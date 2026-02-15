@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* TERANGA THEME (Warm, Food, Human) */
+
+    /* Backgrounds: Warm Millet/Rice White */
+    --background: 40 40% 98%;
+    --foreground: 24 30% 12%;
+    /* Deep Earth Brown/Coffee */
+
+    /* Cards: Clean White but softer */
+    --card: 0 0% 100%;
+    --card-foreground: 24 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 30% 15%;
+
+    /* Primary: Palm Oil / Golden Tiybou Dieune */
+    /* Vibrant Orange: HSL(24, 90%, 55%) */
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Deep Bissap / Terra Cotta */
+    /* Rich Carmine: HSL(345, 60%, 40%) */
+    --secondary: 345 50% 40%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted: Sand / Dry Landscape */
+    --muted: 36 25% 92%;
+    --muted-foreground: 36 10% 45%;
+
+    /* Accents: Fresh Green (Okra/Mafe) */
+    --accent: 85 55% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 36 20% 88%;
+    --input: 36 20% 88%;
+    --ring: 24 95% 53%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark Mode (Midnight in Dakar): Deep Indigos & Golds */
+    --background: 240 20% 8%;
+    --foreground: 40 20% 90%;
+
+    --card: 240 15% 12%;
+    --card-foreground: 40 20% 90%;
+
+    --popover: 240 15% 12%;
+    --popover-foreground: 40 20% 90%;
+
+    --primary: 38 90% 60%;
+    /* Baobab Gold */
+    --primary-foreground: 240 20% 8%;
+
+    --secondary: 345 50% 50%;
+    /* Lighter Bissap */
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 10% 18%;
+    --muted-foreground: 240 5% 60%;
+
+    --accent: 85 45% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
+    --ring: 38 90% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .teranga-card {
+    @apply rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
+  .text-heading {
+    /* Playfair Display logic applied via Tailwind if config allows, here generalized */
+    font-family: var(--font-playfair), serif;
+    letter-spacing: -0.02em;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground font-medium shadow hover:bg-primary/90 transition-all active:scale-[0.98];
+  }
+
+  .pattern-grid {
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
