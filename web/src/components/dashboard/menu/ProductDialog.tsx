@@ -11,9 +11,10 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Plus, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { createProductAction, updateProductAction } from "@/actions/products";
-import { toast } from "sonner"; // If sonner is installed, let's use it. If not, alert.
+import { toast } from "sonner";
+import { ImageUpload } from "@/components/ImageUpload";
 
 type Product = {
     id: string;
@@ -39,15 +40,6 @@ export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChang
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Image state for "upload" simulation
-    const [imageUrl, setImageUrl] = useState(productToEdit?.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60");
-
-    useEffect(() => {
-        if (productToEdit) {
-            setImageUrl(productToEdit.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60");
-        }
-    }, [productToEdit]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -75,19 +67,7 @@ export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChang
         setLoading(false);
     };
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // In a real app, this would upload to storage. 
-            // For now, we simulate a local preview.
-            const objectUrl = URL.createObjectURL(file);
-            setImageUrl(objectUrl);
-            // Note: The form submission currently sends the URL string. 
-            // To support real file uploads, we'd need to modify the server action to handle File objects and upload to Supabase Storage.
-            // For this MVP, we will stick to URL input or Mock.
-            toast.info("Image preview set (Upload not implemented in MVP)");
-        }
-    };
+
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -157,35 +137,13 @@ export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChang
                         />
                     </div>
 
-                    {/* Image Upload placeholder */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none">Image</label>
-                        <div className="border inter-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/30 transition-colors cursor-pointer text-xs relative overflow-hidden group">
-                            {imageUrl ? (
-                                <img src={imageUrl} alt="Preview" className="h-20 w-full object-cover rounded mb-2" />
-                            ) : (
-                                <ImageIcon className="h-6 w-6 mb-2 opacity-50" />
-                            )}
-
-                            <span className="z-10 bg-white/80 px-2 py-1 rounded backdrop-blur-sm">Changer l'image</span>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-                        </div>
-                        {/* Hidden input for URL */}
-                        <div className="flex gap-2">
-                            <Input
-                                name="imageUrl"
-                                value={imageUrl}
-                                onChange={(e) => setImageUrl(e.target.value)}
-                                placeholder="https://..."
-                                className="text-xs font-mono h-8"
-                            />
-                        </div>
-                    </div>
+                    {/* Image Upload */}
+                    <ImageUpload
+                        name="imageUrl"
+                        label="Photo du plat"
+                        defaultValue={productToEdit?.image_url}
+                        folder="products"
+                    />
 
                     {error && <p className="text-sm text-destructive">{error}</p>}
 

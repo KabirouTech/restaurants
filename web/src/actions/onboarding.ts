@@ -28,8 +28,16 @@ export async function createOrganizationAction(formData: FormData) {
     const description = formData.get("orgDescription") as string;
     const fullName = formData.get("fullName") as string;
 
-    // Create unique slug
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Math.random().toString(36).substring(2, 7);
+    // Create slug from name, only add suffix if already taken
+    let slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const { data: slugCheck } = await adminClient
+        .from("organizations")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+    if (slugCheck) {
+        slug = slug + "-" + Math.random().toString(36).substring(2, 5);
+    }
 
     // 3. Create Organization (Admin)
     const { data: org, error: orgError } = await adminClient

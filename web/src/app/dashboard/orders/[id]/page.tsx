@@ -68,7 +68,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     const orgPhone = org?.settings?.contact_phone;
 
     return (
-        <div className="min-h-screen bg-muted/10 p-6 md:p-8 animate-in fade-in duration-500">
+        <div className="min-h-screen bg-muted/10 p-6 md:p-8 animate-in fade-in duration-500 print:bg-white print:p-0 print:min-h-0">
 
             {/* Action Bar (Hidden in Print) */}
             <div className="flex justify-between items-start mb-8 print:hidden flex-wrap gap-4">
@@ -81,16 +81,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
                 {/* Client Component for Actions */}
                 <div className="flex gap-2">
-                    <OrderActions />
+                    <OrderActions orderId={order.id} customerEmail={customer?.email} />
                     {/* Could add Edit button linking to /edit later */}
                 </div>
             </div>
 
             {/* Quote / Invoice Paper */}
-            <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden print:shadow-none print:max-w-none print:bg-transparent print:border-none">
+            <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden print:shadow-none print:max-w-none print:rounded-none print:w-full">
 
                 {/* Header */}
-                <div className="p-8 border-b border-border flex justify-between items-start bg-secondary text-white print:text-black print:bg-transparent print:border-b-2 print:border-black">
+                <div className="p-8 border-b border-border flex justify-between items-start bg-secondary text-white print:text-black print:bg-transparent print:border-b-2 print:border-black print:p-0 print:mb-8 text-black">
                     <div>
                         <div className="flex items-center gap-2 mb-4 text-primary font-serif italic print:text-black">
                             <ChefHat className="h-6 w-6" />
@@ -103,7 +103,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                         </div>
                     </div>
                     <div className="text-right">
-                        <h2 className="text-3xl font-bold mb-1 font-serif uppercase tracking-widest">
+                        <h2 className="text-3xl font-bold mb-1 font-serif uppercase tracking-widest text-white print:text-black">
                             {order.status === 'confirmed' ? 'FACTURE' : 'DEVIS'}
                         </h2>
                         <p className="text-sm opacity-80 font-mono">#{order.id.slice(0, 8).toUpperCase()}</p>
@@ -114,50 +114,50 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </div>
 
                 {/* Client & Event Info */}
-                <div className="p-8 grid grid-cols-2 gap-12 border-b border-border/50">
+                <div className="p-8 grid grid-cols-2 gap-12 border-b border-border/50 print:p-0 print:mb-8 print:gap-4 print:border-none">
                     <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Client</h3>
-                        <p className="font-bold text-lg text-secondary mb-1">{customer?.full_name || "Client Inconnu"}</p>
-                        <p className="text-sm text-muted-foreground">{customer?.email}</p>
-                        <p className="text-sm text-muted-foreground">{customer?.phone}</p>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 print:text-black">Client</h3>
+                        <p className="font-bold text-lg text-secondary mb-1 print:text-black">{customer?.full_name || "Client Inconnu"}</p>
+                        <p className="text-sm text-muted-foreground print:text-black">{customer?.email}</p>
+                        <p className="text-sm text-muted-foreground print:text-black">{customer?.phone}</p>
                     </div>
                     <div className="text-right">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Événement</h3>
-                        <p className="font-medium text-foreground mb-1">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 print:text-black">Événement</h3>
+                        <p className="font-medium text-foreground mb-1 print:text-black">
                             {capacityType?.name || "Standard"} ({order.guest_count ? `${order.guest_count} pers.` : ""})
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground print:text-black">
                             Heure: {order.event_time ? order.event_time.slice(0, 5) : "Non définie"}
                         </p>
                     </div>
                 </div>
 
                 {/* Items Table */}
-                <div className="p-8">
+                <div className="p-8 print:p-0">
                     <Table>
                         <TableHeader>
-                            <TableRow className="hover:bg-transparent border-b-2 border-secondary/10 hover:border-b-2">
-                                <TableHead className="w-[50%] text-secondary font-bold text-left pl-0">Désignation</TableHead>
-                                <TableHead className="text-right text-secondary font-bold">P.U.</TableHead>
-                                <TableHead className="text-center text-secondary font-bold">Qté</TableHead>
-                                <TableHead className="text-right text-secondary font-bold pr-0">Total</TableHead>
+                            <TableRow className="hover:bg-transparent border-b-2 border-secondary/10 hover:border-b-2 print:border-black">
+                                <TableHead className="w-[50%] text-secondary font-bold text-left pl-0 print:text-black">Désignation</TableHead>
+                                <TableHead className="text-right text-secondary font-bold print:text-black">P.U.</TableHead>
+                                <TableHead className="text-center text-secondary font-bold print:text-black">Qté</TableHead>
+                                <TableHead className="text-right text-secondary font-bold pr-0 print:text-black">Total</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {order.order_items && order.order_items.length > 0 ? (
                                 order.order_items.map((item: any) => (
-                                    <TableRow key={item.id} className="hover:bg-transparent border-b border-border/50 hover:border-border/50">
+                                    <TableRow key={item.id} className="hover:bg-transparent border-b border-border/50 hover:border-border/50 print:border-gray-200">
                                         <TableCell className="font-medium py-4 pl-0 align-top">
-                                            <div className="font-bold text-foreground">{item.products?.name || "Article Inconnu"}</div>
-                                            <div className="text-xs text-muted-foreground mt-0.5">{item.products?.category}</div>
+                                            <div className="font-bold text-foreground print:text-black">{item.products?.name || "Article Inconnu"}</div>
+                                            <div className="text-xs text-muted-foreground mt-0.5 print:text-gray-600">{item.products?.category}</div>
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-muted-foreground align-top pt-4">
+                                        <TableCell className="text-right font-mono text-muted-foreground align-top pt-4 print:text-black">
                                             {(item.unit_price_cents / 100).toFixed(2)} €
                                         </TableCell>
-                                        <TableCell className="text-center font-mono align-top pt-4">
+                                        <TableCell className="text-center font-mono align-top pt-4 print:text-black">
                                             {item.quantity}
                                         </TableCell>
-                                        <TableCell className="text-right font-mono font-medium align-top pt-4 pr-0 text-foreground">
+                                        <TableCell className="text-right font-mono font-medium align-top pt-4 pr-0 text-foreground print:text-black">
                                             {((item.unit_price_cents * item.quantity) / 100).toFixed(2)} €
                                         </TableCell>
                                     </TableRow>
@@ -174,33 +174,32 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </div>
 
                 {/* Totals */}
-                <div className="p-8 bg-muted/5 flex justify-end print:bg-transparent">
+                <div className="p-8 bg-muted/5 flex justify-end print:bg-transparent print:p-0 print:mt-4">
                     <div className="w-64 space-y-3">
-                        <div className="flex justify-between text-sm text-muted-foreground">
+                        <div className="flex justify-between text-sm text-muted-foreground print:text-black">
                             <span>Sous-total HT</span>
-                            <span className="font-mono text-foreground">{(subtotal).toFixed(2)} €</span>
+                            <span className="font-mono text-foreground print:text-black">{(subtotal).toFixed(2)} €</span>
                         </div>
-                        {/* Tax Placeholder */}
-                        {/* <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>TVA (20%)</span>
-                    <span className="font-mono text-foreground">{(subtotal * 0.2).toFixed(2)} €</span> 
-                </div> */}
-                        <div className="flex justify-between text-xl font-bold text-secondary border-t-2 border-primary pt-3 mt-2 items-baseline">
+                        <div className="flex justify-between text-xl font-bold text-secondary border-t-2 border-primary pt-3 mt-2 items-baseline print:text-black print:border-black">
                             <span>Total TTC</span>
-                            <span className="font-mono text-primary text-2xl">{(total).toFixed(2)} €</span>
+                            <span className="font-mono text-primary text-2xl print:text-black">{(total).toFixed(2)} €</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer Notes */}
-                <div className="p-8 border-t border-border/50 text-xs text-muted-foreground text-center print:border-t-2 print:border-black print:mt-12">
-                    <p className="mb-2 font-medium text-secondary/80">Merci de votre confiance !</p>
-                    <p className="opacity-70">
+                <div className="p-8 border-t border-border/50 text-xs text-muted-foreground text-center print:border-t-2 print:border-black print:mt-12 print:p-0 print:pt-4">
+                    <p className="mb-2 font-medium text-secondary/80 print:text-black">Merci de votre confiance !</p>
+                    <p className="opacity-70 print:text-gray-600">
                         Conditions de paiement : 30% à la commande, solde à la livraison.<br />
                         Sauf mention contraire, nos devis sont valables 30 jours.
                     </p>
-                    {/* If Bank info exists in profile, show it here? */}
                 </div>
+            </div>
+
+            {/* Platform Footer for Print Only */}
+            <div className="hidden print:block text-center mt-12 text-[10px] text-gray-400 font-mono">
+                Propulsé par Restaurant OS
             </div>
         </div>
     );

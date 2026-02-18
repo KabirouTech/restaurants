@@ -5,8 +5,9 @@ import { format, startOfMonth, endOfMonth, parseISO, startOfWeek, endOfWeek, eac
 import { fr } from "date-fns/locale";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Ban, Clock, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban, Clock, ArrowLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CalendarEvent } from "@/components/dashboard/calendar/CalendarEvent";
 
 export default async function CalendarPage(props: { searchParams: Promise<{ date?: string }> }) {
     const searchParams = await props.searchParams;
@@ -28,13 +29,16 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
     const calendarEnd = endOfWeek(monthEnd, { locale: fr, weekStartsOn: 1 });
 
     // 2. Fetch Orders for this range including Customer info
-    const { data: orders } = await supabase
+    console.log(`[Calendar] Fetching orders for Org: ${orgId}`);
+    console.log(`[Calendar] Date Range: ${format(calendarStart, "yyyy-MM-dd")} to ${format(calendarEnd, "yyyy-MM-dd")}`);
+
+    const { data: orders, error: ordersError } = await supabase
         .from("orders")
         .select(`
             id, 
             event_date, 
-            event_time,
-            status,
+            event_time, 
+            status, 
             guest_count,
             customers (full_name),
             capacity_types (
@@ -46,6 +50,15 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
         .eq("organization_id", orgId)
         .gte("event_date", format(calendarStart, "yyyy-MM-dd"))
         .lte("event_date", format(calendarEnd, "yyyy-MM-dd"));
+
+    if (ordersError) {
+        console.error("[Calendar] Error fetching orders:", ordersError);
+    } else {
+        console.log(`[Calendar] Found ${orders?.length} orders`);
+        if (orders && orders.length > 0) {
+            console.log("[Calendar] First order:", JSON.stringify(orders[0], null, 2));
+        }
+    }
 
     // 3. Fetch Capacity Defaults
     const { data: defaults } = await supabase
@@ -108,96 +121,77 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                         const dayString = format(day, "yyyy-MM-dd");
                         // @ts-ignore
                         const dayOrders = orders?.filter(o => o.event_date === dayString) || [];
-                        // @ts-ignore
-                        const dayLoad = dayOrders.reduce((acc, o) => acc + (o.capacity_types?.load_cost || 0), 0);
-
                         // Adjust mapping: Date-fns getDay() returns 0 for Sunday...6 for Saturday
-                        // My week starts on Monday. 
                         // defaults table uses 0=Sunday...6=Saturday usually.
                         const dow = day.getDay();
-
-                        const defaultSettings = defaults?.find(d => d.day_of_week === dow);
-                        const maxLimit = defaultSettings?.max_daily_load || 100; // Default limit
+                        const defaultSettings = defaults?.find((d: any) => d.day_of_week === dow);
                         const isOpen = defaultSettings?.is_open !== false; // Default open
 
                         const isCurrentMonth = isSameMonth(day, monthStart);
                         const isTodayDate = isToday(day);
 
-                        // Load Color
-                        const loadPercent = maxLimit > 0 ? (dayLoad / maxLimit) * 100 : 0;
-                        let loadColorClass = "bg-green-100 text-green-700 border-green-200";
-                        if (loadPercent > 80) loadColorClass = "bg-red-100 text-red-700 border-red-200";
-                        else if (loadPercent > 50) loadColorClass = "bg-orange-100 text-orange-700 border-orange-200";
-
                         return (
                             <div
                                 key={dayString}
                                 className={cn(
-                                    "min-h-[120px] border-b border-r border-border p-2 relative flex flex-col gap-1 transition-colors hover:bg-muted/5 group",
-                                    !isCurrentMonth && "bg-muted/5 text-muted-foreground/40 text-sm",
-                                    isTodayDate && "bg-blue-50/20"
+                                    "min-h-[120px] border-b border-r border-border relative flex flex-col transition-colors group bg-card hover:bg-muted/5",
+                                    !isCurrentMonth && "bg-muted/10 text-muted-foreground/40",
+                                    isTodayDate && "bg-blue-50/10"
                                 )}
                             >
                                 {/* Day Number Header */}
-                                <div className="flex justify-between items-start mb-1">
+                                <div className="flex justify-between items-start p-2 border-b border-border/50 bg-muted/20">
                                     <span className={cn(
                                         "h-6 w-6 flex items-center justify-center rounded-full text-sm font-medium",
                                         isTodayDate ? "bg-primary text-white shadow-sm" : "text-muted-foreground"
                                     )}>
                                         {format(day, "d")}
                                     </span>
-
-                                    {isOpen ? (
-                                        <span className={cn("text-[10px] px-1.5 rounded-full border font-mono font-medium", loadColorClass)}>
-                                            {dayLoad}/{maxLimit}
-                                        </span>
-                                    ) : (
-                                        <span className="text-[10px] px-1.5 rounded-full border border-gray-200 bg-gray-100 text-gray-400 flex items-center gap-1">
+                                    {!isOpen && (
+                                        <span className="text-[10px] px-1.5 rounded-full border border-border bg-muted text-muted-foreground flex items-center gap-1">
                                             <Ban className="h-3 w-3" /> Fermé
                                         </span>
                                     )}
                                 </div>
 
                                 {/* Events List */}
-                                <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
+                                <div className="flex-1 p-1 flex flex-col gap-1 overflow-y-auto">
                                     {dayOrders.map((order: any) => (
-                                        <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
-                                            <div
-                                                className={cn(
-                                                    "text-xs p-1.5 rounded border shadow-sm transition-all hover:scale-[1.02] cursor-pointer bg-white border-l-4 truncate",
-                                                    order.status === 'confirmed' ? "border-l-green-500" :
-                                                        order.status === 'draft' ? "border-l-gray-400 opacity-80" : "border-l-orange-400"
-                                                )}
-                                                title={`${order.customers?.full_name} - ${order.capacity_types?.name}`}
-                                            >
-                                                <div className="font-semibold text-secondary truncate flex justify-between">
-                                                    <span>{order.customers?.full_name?.split(' ')[0] || "Client"}</span>
-                                                    {order.event_time && (
-                                                        <span className="font-normal text-muted-foreground text-[10px] flex items-center gap-0.5">
-                                                            <Clock className="h-3 w-3" /> {order.event_time.slice(0, 5)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground flex justify-between mt-0.5">
-                                                    <span>{order.capacity_types?.name}</span>
-                                                    <span>{order.guest_count} pers.</span>
-                                                </div>
-                                            </div>
-                                        </Link>
+                                        <CalendarEvent key={order.id} order={order} />
                                     ))}
-                                    {(dayOrders.length === 0 && isOpen) && (
-                                        <Link href={`/dashboard/orders/new?date=${dayString}`} className="opacity-0 group-hover:opacity-100 transition-opacity h-full flex items-center justify-center">
-                                            <Button variant="ghost" size="sm" className="h-6 w-full text-xs border border-dashed border-border text-muted-foreground hover:text-primary hover:bg-primary/5 hover:border-primary/30">
-                                                + Ajouter
-                                            </Button>
-                                        </Link>
-                                    )}
+
+                                    {/* Add Button Area */}
+                                    <Link
+                                        href={`/dashboard/orders/new?date=${dayString}`}
+                                        className={cn(
+                                            "flex-1 min-h-[2rem] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 rounded border border-dashed border-transparent hover:border-primary/30 hover:bg-primary/5 text-primary/70 hover:text-primary",
+                                            dayOrders.length === 0 && "opacity-0 group-hover:opacity-100" // Always visible on hover if empty? Or maybe just keep the opacity transition
+                                        )}
+                                        title="Ajouter un événement"
+                                    >
+                                        <Plus className="h-6 w-6" />
+                                    </Link>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
             </div>
+
+            {/* Debug Info */}
+            <details className="p-4 border-t bg-muted/20">
+                <summary className="text-xs text-muted-foreground cursor-pointer">Debug Info</summary>
+                <pre className="text-[10px] whitespace-pre-wrap mt-2">
+                    {JSON.stringify({
+                        orgId,
+                        calendarStart: format(calendarStart, "yyyy-MM-dd"),
+                        calendarEnd: format(calendarEnd, "yyyy-MM-dd"),
+                        ordersCount: orders?.length,
+                        ordersError: ordersError,
+                        firstOrder: orders?.[0]
+                    }, null, 2)}
+                </pre>
+            </details>
         </div>
     );
 }

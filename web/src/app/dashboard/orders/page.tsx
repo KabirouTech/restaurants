@@ -84,13 +84,13 @@ export default async function OrdersPage() {
             <div className="flex gap-4">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Rechercher un client, N° devis..." className="pl-9 bg-white" />
+                    <Input placeholder="Rechercher un client, N° devis..." className="pl-9 bg-background" />
                 </div>
                 {/* Placeholder for status filter */}
             </div>
 
             {/* Orders List */}
-            <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <Table>
                     <TableHeader className="bg-muted/30">
                         <TableRow>
@@ -109,44 +109,42 @@ export default async function OrdersPage() {
                                 const capacityType = Array.isArray(order.capacity_types) ? order.capacity_types[0] : order.capacity_types;
 
                                 return (
-                                    <TableRow key={order.id} className="hover:bg-muted/5 group relative">
-                                        <TableCell className="font-medium relative">
-                                            <Link href={`/dashboard/orders/${order.id}`} className="absolute inset-0 z-10" />
-                                            <div className="flex flex-col relative z-0 pointer-events-none">
+                                    <TableRow key={order.id} className="group hover:bg-muted/5 transition-colors cursor-pointer relative">
+                                        <TableCell className="font-medium">
+                                            <Link href={`/dashboard/orders/${order.id}`} className="absolute inset-0 z-10" aria-label="Voir la commande"></Link>
+                                            <div className="flex flex-col">
                                                 <span>{order.event_date ? format(new Date(order.event_date), "dd MMM yyyy", { locale: fr }) : format(new Date(order.created_at), "dd MMM yyyy", { locale: fr })}</span>
                                                 <span className="text-xs text-muted-foreground">{order.event_time ? order.event_time.slice(0, 5) : (order.event_date ? "Heure à définir" : "Date de création")}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-col relative z-0">
-                                                <span className="font-medium text-secondary">{customer?.full_name || "Client Inconnu"}</span>
-                                                <span className="text-xs text-muted-foreground">{customer?.phone}</span>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium text-secondary dark:text-foreground">{customer?.full_name || "Client Inconnu"}</span>
+                                                <span className="text-xs text-muted-foreground">{customer?.email}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/10 text-secondary relative z-0">
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/10 dark:bg-secondary/20 text-secondary dark:text-secondary-foreground">
                                                 {capacityType?.name || "Standard"} {order.guest_count ? `(${order.guest_count} pers.)` : ""}
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border relative z-0 ${order.status === 'confirmed' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                order.status === 'draft' ? 'bg-gray-50 text-gray-600 border-gray-200' :
-                                                    'bg-orange-50 text-orange-700 border-orange-200'
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${order.status === 'confirmed' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
+                                                order.status === 'draft' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700' :
+                                                    'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800'
                                                 }`}>
                                                 {order.status === 'draft' ? 'Brouillon' :
                                                     order.status === 'quotation' ? 'Devis Envoyé' :
                                                         order.status === 'confirmed' ? 'Confirmé' : order.status}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="text-right font-mono font-medium relative z-0">
+                                        <TableCell className="text-right font-mono font-medium">
                                             {((order.total_amount_cents || 0) / 100).toFixed(2)} €
                                         </TableCell>
                                         <TableCell>
-                                            <Link href={`/dashboard/orders/${order.id}`}>
-                                                <Button variant="ghost" size="icon" className="group-hover:opacity-100 transition-opacity">
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
+                                            <Button variant="ghost" size="icon" className="group-hover:opacity-100 transition-opacity relative z-20 pointer-events-none">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 );

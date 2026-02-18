@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Trash2, UserPlus, Loader2, Save } from "lucide-react";
 import { createOrderAction } from "@/actions/orders";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ProductSelector } from "./ProductSelector";
 
@@ -31,6 +31,7 @@ type Product = {
 type CapacityType = {
     id: string;
     name: string;
+    description: string;
 };
 
 type Customer = {
@@ -50,6 +51,7 @@ interface CreateOrderFormProps {
 
 export function CreateOrderForm({ products, capacityTypes, customers }: CreateOrderFormProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
 
     // Form State
@@ -62,8 +64,8 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
     const [newCustomerPhone, setNewCustomerPhone] = useState("");
 
     // Order Details
-    const [eventDate, setEventDate] = useState("");
-    const [eventTime, setEventTime] = useState("");
+    const [eventDate, setEventDate] = useState(searchParams.get("date") || "");
+    const [eventTime, setEventTime] = useState(searchParams.get("time") || "");
     const [guestCount, setGuestCount] = useState(0);
     const [capacityTypeId, setCapacityTypeId] = useState<string>("");
     const [internalNotes, setInternalNotes] = useState("");

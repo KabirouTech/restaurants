@@ -35,31 +35,33 @@ export function MenuSection({ products }: { products: Product[] }) {
                 <div className="w-24 h-1 bg-primary mx-auto rounded-full"></div>
             </div>
 
-            {/* Category Filter */}
+            {/* Category Filter - Sticky */}
             {categories.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 md:gap-4">
-                    <Button
-                        variant={activeCategory === "Tous" ? "default" : "outline"}
-                        onClick={() => setActiveCategory("Tous")}
-                        className="rounded-full px-6"
-                    >
-                        Tous
-                    </Button>
-                    {categories.map(cat => (
+                <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm py-4 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border/50 mb-8">
+                    <div className="flex space-x-3 overflow-x-auto no-scrollbar pb-2">
                         <Button
-                            key={cat}
-                            variant={activeCategory === cat ? "default" : "outline"}
-                            onClick={() => setActiveCategory(cat)}
-                            className="rounded-full px-6 capitalize"
+                            variant={activeCategory === "Tous" ? "default" : "outline"}
+                            onClick={() => setActiveCategory("Tous")}
+                            className="rounded-full px-6 flex-shrink-0 shadow-sm"
                         >
-                            {cat}
+                            Tous
                         </Button>
-                    ))}
+                        {categories.map(cat => (
+                            <Button
+                                key={cat}
+                                variant={activeCategory === cat ? "default" : "outline"}
+                                onClick={() => setActiveCategory(cat)}
+                                className="rounded-full px-6 capitalize flex-shrink-0 shadow-sm"
+                            >
+                                {cat}
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             )}
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Grid - 2 Cols max because of 8-col parent */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredProducts.map((product) => (
                     <div
                         key={product.id}

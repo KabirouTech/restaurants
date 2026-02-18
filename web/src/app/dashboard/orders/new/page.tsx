@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/utils/supabase/server";
 import { CreateOrderForm } from "@/components/dashboard/orders/CreateOrderForm";
 import { redirect } from "next/navigation";
@@ -25,7 +26,7 @@ export default async function NewOrderPage() {
     // 2. Fetch Capacity Types
     const { data: capacityTypes } = await supabase
         .from("capacity_types")
-        .select("id, name")
+        .select("id, name, description")
         .eq("organization_id", orgId);
 
     // 3. Fetch Customers (Limit 50 for now, or implement async search later)
@@ -48,11 +49,13 @@ export default async function NewOrderPage() {
 
             {/* Main Content */}
             <main className="flex-1 overflow-hidden p-6 bg-muted/10">
-                <CreateOrderForm
-                    products={products || []}
-                    capacityTypes={capacityTypes || []}
-                    customers={customers || []}
-                />
+                <Suspense fallback={<div>Chargement...</div>}>
+                    <CreateOrderForm
+                        products={products || []}
+                        capacityTypes={capacityTypes || []}
+                        customers={customers || []}
+                    />
+                </Suspense>
             </main>
         </div>
     );

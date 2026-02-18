@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useFCM } from "@/hooks/useFCM";
 import {
     LayoutDashboard,
     ChefHat,
@@ -15,8 +16,8 @@ import {
     Users,
     Settings,
     LogOut,
-    PanelLeft,
-    ChevronLeft
+    ChevronLeft,
+    Bell
 } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 
@@ -32,21 +33,22 @@ const navItems = [
 export function Sidebar() {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
+    const { requestPermission, permissionStatus } = useFCM();
 
     return (
         <div
             className={cn(
-                "flex flex-col h-full bg-white border-r border-border shrink-0 z-50 transition-all duration-300 ease-in-out relative group",
+                "flex flex-col h-full bg-white dark:bg-card border-r border-border shrink-0 z-50 transition-all duration-300 ease-in-out relative group print:hidden",
                 collapsed ? "w-[70px]" : "w-64"
             )}
         >
-            {/* Toggle Button (visible on hover or always?) -> Let's put it in header or floating */}
+            {/* Toggle Button */}
             <Button
                 variant="ghost"
                 size="icon"
                 className={cn(
-                    "absolute -right-3 top-6 h-6 w-6 rounded-full border border-border bg-white shadow-md z-50 text-muted-foreground hover:text-foreground hidden group-hover:flex items-center justify-center",
-                    collapsed && "flex" // Always show when collapsed to allow opening
+                    "absolute -right-3 top-6 h-6 w-6 rounded-full border border-border bg-white dark:bg-card shadow-md z-50 text-muted-foreground hover:text-foreground hidden group-hover:flex items-center justify-center",
+                    collapsed && "flex"
                 )}
                 onClick={() => setCollapsed(!collapsed)}
             >
@@ -60,7 +62,7 @@ export function Sidebar() {
             )}>
                 <ChefHat className="h-6 w-6 text-primary shrink-0" />
                 <span className={cn(
-                    "font-serif font-bold text-lg text-secondary transition-opacity duration-300",
+                    "font-serif font-bold text-lg text-secondary dark:text-foreground transition-opacity duration-300",
                     collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
                 )}>
                     Restaurant OS
@@ -105,6 +107,26 @@ export function Sidebar() {
 
             {/* Bottom Actions */}
             <div className="p-3 border-t border-border space-y-1 overflow-hidden">
+                {/* Notification Request Button */}
+                {permissionStatus === "default" && (
+                    <button
+                        onClick={requestPermission}
+                        className={cn(
+                            "flex items-center rounded-lg text-sm font-medium transition-colors text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 h-10 w-full mb-2",
+                            collapsed ? "justify-center px-0" : "px-3 gap-3"
+                        )}
+                        title="Activer les notifications"
+                    >
+                        <Bell className="h-4 w-4 shrink-0 animate-pulse" />
+                        <span className={cn(
+                            "whitespace-nowrap transition-all duration-300",
+                            collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
+                        )}>
+                            Activer Notifs
+                        </span>
+                    </button>
+                )}
+
                 <Link href="/dashboard/settings">
                     <div className={cn(
                         "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground h-10",
@@ -124,25 +146,23 @@ export function Sidebar() {
                 <div className={cn(
                     "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground h-10 cursor-pointer",
                     collapsed ? "justify-center px-0" : "px-3 gap-3"
-                )} title={collapsed ? "Thème" : undefined}>
+                )} title={collapsed ? "Apparence" : undefined}>
                     <div className="flex items-center w-full" onClick={(e) => e.stopPropagation()}>
                         <div className={cn("flex items-center w-full", collapsed ? "justify-center" : "gap-3")}>
-                            {/* We render the toggle but we might need to customize it to fit the sidebar look. 
-                                Actually, placing the ModeToggle button directly is easiest. 
-                                Let's wrap it to look integrated. */}
                             <ModeToggle />
                             <span className={cn(
                                 "whitespace-nowrap transition-all duration-300",
-                                collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
+                                "opacity-100" // ModeToggle usually handles its own visibility or we can wrap it better. Keeping simplified logic.
                             )}>
-                                Apparence
+                                {!collapsed && "Apparence"}
                             </span>
                         </div>
                     </div>
                 </div>
+
                 <form action="/auth/signout" method="post">
                     <button className={cn(
-                        "flex items-center rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors h-10 w-full",
+                        "flex items-center rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors h-10 w-full",
                         collapsed ? "justify-center px-0" : "px-3 gap-3"
                     )} title={collapsed ? "Déconnexion" : undefined}>
                         <LogOut className="h-4 w-4 shrink-0" />

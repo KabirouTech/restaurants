@@ -17,40 +17,40 @@ export function OverviewStats({ organizationId, totalRevenueCents, orderCount }:
             value: (totalRevenueCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }),
             description: "+0%",
             icon: DollarSign,
-            color: "text-primary bg-primary/10",
+            color: "text-primary bg-primary/10 dark:bg-primary/20",
         },
         {
             title: "Commandes",
             value: orderCount.toString(),
             description: "Nouveau",
             icon: ShoppingBag,
-            color: "text-secondary bg-secondary/10",
+            color: "text-secondary dark:text-red-400 bg-secondary/10 dark:bg-red-900/20",
         },
         {
             title: "Messages",
             value: "0",
             description: "Inbox",
             icon: MessageSquare,
-            color: "text-purple-600 bg-purple-100",
+            color: "text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/20",
         },
         {
             title: "Satisfaction",
             value: "-",
             description: "NPS",
             icon: TrendingUp,
-            color: "text-green-600 bg-green-100",
+            color: "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20",
         },
     ];
 
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat, index) => (
-                <Card key={index} className="bg-white border border-border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <Card key={index} className="bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between pb-4">
                             <div>
                                 <p className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-2 font-sans">{stat.title}</p>
-                                <h3 className="text-3xl font-bold text-secondary font-serif tracking-tight">{stat.value}</h3>
+                                <h3 className="text-3xl font-bold text-secondary dark:text-secondary-foreground font-serif tracking-tight">{stat.value}</h3>
                             </div>
                             <div className={`h-12 w-12 rounded-xl flex items-center justify-center border border-transparent ${stat.color}`}>
                                 <stat.icon className="h-6 w-6" />

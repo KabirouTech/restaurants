@@ -114,10 +114,10 @@ export default async function DashboardPage() {
 
           {/* Inbox Preview Link */}
           <div className="p-8 rounded-2xl border border-dashed border-border bg-muted/20 min-h-[200px] flex flex-col justify-center items-center text-center">
-            <div className="h-14 w-14 bg-white rounded-full flex items-center justify-center mb-4 text-primary shadow-sm">
+            <div className="h-14 w-14 bg-card rounded-full flex items-center justify-center mb-4 text-primary shadow-sm">
               <MessageSquare className="h-6 w-6" />
             </div>
-            <h3 className="text-lg font-bold text-secondary font-serif mb-1">Inbox Unifiée</h3>
+            <h3 className="text-lg font-bold text-secondary dark:text-foreground font-serif mb-1">Inbox Unifiée</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-xs leading-relaxed">
               Centralisez vos messages WhatsApp et Instagram pour ne rater aucune commande.
             </p>
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
 
         {/* Right Column: Quick Actions / Notifications */}
         <aside className="md:col-span-1 space-y-6">
-          <div className="p-6 rounded-2xl border border-border bg-white shadow-sm">
+          <div className="p-6 rounded-2xl border border-border bg-card shadow-sm">
             <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4">À Faire (Urgent)</h3>
             <ul className="space-y-4">
               {[

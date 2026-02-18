@@ -22,7 +22,7 @@ export function RecentOrders({ organizationId, orders = [] }: RecentOrdersProps)
     }
 
     return (
-        <Card className="bg-white border border-border shadow-sm hover:shadow-lg transition-all text-foreground overflow-hidden">
+        <Card className="bg-card border border-border shadow-sm hover:shadow-lg transition-all text-foreground overflow-hidden">
             <CardHeader className="bg-muted/10 pb-4 border-b border-border/50">
                 <div className="flex justify-between items-center">
                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest font-sans">Commandes Récentes</h3>
@@ -36,18 +36,18 @@ export function RecentOrders({ organizationId, orders = [] }: RecentOrdersProps)
                     {orders.map((order, i) => {
                         const customerName = order.customers?.full_name || "Client";
                         const initials = customerName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-                        const statusColor = order.status === 'confirmed' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                            order.status === 'draft' ? "bg-gray-100 text-gray-700 border-gray-200" :
-                                "bg-amber-100 text-amber-700 border-amber-200";
+                        const statusColor = order.status === 'confirmed' ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800" :
+                            order.status === 'draft' ? "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700" :
+                                "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800";
 
                         return (
                             <div key={order.id} className="flex items-center justify-between group cursor-pointer hover:bg-muted/30 p-4 transition-colors">
                                 <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center font-bold text-secondary text-xs font-serif group-hover:bg-secondary group-hover:text-white transition-all border border-secondary/20 shadow-sm">
+                                    <div className="h-10 w-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center font-bold text-secondary dark:text-secondary-foreground text-xs font-serif group-hover:bg-secondary group-hover:text-white transition-all border border-secondary/20 shadow-sm">
                                         {initials}
                                     </div>
                                     <div>
-                                        <p className="font-bold text-sm text-secondary font-serif group-hover:text-primary transition-colors">{customerName}</p>
+                                        <p className="font-bold text-sm text-secondary dark:text-secondary-foreground font-serif group-hover:text-primary transition-colors">{customerName}</p>
                                         <p className="text-xs text-muted-foreground font-medium">
                                             {(order.total_amount_cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                                         </p>
