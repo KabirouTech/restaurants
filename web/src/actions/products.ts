@@ -92,3 +92,29 @@ export async function deleteProductAction(productId: string) {
     revalidatePath("/dashboard/menu");
     return { success: true };
 }
+// --- Bulk Delete Products ---
+export async function bulkDeleteProductsAction(ids: string[]) {
+    if (!ids.length) return { error: "Aucun produit sélectionné." };
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Non authentifié" };
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+
+    const { error } = await supabase
+        .from("products")
+        .update({ is_active: false }) // Soft delete
+        .in("id", ids)
+        .eq("organization_id", profile.organization_id); // safety scope
+
+    if (error) return { error: "Erreur lors de la suppression : " + error.message };
+
+    revalidatePath("/dashboard/menu");
+    return { success: true, count: ids.length };
+}

@@ -12,6 +12,14 @@ import {
 } from "lucide-react";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { ImageUpload } from "@/components/ImageUpload";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { CURRENCIES } from "@/lib/currencies";
 import { updateSettingsAction } from "@/actions/settings";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -89,7 +97,7 @@ function SectionTitle({ icon: Icon, title, desc }: { icon: any; title: string; d
                 <Icon className="h-4 w-4 text-primary" />
             </div>
             <div>
-                <p className="font-semibold text-sm text-secondary">{title}</p>
+                <p className="font-semibold text-sm text-foreground">{title}</p>
                 {desc && <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>}
             </div>
         </div>
@@ -110,6 +118,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
     const [description, setDescription] = useState(settings.description || "");
     const [heroImage, setHeroImage] = useState(settings.hero_image || "");
     const [logoUrl, setLogoUrl] = useState(settings.logo_url || "");
+    const [currency, setCurrency] = useState(settings.currency || "EUR");
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -130,6 +139,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
             <input type="hidden" name="orgId" value={org.id} />
             <input type="hidden" name="primaryColor" value={primaryColor} />
             <input type="hidden" name="logoUrl" value={logoUrl} />
+            <input type="hidden" name="currency" value={currency} />
 
             {/* Two-column: form left, preview right */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -194,6 +204,23 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="La meilleure cuisine de la ville..."
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Devise</Label>
+                                <Select value={currency} onValueChange={setCurrency}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Sélectionnez une devise" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {CURRENCIES.map((c) => (
+                                            <SelectItem key={c.code} value={c.code}>
+                                                {c.label} ({c.code})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">La devise affichée sur votre menu et vos devis.</p>
                             </div>
                         </CardContent>
                     </Card>

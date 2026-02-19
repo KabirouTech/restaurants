@@ -19,6 +19,7 @@ export async function updateSettingsAction(formData: FormData) {
         const heroSubtitle = formData.get("heroSubtitle") as string;
         const primaryColor = formData.get("primaryColor") as string;
         const logoUrl = formData.get("logoUrl") as string;
+        const currency = formData.get("currency") as string;
 
         // Contact
         const contactPhone = formData.get("phone") as string;
@@ -76,6 +77,7 @@ export async function updateSettingsAction(formData: FormData) {
             hero_subtitle: heroSubtitle || null,
             primary_color: primaryColor || "#f4af25",
             logo_url: logoUrl || null,
+            currency: currency || "EUR",
             contact_phone: contactPhone || null,
             contact_email: contactEmail || null,
             contact_address: contactAddress || null,

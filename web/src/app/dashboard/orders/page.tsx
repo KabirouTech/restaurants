@@ -45,6 +45,7 @@ export default async function OrdersPage() {
     const orders = ordersData || [];
     const settings = (org?.settings as Record<string, any>) || {};
     const kanbanColumns = settings.kanban_columns || DEFAULT_KANBAN_COLUMNS;
+    const currency = settings.currency || "EUR";
 
     return (
         <div className="min-h-screen p-6 md:p-8 space-y-6 animate-in fade-in duration-500">
@@ -55,7 +56,7 @@ export default async function OrdersPage() {
                         <ChefHat className="h-5 w-5" />
                         <span>Gestion</span>
                     </div>
-                    <h1 className="text-3xl font-bold font-serif text-secondary">Devis & Commandes</h1>
+                    <h1 className="text-3xl font-bold font-serif text-foreground">Devis & Commandes</h1>
                     <p className="text-muted-foreground mt-1">Gérez vos événements, devis et facturations.</p>
                 </div>
                 <Link href="/dashboard/orders/new">
@@ -66,7 +67,7 @@ export default async function OrdersPage() {
             </div>
 
             {/* Orders view (Kanban default) */}
-            <OrdersView orders={orders as any} kanbanColumns={kanbanColumns} />
+            <OrdersView orders={orders as any} kanbanColumns={kanbanColumns} currency={currency} />
         </div>
     );
 }

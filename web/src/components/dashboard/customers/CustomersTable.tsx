@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, MoreHorizontal, Edit, Trash, User, Phone, Mail, MessageCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, MoreHorizontal, Edit, Trash, Phone, Mail, FileSpreadsheet, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { createCustomerAction, updateCustomerAction, deleteCustomerAction } from "@/actions/customers";
+import { createCustomerAction, updateCustomerAction, deleteCustomerAction, bulkDeleteCustomersAction } from "@/actions/customers";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { ImportCustomersDialog } from "./ImportCustomersDialog";
 
 type Customer = {
     id: string;
@@ -39,15 +41,9 @@ const SOURCE_ICONS: Record<string, string> = {
 };
 
 function getInitials(name: string) {
-    return name
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
+    return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 }
 
-// Stable avatar color from name
 const AVATAR_COLORS = [
     "bg-orange-100 text-orange-700",
     "bg-violet-100 text-violet-700",
@@ -68,15 +64,38 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     const [view, setView] = useState<ViewMode>("list");
     const [filter, setFilter] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isImportOpen, setIsImportOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(false);
     const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+    const [isBulkDeleting, startBulkDelete] = useTransition();
 
     const filteredCustomers = initialCustomers.filter((c) =>
         c.full_name.toLowerCase().includes(filter.toLowerCase()) ||
         (c.email || "").toLowerCase().includes(filter.toLowerCase()) ||
         (c.phone || "").toLowerCase().includes(filter.toLowerCase())
     );
+
+    const allSelected = filteredCustomers.length > 0 && filteredCustomers.every(c => selectedIds.has(c.id));
+    const someSelected = filteredCustomers.some(c => selectedIds.has(c.id));
+
+    const toggleSelectAll = () => {
+        if (allSelected) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredCustomers.map(c => c.id)));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
 
     const handleOpenCreate = () => { setEditingCustomer(null); setIsDialogOpen(true); };
     const handleOpenEdit = (customer: Customer) => { setEditingCustomer(customer); setIsDialogOpen(true); };
@@ -108,6 +127,21 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
         } finally { setLoading(false); }
     };
 
+    const handleBulkDelete = () => {
+        startBulkDelete(async () => {
+            const ids = Array.from(selectedIds);
+            const result = await bulkDeleteCustomersAction(ids);
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success(`${result.count} client(s) supprimé(s).`);
+                setSelectedIds(new Set());
+                setIsBulkDeleteOpen(false);
+                router.refresh();
+            }
+        });
+    };
+
     return (
         <div className="space-y-4">
             {/* Toolbar */}
@@ -123,7 +157,27 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 </div>
 
                 <div className="flex items-center gap-2 ml-auto">
+                    {/* Bulk action bar */}
+                    {selectedIds.size > 0 && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-lg animate-in slide-in-from-right-4 duration-200">
+                            <span className="text-sm font-medium text-destructive">{selectedIds.size} sélectionné(s)</span>
+                            <Button
+                                size="sm"
+                                variant="destructive"
+                                className="h-7 gap-1.5 text-xs"
+                                onClick={() => setIsBulkDeleteOpen(true)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
+                                Annuler
+                            </Button>
+                        </div>
+                    )}
                     <ViewToggle view={view} onChange={setView} />
+                    <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
+                        <FileSpreadsheet className="h-4 w-4" /> Importer Excel
+                    </Button>
                     <Button onClick={handleOpenCreate}>
                         <Plus className="mr-2 h-4 w-4" /> Nouveau Client
                     </Button>
@@ -138,129 +192,153 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 <>
                     {/* ── LIST / TABLE VIEW ─────────────────────────────────── */}
                     {view === "list" && (
-                        <div className="rounded-md border bg-white shadow-sm overflow-hidden animate-in fade-in duration-300">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/50">
-                                        <TableHead>Nom Complet</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Téléphone</TableHead>
-                                        <TableHead>Source</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredCustomers.map((customer) => (
-                                        <TableRow key={customer.id} className="hover:bg-muted/5 group">
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={cn("h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0", avatarColor(customer.full_name))}>
-                                                        {getInitials(customer.full_name)}
-                                                    </span>
-                                                    {customer.full_name}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground">{customer.email || "-"}</TableCell>
-                                            <TableCell className="text-muted-foreground">{customer.phone || "-"}</TableCell>
-                                            <TableCell>
-                                                {customer.source && (
-                                                    <Badge variant="secondary" className="uppercase text-[10px]">
-                                                        {SOURCE_ICONS[customer.source] || ""} {customer.source}
-                                                    </Badge>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <span className="sr-only">Actions</span>
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem onClick={() => handleOpenEdit(customer)}>
-                                                            <Edit className="mr-2 h-4 w-4" /> Modifier
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onClick={() => setDeletingCustomer(customer)}
-                                                            className="text-red-600 focus:text-red-600"
-                                                        >
-                                                            <Trash className="mr-2 h-4 w-4" /> Supprimer
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
+                        <div className="rounded-md border bg-white shadow-sm animate-in fade-in duration-300">
+                            <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/80 hover:bg-muted/80">
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm w-10">
+                                                <Checkbox
+                                                    checked={allSelected}
+                                                    onCheckedChange={toggleSelectAll}
+                                                    aria-label="Tout sélectionner"
+                                                    data-state={!allSelected && someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
+                                                />
+                                            </TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Nom Complet</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Email</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Téléphone</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Source</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold text-right">Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredCustomers.map((customer) => (
+                                            <TableRow
+                                                key={customer.id}
+                                                className={cn("hover:bg-muted/5 group", selectedIds.has(customer.id) && "bg-primary/5")}
+                                            >
+                                                <TableCell>
+                                                    <Checkbox
+                                                        checked={selectedIds.has(customer.id)}
+                                                        onCheckedChange={() => toggleSelect(customer.id)}
+                                                        aria-label={`Sélectionner ${customer.full_name}`}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={cn("h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0", avatarColor(customer.full_name))}>
+                                                            {getInitials(customer.full_name)}
+                                                        </span>
+                                                        {customer.full_name}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground">{customer.email || "-"}</TableCell>
+                                                <TableCell className="text-muted-foreground">{customer.phone || "-"}</TableCell>
+                                                <TableCell>
+                                                    {customer.source && (
+                                                        <Badge variant="secondary" className="uppercase text-[10px]">
+                                                            {SOURCE_ICONS[customer.source] || ""} {customer.source}
+                                                        </Badge>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                <span className="sr-only">Actions</span>
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuItem onClick={() => handleOpenEdit(customer)}>
+                                                                <Edit className="mr-2 h-4 w-4" /> Modifier
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => setDeletingCustomer(customer)}
+                                                                className="text-red-600 focus:text-red-600"
+                                                            >
+                                                                <Trash className="mr-2 h-4 w-4" /> Supprimer
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
                     )}
 
                     {/* ── GRID / CARD VIEW ──────────────────────────────────── */}
                     {view === "grid" && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in duration-300">
-                            {filteredCustomers.map((customer) => (
-                                <div
-                                    key={customer.id}
-                                    className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-md transition-all"
-                                >
-                                    {/* Actions always visible on hover */}
-                                    <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-7 w-7 text-muted-foreground hover:text-secondary"
-                                            onClick={() => handleOpenEdit(customer)}
-                                        >
-                                            <Edit className="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                            onClick={() => setDeletingCustomer(customer)}
-                                        >
-                                            <Trash className="h-3.5 w-3.5" />
-                                        </Button>
-                                    </div>
-
-                                    {/* Avatar + Name */}
-                                    <div className="flex flex-col items-center text-center mb-4">
-                                        <div className={cn("h-14 w-14 rounded-full flex items-center justify-center text-xl font-bold mb-3", avatarColor(customer.full_name))}>
-                                            {getInitials(customer.full_name)}
+                        <div className="max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in duration-300 pb-2">
+                                {filteredCustomers.map((customer) => (
+                                    <div
+                                        key={customer.id}
+                                        className={cn(
+                                            "group relative bg-card border border-border rounded-xl p-5 hover:shadow-md transition-all",
+                                            selectedIds.has(customer.id) && "ring-2 ring-primary border-primary"
+                                        )}
+                                    >
+                                        {/* Checkbox */}
+                                        <div className="absolute top-3 left-3">
+                                            <Checkbox
+                                                checked={selectedIds.has(customer.id)}
+                                                onCheckedChange={() => toggleSelect(customer.id)}
+                                                aria-label={`Sélectionner ${customer.full_name}`}
+                                                className="opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity"
+                                            />
                                         </div>
-                                        <h3 className="font-semibold text-secondary text-sm leading-tight">{customer.full_name}</h3>
-                                        {customer.source && (
-                                            <Badge variant="secondary" className="mt-1.5 text-[10px]">
-                                                {SOURCE_ICONS[customer.source] || ""} {customer.source}
-                                            </Badge>
-                                        )}
-                                    </div>
+                                        {/* Actions */}
+                                        <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-secondary" onClick={() => handleOpenEdit(customer)}>
+                                                <Edit className="h-3.5 w-3.5" />
+                                            </Button>
+                                            <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeletingCustomer(customer)}>
+                                                <Trash className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
 
-                                    {/* Contact info */}
-                                    <div className="space-y-1.5 text-xs text-muted-foreground">
-                                        {customer.email && (
-                                            <div className="flex items-center gap-1.5 min-w-0">
-                                                <Mail className="h-3 w-3 shrink-0" />
-                                                <span className="truncate">{customer.email}</span>
+                                        {/* Avatar + Name */}
+                                        <div className="flex flex-col items-center text-center mb-4 pt-4">
+                                            <div className={cn("h-14 w-14 rounded-full flex items-center justify-center text-xl font-bold mb-3", avatarColor(customer.full_name))}>
+                                                {getInitials(customer.full_name)}
                                             </div>
-                                        )}
-                                        {customer.phone && (
-                                            <div className="flex items-center gap-1.5">
-                                                <Phone className="h-3 w-3 shrink-0" />
-                                                <span>{customer.phone}</span>
-                                            </div>
-                                        )}
-                                        {customer.notes && (
-                                            <p className="mt-2 text-[11px] line-clamp-2 italic text-muted-foreground/70 border-t border-border pt-2">
-                                                {customer.notes}
-                                            </p>
-                                        )}
+                                            <h3 className="font-semibold text-secondary text-sm leading-tight">{customer.full_name}</h3>
+                                            {customer.source && (
+                                                <Badge variant="secondary" className="mt-1.5 text-[10px]">
+                                                    {SOURCE_ICONS[customer.source] || ""} {customer.source}
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        {/* Contact info */}
+                                        <div className="space-y-1.5 text-xs text-muted-foreground">
+                                            {customer.email && (
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <Mail className="h-3 w-3 shrink-0" />
+                                                    <span className="truncate">{customer.email}</span>
+                                                </div>
+                                            )}
+                                            {customer.phone && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Phone className="h-3 w-3 shrink-0" />
+                                                    <span>{customer.phone}</span>
+                                                </div>
+                                            )}
+                                            {customer.notes && (
+                                                <p className="mt-2 text-[11px] line-clamp-2 italic text-muted-foreground/70 border-t border-border pt-2">
+                                                    {customer.notes}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     )}
                 </>
@@ -317,7 +395,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Confirmation */}
+            {/* Single Delete Confirmation */}
             <ConfirmDialog
                 open={!!deletingCustomer}
                 onOpenChange={(open) => { if (!open) setDeletingCustomer(null); }}
@@ -328,6 +406,21 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 variant="destructive"
                 onConfirm={handleDeleteConfirmed}
             />
+
+            {/* Bulk Delete Confirmation */}
+            <ConfirmDialog
+                open={isBulkDeleteOpen}
+                onOpenChange={setIsBulkDeleteOpen}
+                title={`Supprimer ${selectedIds.size} client(s) ?`}
+                description={`Ces ${selectedIds.size} clients seront définitivement supprimés. Cette action est irréversible.`}
+                confirmLabel={isBulkDeleting ? "Suppression..." : `Supprimer ${selectedIds.size} client(s)`}
+                cancelLabel="Annuler"
+                variant="destructive"
+                onConfirm={handleBulkDelete}
+            />
+
+            {/* Import Dialog */}
+            <ImportCustomersDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
         </div>
     );
 }

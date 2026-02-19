@@ -55,7 +55,7 @@ export default function OnboardingWizard() {
                 <div className="inline-flex items-center justify-center p-3 rounded-full bg-primary/10 text-primary mb-4 border border-primary/20">
                     <ChefHat className="h-8 w-8" />
                 </div>
-                <h1 className="text-3xl font-bold font-serif text-secondary">
+                <h1 className="text-3xl font-bold font-serif text-foreground">
                     {step === 1 && "Dites-nous tout, Chef."}
                     {step === 2 && "Quels services proposez-vous ?"}
                     {step === 3 && "Un aperçu de votre Menu ?"}
@@ -214,7 +214,7 @@ export default function OnboardingWizard() {
                         <div className="h-20 w-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Check className="h-10 w-10" />
                         </div>
-                        <h3 className="text-2xl font-bold font-serif text-secondary">Tout est prêt !</h3>
+                        <h3 className="text-2xl font-bold font-serif text-foreground">Tout est prêt !</h3>
                         <p className="text-muted-foreground max-w-md mx-auto">
                             Nous allons créer votre espace <strong>{formData.orgName}</strong> avec {formData.services.length} services et {formData.menuItems.length} plats au menu.
                         </p>

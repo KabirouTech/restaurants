@@ -37,13 +37,21 @@ export default async function NewOrderPage() {
         .order("full_name")
         .limit(100);
 
+    // 4. Fetch Currency from Settings
+    const { data: org } = await supabase
+        .from("organizations")
+        .select("settings")
+        .eq("id", orgId)
+        .single();
+    const currency = (org?.settings as any)?.currency || "EUR";
+
     return (
         <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-500 overflow-hidden">
             {/* Minimal Header */}
             <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-white shadow-sm shrink-0">
                 <div className="flex items-center gap-2">
                     <ChefHat className="h-5 w-5 text-primary" />
-                    <h1 className="text-xl font-bold font-serif text-secondary">Nouveau Devis</h1>
+                    <h1 className="text-xl font-bold font-serif text-foreground">Nouveau Devis</h1>
                 </div>
             </header>
 
@@ -54,6 +62,7 @@ export default async function NewOrderPage() {
                         products={products || []}
                         capacityTypes={capacityTypes || []}
                         customers={customers || []}
+                        currency={currency}
                     />
                 </Suspense>
             </main>

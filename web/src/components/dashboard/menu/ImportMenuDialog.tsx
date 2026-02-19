@@ -61,9 +61,9 @@ export function ImportMenuDialog() {
                     setMessage(result.error);
                 } else {
                     setStatus("success");
-                    setMessage(`${result.count} plats importés avec succès !`);
+                    setMessage(result.message ?? `${result.count} plats importés avec succès !`);
                     // Delay close slightly
-                    setTimeout(() => setOpen(false), 2000);
+                    setTimeout(() => setOpen(false), 2500);
                 }
             } catch (err: any) {
                 setStatus("error");

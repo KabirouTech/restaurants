@@ -17,11 +17,22 @@ import { DEFAULT_SECTIONS, DEFAULT_SERVICES, DEFAULT_TESTIMONIALS } from "@/lib/
 import type { StorefrontSection, ServiceItem, Testimonial } from "@/lib/storefront-types";
 import { ImageUpload } from "@/components/ImageUpload";
 import { cn } from "@/lib/utils";
+import { Hero } from "@/components/storefront/Hero";
+import { MenuSection } from "@/components/storefront/MenuSection";
+import { AboutSection } from "@/components/storefront/AboutSection";
+import { ServicesSection } from "@/components/storefront/ServicesSection";
+import { GallerySection } from "@/components/storefront/GallerySection";
+import { TestimonialsSection } from "@/components/storefront/TestimonialsSection";
+import { ContactSection } from "@/components/storefront/ContactSection";
+import { CartProvider } from "@/context/CartContext";
+import { Smartphone } from "lucide-react";
 
 interface SiteSettingsProps {
     org: any;
     settings: any;
+    products: any[];
 }
+
 
 const SECTION_ICONS: Record<string, any> = {
     menu: BookOpen, about: LayoutList, services: CalendarDays,
@@ -226,7 +237,9 @@ function Block({ title, icon: Icon, children }: { title: string; icon: any; chil
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-export function SiteSettings({ org, settings }: SiteSettingsProps) {
+// ── Main ──────────────────────────────────────────────────────────────────────
+
+export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
     const [loading, startTransition] = useTransition();
     const router = useRouter();
 
@@ -234,6 +247,12 @@ export function SiteSettings({ org, settings }: SiteSettingsProps) {
     const [sections, setSections] = useState<StorefrontSection[]>(
         settings?.sections || DEFAULT_SECTIONS
     );
+
+    // Hero
+    const [heroTitle, setHeroTitle] = useState(settings?.hero_title || "Goûtez l'Essence de l'Épice Dorée");
+    const [heroSubtitle, setHeroSubtitle] = useState(settings?.hero_subtitle || "Plat Signature");
+    const [heroDescription, setHeroDescription] = useState(settings?.description || "Des saveurs authentiques créées avec passion.");
+    const [heroImage, setHeroImage] = useState(settings?.hero_image || "");
 
     // About
     const [aboutTitle, setAboutTitle] = useState(settings?.about_title || "");
@@ -267,11 +286,38 @@ export function SiteSettings({ org, settings }: SiteSettingsProps) {
     const [contactTitle, setContactTitle] = useState(settings?.contact_title || "");
     const [contactSubtitle, setContactSubtitle] = useState(settings?.contact_subtitle || "");
 
+    // ── Preview derivation ──
+    const previewSettings = {
+        ...settings,
+        sections,
+        hero_title: heroTitle, hero_subtitle: heroSubtitle, description: heroDescription, hero_image: heroImage,
+        about_title: aboutTitle, about_subtitle: aboutSubtitle, about_text1: aboutText1, about_text2: aboutText2, about_image: aboutImage,
+        stat1_value: stat1Value, stat1_label: stat1Label, stat2_value: stat2Value, stat2_label: stat2Label, stat3_value: stat3Value, stat3_label: stat3Label,
+        services_title: servicesTitle, services_subtitle: servicesSubtitle, services,
+        gallery_title: galleryTitle, gallery_subtitle: gallerySubtitle, gallery_images: galleryImages,
+        testimonials_title: testimonialsTitle, testimonials_subtitle: testimonialsSubtitle, testimonials,
+        contact_title: contactTitle, contact_subtitle: contactSubtitle,
+        org_id: org.id // Ensure ContactSection gets org_id
+    };
+
+    const PreviewComponent = ({ section }: { section: StorefrontSection }) => {
+        switch (section.id) {
+            case 'menu': return <MenuSection products={products} currency={previewSettings.currency || "EUR"} />;
+            case 'about': return <AboutSection settings={previewSettings} />;
+            case 'services': return <ServicesSection settings={previewSettings} />;
+            case 'gallery': return <GallerySection settings={previewSettings} />;
+            case 'testimonials': return <TestimonialsSection settings={previewSettings} />;
+            case 'contact': return <ContactSection settings={previewSettings} />;
+            default: return null;
+        }
+    };
+
     const handleSubmit = () => {
         startTransition(async () => {
             const payload = {
                 orgId: org.id,
                 sections,
+                heroTitle, heroSubtitle, description: heroDescription, heroImage,
                 aboutTitle, aboutSubtitle, aboutText1, aboutText2, aboutImage,
                 stat1Value, stat1Label, stat2Value, stat2Label, stat3Value, stat3Label,
                 servicesTitle, servicesSubtitle, services,
@@ -286,135 +332,252 @@ export function SiteSettings({ org, settings }: SiteSettingsProps) {
     };
 
     return (
-        <div className="space-y-5">
-            {/* Sections manager */}
-            <Card>
-                <CardContent className="pt-6 space-y-4">
-                    <div className="flex items-center gap-3 pb-3 border-b border-border mb-4">
-                        <div className="p-2 bg-primary/10 rounded-lg"><LayoutList className="h-4 w-4 text-primary" /></div>
-                        <div>
-                            <p className="font-semibold text-sm">Sections du site</p>
-                            <p className="text-xs text-muted-foreground">Activez ou désactivez les sections de votre vitrine.</p>
-                        </div>
-                    </div>
-                    <SectionsManager sections={sections} onChange={setSections} />
-                </CardContent>
-            </Card>
-
-            {/* About */}
-            <Block title="Notre Histoire — Contenu" icon={LayoutList}>
-                <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Titre</Label>
-                            <Input value={aboutTitle} onChange={e => setAboutTitle(e.target.value)} placeholder="Notre Histoire" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Accroche</Label>
-                            <Input value={aboutSubtitle} onChange={e => setAboutSubtitle(e.target.value)} placeholder="Depuis 2015..." />
-                        </div>
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Photo</Label>
-                        <ImageUpload name="aboutImage" defaultValue={aboutImage}
-                            folder={`organizations/${org.id}/about`} onUpload={setAboutImage} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Paragraphe 1</Label>
-                        <Textarea value={aboutText1} onChange={e => setAboutText1(e.target.value)} rows={3} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Paragraphe 2</Label>
-                        <Textarea value={aboutText2} onChange={e => setAboutText2(e.target.value)} rows={3} />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                        {[
-                            [stat1Value, setStat1Value, stat1Label, setStat1Label],
-                            [stat2Value, setStat2Value, stat2Label, setStat2Label],
-                            [stat3Value, setStat3Value, stat3Label, setStat3Label],
-                        ].map(([val, setVal, lbl, setLbl], i) => (
-                            <div key={i} className="space-y-1.5">
-                                <Label className="text-xs">Stat {i + 1}</Label>
-                                <Input value={val as string} onChange={e => (setVal as any)(e.target.value)} placeholder="500+" className="h-8 text-center text-sm font-bold" />
-                                <Input value={lbl as string} onChange={e => (setLbl as any)(e.target.value)} placeholder="Événements" className="h-7 text-xs" />
+        <div className="flex flex-col xl:flex-row gap-8 items-start relative pb-12">
+            {/* ── Left: Editors ── */}
+            <div className="w-full xl:w-1/2 space-y-5">
+                {/* Sections manager */}
+                <Card>
+                    <CardContent className="pt-6 space-y-4">
+                        <div className="flex items-center gap-3 pb-3 border-b border-border mb-4">
+                            <div className="p-2 bg-primary/10 rounded-lg"><LayoutList className="h-4 w-4 text-primary" /></div>
+                            <div>
+                                <p className="font-semibold text-sm">Sections du site</p>
+                                <p className="text-xs text-muted-foreground">Activez ou désactivez les sections de votre vitrine.</p>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </Block>
+                        </div>
+                        <SectionsManager sections={sections} onChange={setSections} />
+                    </CardContent>
+                </Card>
 
-            {/* Services */}
-            <Block title="Événements & Prestations" icon={CalendarDays}>
-                <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                {/* Hero */}
+                <Block title="Haut de page (Hero)" icon={ImageIcon}>
+                    <div className="space-y-3">
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Titre de section</Label>
-                            <Input value={servicesTitle} onChange={e => setServicesTitle(e.target.value)} placeholder="Nos Prestations" />
+                            <Label className="text-xs">Image de fond</Label>
+                            <ImageUpload name="heroImage" defaultValue={heroImage}
+                                folder={`organizations/${org.id}/hero`} onUpload={setHeroImage} />
+                            <p className="text-[10px] text-muted-foreground">Format recommandé: Paysage, haute définition.</p>
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Sous-titre</Label>
-                            <Input value={servicesSubtitle} onChange={e => setServicesSubtitle(e.target.value)} placeholder="Sur mesure pour chaque occasion" />
+                            <Label className="text-xs">Badge / Surtitre</Label>
+                            <Input value={heroSubtitle} onChange={e => setHeroSubtitle(e.target.value)} placeholder="Plat Signature" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Grand Titre</Label>
+                            <Input value={heroTitle} onChange={e => setHeroTitle(e.target.value)} placeholder="Goûtez l'Essence..." />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Description</Label>
+                            <Textarea value={heroDescription} onChange={e => setHeroDescription(e.target.value)} rows={2} placeholder="Des saveurs authentiques..." />
                         </div>
                     </div>
-                    <ServicesEditor services={services} onChange={setServices} />
-                </div>
-            </Block>
+                </Block>
 
-            {/* Gallery */}
-            <Block title="Galerie Photos" icon={ImageIcon}>
-                <div className="space-y-3">
+                {/* About */}
+                <Block title="Notre Histoire — Contenu" icon={LayoutList}>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Titre</Label>
+                                <Input value={aboutTitle} onChange={e => setAboutTitle(e.target.value)} placeholder="Notre Histoire" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Accroche</Label>
+                                <Input value={aboutSubtitle} onChange={e => setAboutSubtitle(e.target.value)} placeholder="Depuis 2015..." />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Photo</Label>
+                            <ImageUpload name="aboutImage" defaultValue={aboutImage}
+                                folder={`organizations/${org.id}/about`} onUpload={setAboutImage} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Paragraphe 1</Label>
+                            <Textarea value={aboutText1} onChange={e => setAboutText1(e.target.value)} rows={3} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Paragraphe 2</Label>
+                            <Textarea value={aboutText2} onChange={e => setAboutText2(e.target.value)} rows={3} />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {[
+                                [stat1Value, setStat1Value, stat1Label, setStat1Label],
+                                [stat2Value, setStat2Value, stat2Label, setStat2Label],
+                                [stat3Value, setStat3Value, stat3Label, setStat3Label],
+                            ].map(([val, setVal, lbl, setLbl], i) => (
+                                <div key={i} className="space-y-1.5">
+                                    <Label className="text-xs">Stat {i + 1}</Label>
+                                    <Input value={val as string} onChange={e => (setVal as any)(e.target.value)} placeholder="500+" className="h-8 text-center text-sm font-bold" />
+                                    <Input value={lbl as string} onChange={e => (setLbl as any)(e.target.value)} placeholder="Événements" className="h-7 text-xs" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </Block>
+
+                {/* Services */}
+                <Block title="Événements & Prestations" icon={CalendarDays}>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Titre de section</Label>
+                                <Input value={servicesTitle} onChange={e => setServicesTitle(e.target.value)} placeholder="Nos Prestations" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Sous-titre</Label>
+                                <Input value={servicesSubtitle} onChange={e => setServicesSubtitle(e.target.value)} placeholder="Sur mesure pour chaque occasion" />
+                            </div>
+                        </div>
+                        <ServicesEditor services={services} onChange={setServices} />
+                    </div>
+                </Block>
+
+                {/* Gallery */}
+                <Block title="Galerie Photos" icon={ImageIcon}>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Titre</Label>
+                                <Input value={galleryTitle} onChange={e => setGalleryTitle(e.target.value)} placeholder="Notre Galerie" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Sous-titre</Label>
+                                <Input value={gallerySubtitle} onChange={e => setGallerySubtitle(e.target.value)} placeholder="Des réalisations..." />
+                            </div>
+                        </div>
+                        <GalleryEditor orgId={org.id} images={galleryImages} onChange={setGalleryImages} />
+                    </div>
+                </Block>
+
+                {/* Testimonials */}
+                <Block title="Témoignages Clients" icon={Star}>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Titre</Label>
+                                <Input value={testimonialsTitle} onChange={e => setTestimonialsTitle(e.target.value)} placeholder="Ce que disent nos clients" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Sous-titre</Label>
+                                <Input value={testimonialsSubtitle} onChange={e => setTestimonialsSubtitle(e.target.value)} placeholder="Des centaines d'événements..." />
+                            </div>
+                        </div>
+                        <TestimonialsEditor testimonials={testimonials} onChange={setTestimonials} />
+                    </div>
+                </Block>
+
+                {/* Contact section headings */}
+                <Block title="Section Contact — Texte" icon={MessageCircle}>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <Label className="text-xs">Titre</Label>
-                            <Input value={galleryTitle} onChange={e => setGalleryTitle(e.target.value)} placeholder="Notre Galerie" />
+                            <Input value={contactTitle} onChange={e => setContactTitle(e.target.value)} placeholder="Faisons Connaissance" />
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-xs">Sous-titre</Label>
-                            <Input value={gallerySubtitle} onChange={e => setGallerySubtitle(e.target.value)} placeholder="Des réalisations..." />
+                            <Input value={contactSubtitle} onChange={e => setContactSubtitle(e.target.value)} placeholder="Parlons de votre prochain événement." />
                         </div>
                     </div>
-                    <GalleryEditor orgId={org.id} images={galleryImages} onChange={setGalleryImages} />
-                </div>
-            </Block>
+                    <p className="text-xs text-muted-foreground">Les coordonnées (téléphone, email, adresse) se gèrent dans l'onglet <strong>Général</strong>.</p>
+                </Block>
 
-            {/* Testimonials */}
-            <Block title="Témoignages Clients" icon={Star}>
-                <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Titre</Label>
-                            <Input value={testimonialsTitle} onChange={e => setTestimonialsTitle(e.target.value)} placeholder="Ce que disent nos clients" />
+                {/* Save */}
+                <div className="flex justify-end sticky bottom-6 bg-background/80 backdrop-blur-sm p-4 border-t border-border rounded-xl shadow-lg z-10">
+                    <Button onClick={handleSubmit} disabled={loading} className="gap-2 rounded-full px-8">
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Enregistrer le site
+                    </Button>
+                </div>
+            </div>
+
+            {/* ── Right: Live Preview ── */}
+            <div className="hidden xl:flex w-full xl:w-1/2 sticky top-6 h-[calc(100vh-theme(spacing.12))] items-center justify-center">
+                <div className="relative w-full max-w-[1000px] perspective-[2000px]">
+                    {/* Monitor Stand */}
+                    <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 w-32 h-20 bg-gradient-to-b from-zinc-700 to-zinc-800 rounded-lg shadow-xl z-0 transform -translate-y-4"></div>
+                    <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-48 h-4 bg-zinc-900 rounded-full shadow-2xl z-0"></div>
+
+                    {/* Monitor Bezel */}
+                    <div className="relative bg-zinc-900 p-3 rounded-2xl shadow-2xl border border-zinc-700 z-10">
+                        {/* Screen Area (16:10 Aspect Ratio) */}
+                        <div className="relative aspect-[16/10] w-full bg-white rounded-md overflow-hidden ring-1 ring-white/10 group">
+
+                            {/* Browser Header / OS Bar */}
+                            <div className="h-6 bg-zinc-100 border-b flex items-center px-3 gap-2 sticky top-0 z-50">
+                                <div className="flex gap-1.5 opacity-60">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                                </div>
+                                <div className="flex-1 text-[10px] text-center font-mono text-zinc-400 select-none">
+                                    restaurants.os/{org.slug}
+                                </div>
+                            </div>
+
+                            {/* Scaled Content Container */}
+                            <div className="w-full h-[calc(100%-24px)] overflow-hidden bg-white">
+                                <div className="w-[200%] h-[200%] origin-top-left transform scale-[0.5] overflow-y-auto no-scrollbar">
+                                    <CartProvider>
+                                        <div className="min-h-full bg-background font-sans text-foreground pb-20">
+                                            {/* Scaling Wrapper for Font Sizing if needed, or just let it be natural desktop size */}
+
+                                            {/* Navbar Desktop */}
+                                            <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50 h-16 flex items-center justify-between px-12">
+                                                <span className="font-bold text-xl">{org.name}</span>
+                                                <div className="flex gap-6 items-center">
+                                                    <span className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors">Accueil</span>
+                                                    <span className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors">Notre Menu</span>
+                                                    <span className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors">Le Chef</span>
+                                                    <Button size="sm" className="rounded-full px-6">Réserver</Button>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-12 pb-0 max-w-7xl mx-auto">
+                                                {/* Hero */}
+                                                <Hero orgName={org.name} settings={previewSettings} />
+                                            </div>
+
+                                            <div className="space-y-0 divide-y divide-border/30 px-12 pb-20 max-w-7xl mx-auto">
+                                                {sections.filter(s => s.enabled).map(sec => (
+                                                    <div key={sec.id} className="py-0">
+                                                        <PreviewComponent section={sec} />
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Footer Mockup */}
+                                            <div className="bg-zinc-950 text-white py-12 px-12 mt-12">
+                                                <div className="grid grid-cols-4 gap-8 max-w-7xl mx-auto">
+                                                    <div className="space-y-4">
+                                                        <h3 className="font-bold text-lg">{org.name}</h3>
+                                                        <p className="text-sm text-zinc-400">L'excellence gastronomique à portée de clic.</p>
+                                                    </div>
+                                                    <div className="space-y-4 col-span-2">
+                                                        <h4 className="font-semibold text-sm uppercase tracking-wider text-zinc-500">Liens</h4>
+                                                        <div className="grid grid-cols-2 gap-2 text-sm text-zinc-300">
+                                                            <span>Mentions légales</span>
+                                                            <span>CGV</span>
+                                                            <span>Confidentialité</span>
+                                                            <span>Contact</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CartProvider>
+                                </div>
+                            </div>
+
+                            {/* Reflection/Glass Effect overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none rounded-md" />
                         </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Sous-titre</Label>
-                            <Input value={testimonialsSubtitle} onChange={e => setTestimonialsSubtitle(e.target.value)} placeholder="Des centaines d'événements..." />
+
+                        {/* Monitor Bottom Bezel Logo */}
+                        <div className="h-6 flex items-center justify-center">
+                            <div className="w-1 h-1 rounded-full bg-zinc-800 animate-pulse"></div>
                         </div>
                     </div>
-                    <TestimonialsEditor testimonials={testimonials} onChange={setTestimonials} />
                 </div>
-            </Block>
-
-            {/* Contact section headings */}
-            <Block title="Section Contact — Texte" icon={MessageCircle}>
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Titre</Label>
-                        <Input value={contactTitle} onChange={e => setContactTitle(e.target.value)} placeholder="Faisons Connaissance" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Sous-titre</Label>
-                        <Input value={contactSubtitle} onChange={e => setContactSubtitle(e.target.value)} placeholder="Parlons de votre prochain événement." />
-                    </div>
-                </div>
-                <p className="text-xs text-muted-foreground">Les coordonnées (téléphone, email, adresse) se gèrent dans l'onglet <strong>Général</strong>.</p>
-            </Block>
-
-            {/* Save */}
-            <div className="flex justify-end sticky bottom-6 bg-background/80 backdrop-blur-sm p-4 border-t border-border rounded-xl shadow-lg">
-                <Button onClick={handleSubmit} disabled={loading} className="gap-2 rounded-full px-8">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    Enregistrer le site
-                </Button>
             </div>
         </div>
     );

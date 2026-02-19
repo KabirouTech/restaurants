@@ -7,6 +7,10 @@ import { createClient } from "@/utils/supabase/server";
 interface SiteSettingsPayload {
     orgId: string;
     sections: any[];
+    heroTitle?: string;
+    heroSubtitle?: string;
+    description?: string;
+    heroImage?: string;
     aboutTitle: string;
     aboutSubtitle: string;
     aboutText1: string;
@@ -52,6 +56,10 @@ export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
         const newSettings: Record<string, any> = {
             ...current,
             sections: payload.sections,
+            hero_title: payload.heroTitle || null,
+            hero_subtitle: payload.heroSubtitle || null,
+            description: payload.description || null,
+            hero_image: payload.heroImage || null,
             about_title: payload.aboutTitle || null,
             about_subtitle: payload.aboutSubtitle || null,
             about_text1: payload.aboutText1 || null,

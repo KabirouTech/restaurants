@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
+import { formatPrice } from "@/lib/currencies";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -23,7 +24,7 @@ import { createClient } from "@/utils/supabase/client";
 
 import { submitOrder } from "@/actions/order";
 
-export function CartDrawer({ orgId }: { orgId: string }) {
+export function CartDrawer({ orgId, currency }: { orgId: string, currency: string }) {
     const { items, removeItem, updateQuantity, totalCents, itemCount, isOpen, setIsOpen, clearCart } = useCart();
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -97,7 +98,7 @@ export function CartDrawer({ orgId }: { orgId: string }) {
                                                 <div>
                                                     <h4 className="font-medium text-sm line-clamp-1">{item.name}</h4>
                                                     <p className="text-sm font-semibold text-primary">
-                                                        {(item.priceCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                                                        {formatPrice(item.priceCents, currency)}
                                                     </p>
                                                 </div>
 
@@ -136,11 +137,11 @@ export function CartDrawer({ orgId }: { orgId: string }) {
                                 <div className="space-y-1.5 text-sm">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Sous-total</span>
-                                        <span>{(totalCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>
+                                        <span>{formatPrice(totalCents, currency)}</span>
                                     </div>
                                     <div className="flex justify-between font-bold text-lg pt-2 border-t border-border/50">
                                         <span>Total (Estimé)</span>
-                                        <span className="text-primary">{(totalCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>
+                                        <span className="text-primary">{formatPrice(totalCents, currency)}</span>
                                     </div>
                                 </div>
                                 <Button className="w-full gap-2 text-lg" size="lg" onClick={() => setIsCheckoutOpen(true)}>

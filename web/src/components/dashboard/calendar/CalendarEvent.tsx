@@ -97,7 +97,7 @@ export function CalendarEvent({ order, index }: CalendarEventProps) {
                                     className="inline-block w-3 h-3 rounded-full shrink-0 mt-[3px]"
                                     style={{ backgroundColor: color }}
                                 />
-                                <span className="text-secondary font-serif font-bold text-lg leading-tight">
+                                <span className="text-foreground font-serif font-bold text-lg leading-tight">
                                     {order.customers?.full_name || "Client Inconnu"}
                                 </span>
                             </div>
@@ -119,7 +119,7 @@ export function CalendarEvent({ order, index }: CalendarEventProps) {
                             style={{ color }}
                         />
                         <div>
-                            <p className="font-medium text-sm text-secondary capitalize">
+                            <p className="font-medium text-sm text-foreground capitalize">
                                 {order.event_date
                                     ? format(parseISO(order.event_date), "EEEE d MMMM yyyy", { locale: fr })
                                     : "Date non définie"}
@@ -137,7 +137,7 @@ export function CalendarEvent({ order, index }: CalendarEventProps) {
                             style={{ color }}
                         />
                         <div>
-                            <p className="font-medium text-sm text-secondary">
+                            <p className="font-medium text-sm text-foreground">
                                 {order.customers?.full_name || "Client Inconnu"}
                             </p>
                             <p className="text-xs text-muted-foreground">Client</p>
@@ -150,7 +150,7 @@ export function CalendarEvent({ order, index }: CalendarEventProps) {
                             style={{ color }}
                         />
                         <div>
-                            <p className="font-medium text-sm text-secondary">
+                            <p className="font-medium text-sm text-foreground">
                                 {order.capacity_types?.name || "Type non défini"}
                             </p>
                             <p className="text-xs text-muted-foreground">

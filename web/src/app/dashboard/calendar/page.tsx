@@ -96,7 +96,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border bg-white shadow-sm shrink-0 z-10">
                     <div>
-                        <h1 className="text-2xl font-bold font-serif text-secondary capitalize flex items-center gap-2">
+                        <h1 className="text-2xl font-bold font-serif text-foreground capitalize flex items-center gap-2">
                             {format(viewDate, "MMMM yyyy", { locale: fr })}
                             <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                                 {orders?.length || 0} événements

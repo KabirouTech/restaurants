@@ -56,7 +56,7 @@ export function NewOrderDialog({ organizationId, services }: NewOrderDialogProps
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-serif text-secondary">Ajouter une Commande</DialogTitle>
+                    <DialogTitle className="text-xl font-serif text-foreground">Ajouter une Commande</DialogTitle>
                     <DialogDescription>
                         Saisissez les détails de l'événement pour vérifier la disponibilité.
                     </DialogDescription>

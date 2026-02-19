@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OrderActions } from "@/components/dashboard/orders/OrderActions";
+import { formatPrice } from "@/lib/currencies";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -58,9 +59,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     const capacityType = Array.isArray(order.capacity_types) ? order.capacity_types[0] : order.capacity_types;
     // order_items is definitely array (one to many) - wait, select returns array for One-to-Many by default
 
-    const subtotal = (order.total_amount_cents || 0) / 100;
-    const tax = 0; // Assuming tax included or 0 for now
-    const total = subtotal + tax;
+    const currency = (org?.settings as any)?.currency || "EUR";
+    const subtotal = order.total_amount_cents || 0;
+    const total = subtotal; // Tax is 0 for now
 
     const orgName = org?.name || "Votre Entreprise";
     const orgAddress = org?.settings?.contact_address;
@@ -76,7 +77,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     <Link href="/dashboard/orders" className="text-sm text-muted-foreground hover:text-foreground mb-1 block">
                         &larr; Retour aux commandes
                     </Link>
-                    <h1 className="text-2xl font-bold font-serif text-secondary">Détail de la Commande</h1>
+                    <h1 className="text-2xl font-bold font-serif text-foreground">Détail de la Commande</h1>
                 </div>
 
                 {/* Client Component for Actions */}
@@ -153,13 +154,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                                             <div className="text-xs text-muted-foreground mt-0.5 print:text-gray-600">{item.products?.category}</div>
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-muted-foreground align-top pt-4 print:text-black">
-                                            {(item.unit_price_cents / 100).toFixed(2)} €
+                                            {formatPrice(item.unit_price_cents, currency)}
                                         </TableCell>
                                         <TableCell className="text-center font-mono align-top pt-4 print:text-black">
                                             {item.quantity}
                                         </TableCell>
                                         <TableCell className="text-right font-mono font-medium align-top pt-4 pr-0 text-foreground print:text-black">
-                                            {((item.unit_price_cents * item.quantity) / 100).toFixed(2)} €
+                                            {formatPrice(item.unit_price_cents * item.quantity, currency)}
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -179,11 +180,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     <div className="w-64 space-y-3">
                         <div className="flex justify-between text-sm text-muted-foreground print:text-black">
                             <span>Sous-total HT</span>
-                            <span className="font-mono text-foreground print:text-black">{(subtotal).toFixed(2)} €</span>
+                            <span className="font-mono text-foreground print:text-black">{formatPrice(subtotal, currency)}</span>
                         </div>
                         <div className="flex justify-between text-xl font-bold text-secondary border-t-2 border-primary pt-3 mt-2 items-baseline print:text-black print:border-black">
                             <span>Total TTC</span>
-                            <span className="font-mono text-primary text-2xl print:text-black">{(total).toFixed(2)} €</span>
+                            <span className="font-mono text-primary text-2xl print:text-black">{formatPrice(total, currency)}</span>
                         </div>
                     </div>
                 </div>

@@ -99,6 +99,7 @@ export default async function StorefrontPage({ params }: Props) {
     const products = await getProducts(org.id);
     const s = (org.settings || {}) as Record<string, any>;
     const primaryHsl = s.primary_color ? hexToHsl(s.primary_color) : null;
+    const currency = s.currency || "EUR";
 
     // Resolve sections: merge saved config with defaults so new defaults appear
     const savedSections: StorefrontSection[] = s.sections || [];
@@ -131,7 +132,7 @@ export default async function StorefrontPage({ params }: Props) {
                 <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-0 divide-y divide-border/30">
                     {/* Menu is always present */}
                     <div className="py-0">
-                        <MenuSection products={products} />
+                        <MenuSection products={products} currency={currency} />
                     </div>
 
                     {/* Remaining enabled sections */}
@@ -151,7 +152,7 @@ export default async function StorefrontPage({ params }: Props) {
                 </main>
 
                 <StorefrontFooter orgName={org.name} settings={org.settings} />
-                <CartDrawer orgId={org.id} />
+                <CartDrawer orgId={org.id} currency={currency} />
                 <CartFloatingButton />
             </div>
         </CartProvider>

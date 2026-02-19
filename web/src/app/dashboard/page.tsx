@@ -93,7 +93,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
         <div>
-          <h1 className="text-3xl font-bold font-serif text-secondary">Tableau de bord</h1>
+          <h1 className="text-3xl font-bold font-serif text-foreground">Tableau de bord</h1>
           <p className="text-sm text-muted-foreground font-light">Bonjour, voici le programme culinaire du jour.</p>
         </div>
         <div className="flex items-center gap-4">
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Revenu Mensuel</p>
-              <h3 className="text-2xl font-bold text-secondary font-serif">{(totalRevenue / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</h3>
+              <h3 className="text-2xl font-bold text-foreground font-serif">{(totalRevenue / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</h3>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Devis en Attente</p>
-              <h3 className="text-2xl font-bold text-secondary font-serif">{pendingQuotesCount}</h3>
+              <h3 className="text-2xl font-bold text-foreground font-serif">{pendingQuotesCount}</h3>
             </div>
           </div>
 
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Livraisons du Jour</p>
-              <h3 className="text-2xl font-bold text-secondary font-serif">{deliveryCount}</h3>
+              <h3 className="text-2xl font-bold text-foreground font-serif">{deliveryCount}</h3>
             </div>
           </div>
 
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Note Moyenne</p>
-              <h3 className="text-2xl font-bold text-secondary font-serif">{averageRating}</h3>
+              <h3 className="text-2xl font-bold text-foreground font-serif">{averageRating}</h3>
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ export default async function DashboardPage() {
             {/* Capacity Overview */}
             <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
               <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                <h2 className="text-lg font-bold text-secondary flex items-center gap-2 font-serif">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
                   <BarChart className="text-primary h-5 w-5" />
                   Aperçu de la Capacité
                 </h2>
@@ -187,7 +187,7 @@ export default async function DashboardPage() {
                 <div className="space-y-5">
                   {capacityDays.map((day, i) => (
                     <div key={i} className="grid grid-cols-12 gap-4 items-center group">
-                      <div className="col-span-2 text-sm font-medium text-muted-foreground group-hover:text-secondary transition-colors capitalize">
+                      <div className="col-span-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors capitalize">
                         {day.dayName}
                       </div>
                       <div className="col-span-9 relative h-3 bg-muted rounded-full overflow-hidden">
@@ -208,7 +208,7 @@ export default async function DashboardPage() {
             {/* Recent Orders Table */}
             <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
               <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                <h2 className="text-lg font-bold text-secondary flex items-center gap-2 font-serif">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
                   <Receipt className="text-primary h-5 w-5" />
                   Commandes à venir
                 </h2>
@@ -220,11 +220,11 @@ export default async function DashboardPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="text-xs text-muted-foreground border-b border-border bg-muted/50">
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-secondary">Client</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-secondary">Événement</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-secondary">Date & Heure</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-secondary">Couverts</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-secondary">Statut</th>
+                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Client</th>
+                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Événement</th>
+                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Date & Heure</th>
+                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Couverts</th>
+                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Statut</th>
                       <th className="px-6 py-4"></th>
                     </tr>
                   </thead>
@@ -247,7 +247,7 @@ export default async function DashboardPage() {
                                 <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs">
                                   {initials}
                                 </div>
-                                <span className="font-bold text-secondary font-serif">{order.customers?.full_name || "Client Inconnu"}</span>
+                                <span className="font-bold text-foreground font-serif">{order.customers?.full_name || "Client Inconnu"}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4 text-muted-foreground">{order.internal_notes || "Commande"}</td>
@@ -286,7 +286,7 @@ export default async function DashboardPage() {
             {/* Messages Widget */}
             <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col h-[500px]">
               <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                <h2 className="text-lg font-bold text-secondary flex items-center gap-2 font-serif">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
                   <MessageSquare className="text-primary h-5 w-5" />
                   Messages récents
                 </h2>
@@ -300,11 +300,11 @@ export default async function DashboardPage() {
                       <div className="w-7 h-7 rounded-full bg-[#25D366]/10 flex items-center justify-center">
                         <MessageSquare className="text-[#25D366] h-3 w-3" />
                       </div>
-                      <span className="text-sm font-bold text-secondary font-serif">Sarah Jenkins</span>
+                      <span className="text-sm font-bold text-foreground font-serif">Sarah Jenkins</span>
                     </div>
                     <span className="text-[10px] text-muted-foreground font-medium">il y a 2m</span>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 pl-9 group-hover:text-secondary transition-colors">Bonjour ! Je voulais savoir si vous avez de la disponibilité pour une baby shower le 24 ?</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 pl-9 group-hover:text-foreground transition-colors">Bonjour ! Je voulais savoir si vous avez de la disponibilité pour une baby shower le 24 ?</p>
                 </div>
 
                 {/* Message 2 */}
@@ -317,11 +317,11 @@ export default async function DashboardPage() {
                           <Camera className="text-black h-3 w-3" />
                         </div>
                       </div>
-                      <span className="text-sm font-bold text-secondary font-serif">@foodie_mike</span>
+                      <span className="text-sm font-bold text-foreground font-serif">@foodie_mike</span>
                     </div>
                     <span className="text-[10px] text-muted-foreground font-medium">il y a 1h</span>
                   </div>
-                  <p className="text-xs text-secondary font-medium line-clamp-2 pl-9">Votre dernier post a l'air incroyable ! Faites-vous des services traiteur pour de petits dîners privés ?</p>
+                  <p className="text-xs text-foreground font-medium line-clamp-2 pl-9">Votre dernier post a l'air incroyable ! Faites-vous des services traiteur pour de petits dîners privés ?</p>
                 </div>
 
                 {/* Message 3 */}
@@ -331,11 +331,11 @@ export default async function DashboardPage() {
                       <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
                         <Mail className="text-blue-500 h-3 w-3" />
                       </div>
-                      <span className="text-sm font-bold text-secondary font-serif">Équipe Événementielle</span>
+                      <span className="text-sm font-bold text-foreground font-serif">Équipe Événementielle</span>
                     </div>
                     <span className="text-[10px] text-muted-foreground font-medium">il y a 3h</span>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 pl-9 group-hover:text-secondary transition-colors">RE: Devis #4092 - Nous souhaitons procéder avec l'Option B mais devons changer le nombre de végétariens.</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 pl-9 group-hover:text-foreground transition-colors">RE: Devis #4092 - Nous souhaitons procéder avec l'Option B mais devons changer le nombre de végétariens.</p>
                 </div>
               </div>
               <div className="p-4 border-t border-border bg-gray-50/50">

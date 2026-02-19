@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 
 interface ContactFormPayload {
     orgId: string;
@@ -125,6 +126,7 @@ export async function submitContactFormAction(payload: ContactFormPayload) {
             return { error: "Message non enregistré: " + msgError.message };
         }
 
+        revalidatePath("/dashboard/inbox");
         return { success: true, conversationId: conversation.id };
     } catch (e: any) {
         return { error: e.message || "Erreur inattendue" };

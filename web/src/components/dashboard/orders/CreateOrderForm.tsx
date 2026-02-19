@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ProductSelector } from "./ProductSelector";
+import { formatPrice } from "@/lib/currencies";
 
 // Types
 type Product = {
@@ -45,11 +46,12 @@ interface CreateOrderFormProps {
     products: Product[];
     capacityTypes: CapacityType[];
     customers: Customer[];
+    currency?: string;
 }
 
 
 
-export function CreateOrderForm({ products, capacityTypes, customers }: CreateOrderFormProps) {
+export function CreateOrderForm({ products, capacityTypes, customers, currency = "EUR" }: CreateOrderFormProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
@@ -163,7 +165,7 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
 
                 {/* 1. Client & Details */}
                 <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-4">
-                    <h3 className="font-serif text-lg font-bold text-secondary border-b pb-2 mb-4">Informations Client & Événement</h3>
+                    <h3 className="font-serif text-lg font-bold text-foreground border-b pb-2 mb-4">Informations Client & Événement</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Client Select */}
@@ -254,7 +256,7 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
 
                 {/* 2. Cart Summary */}
                 <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex-1 flex flex-col">
-                    <h3 className="font-serif text-lg font-bold text-secondary border-b pb-2 mb-4 flex justify-between items-center">
+                    <h3 className="font-serif text-lg font-bold text-foreground border-b pb-2 mb-4 flex justify-between items-center">
                         <span>Détail de la commande</span>
                         <span className="text-sm font-sans font-medium text-muted-foreground">{cart.length} articles</span>
                     </h3>
@@ -283,7 +285,7 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
                                         <button onClick={() => handleUpdateQuantity(item.product.id, 1)} className="hover:bg-muted rounded px-1">+</button>
                                     </div>
                                     <div className="col-span-3 text-right font-mono">
-                                        {((item.product.price_cents * item.quantity) / 100).toFixed(2)}€
+                                        {formatPrice(item.product.price_cents * item.quantity, currency)}
                                     </div>
                                     <div className="col-span-1 flex justify-end">
                                         <button onClick={() => handleRemove(item.product.id)} className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
@@ -298,8 +300,8 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
                     {/* Totals */}
                     <div className="mt-4 pt-4 border-t space-y-2">
                         <div className="flex justify-between items-end">
-                            <span className="font-bold text-xl font-serif text-secondary">Total</span>
-                            <span className="font-bold text-2xl font-mono text-primary">{(totalCents / 100).toFixed(2)} €</span>
+                            <span className="font-bold text-xl font-serif text-foreground">Total</span>
+                            <span className="font-bold text-2xl font-mono text-primary">{formatPrice(totalCents, currency)}</span>
                         </div>
                         <Button
                             className="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-md"
@@ -319,7 +321,7 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
                     Carte & Menu
                 </div>
                 <div className="flex-1 overflow-hidden">
-                    <ProductSelector products={products} onAdd={handleAddProduct} />
+                    <ProductSelector products={products} onAdd={handleAddProduct} currency={currency} />
                 </div>
             </div>
         </div>

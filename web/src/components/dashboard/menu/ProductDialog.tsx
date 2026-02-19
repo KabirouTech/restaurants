@@ -15,6 +15,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { createProductAction, updateProductAction } from "@/actions/products";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
+import { createClient } from "@/utils/supabase/client";
 
 type Product = {
     id: string;
@@ -29,14 +30,34 @@ interface ProductDialogProps {
     productToEdit?: Product | null;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    currency?: string;
 }
 
-export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChange }: ProductDialogProps) {
+export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChange, currency = "EUR" }: ProductDialogProps) {
     const [internalOpen, setInternalOpen] = useState(false);
+    const [categories, setCategories] = useState<string[]>(["Entrée", "Plat", "Dessert", "Boisson"]);
+    const [customCategory, setCustomCategory] = useState("");
 
     const isControlled = typeof controlledOpen !== "undefined";
     const setOpen = isControlled ? onOpenChange! : setInternalOpen;
     const open = isControlled ? controlledOpen : internalOpen;
+
+    const DEFAULT_CATEGORIES = ["Entrée", "Plat", "Dessert", "Boisson"];
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase
+            .from("products")
+            .select("category")
+            .eq("is_active", true)
+            .then(({ data }) => {
+                if (data) {
+                    const dbCats = data.map((r: any) => r.category).filter(Boolean);
+                    const merged = Array.from(new Set([...DEFAULT_CATEGORIES, ...dbCats])).sort();
+                    setCategories(merged);
+                }
+            });
+    }, [open]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -80,7 +101,7 @@ export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChang
             )}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle className="font-serif text-2xl text-secondary">
+                    <DialogTitle className="font-serif text-2xl text-foreground">
                         {productToEdit ? "Modifier le Plat" : "Nouveau Plat"}
                     </DialogTitle>
                     <DialogDescription>
@@ -101,7 +122,7 @@ export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChang
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none">Prix (€)</label>
+                            <label className="text-sm font-medium leading-none">Prix ({currency})</label>
                             <Input
                                 name="price"
                                 type="number"
@@ -119,10 +140,9 @@ export function ProductDialog({ productToEdit, open: controlledOpen, onOpenChang
                                 defaultValue={productToEdit?.category || "Plat"}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                             >
-                                <option value="Entrée">Entrée</option>
-                                <option value="Plat">Plat</option>
-                                <option value="Dessert">Dessert</option>
-                                <option value="Boisson">Boisson</option>
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
                             </select>
                         </div>
                     </div>

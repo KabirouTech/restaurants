@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Restaurant OS - Vitrine Digitale</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f4af25",
+                        "primary-dark": "#d99616",
+                        "background-light": "#f8f7f5", // Rice / Off-white
+                        "background-dark": "#221c10", // Dark warm brown
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2d261a",
+                        "text-main": "#3f3a30",
+                        "text-muted": "#8c8578",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .hero-pattern {
+            background-color: #f8f7f5;
+            background-image: radial-gradient(#f4af25 0.5px, transparent 0.5px), radial-gradient(#f4af25 0.5px, #f8f7f5 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white font-display antialiased selection:bg-primary/30">
+<nav class="sticky top-0 z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-primary/10">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between items-center h-20">
+<div class="flex items-center space-x-2">
+<span class="material-icons text-primary text-3xl">restaurant</span>
+<span class="font-serif font-bold text-2xl tracking-tight text-gray-900 dark:text-white">Teranga<span class="text-primary">.</span></span>
+</div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-gray-900 dark:text-white hover:text-primary font-medium transition-colors" href="#">Notre Carte</a>
+<a class="text-gray-500 dark:text-gray-400 hover:text-primary font-medium transition-colors" href="#">Notre Histoire</a>
+<a class="text-gray-500 dark:text-gray-400 hover:text-primary font-medium transition-colors" href="#">Événements</a>
+</div>
+<div class="flex items-center space-x-4">
+<button class="p-2 text-gray-500 hover:text-primary transition-colors relative">
+<span class="material-icons">shopping_bag</span>
+<span class="absolute top-1 right-0 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">2</span>
+</button>
+<button class="md:hidden p-2 text-gray-900">
+<span class="material-icons">menu</span>
+</button>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+<div class="lg:grid lg:grid-cols-12 lg:gap-12 items-start">
+<div class="lg:col-span-8 space-y-12">
+<div class="relative rounded-2xl overflow-hidden shadow-xl group h-[400px]">
+<img alt="High-end culinary photography of a gourmet dish" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="High-end culinary photography of a gourmet dish" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuFGviMGtl3fs4MlsIKnLItFPMxkLgdEpgO2wsGGrR_aGlLmAZxpw9YS7FHIE2-KfHf0iqsAUU7lJd-RM5B8IgH3bJL18Eu7nMjCOzRqZddNk9ebc8_OSmFzoZMsN_07WZy5flC0-TmYR8l6bTeaHkal9zHB0oR4jpyD7Xp_QjWo1FzfODeDixZ7grbHYrSFRNvAHm-Fj-mFMsSuLNBcKRtT256MY_i4L6tDnTjG1fmWzs8GxKbGU-HwUolhB5xmLl2SKfqOX0c8U"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8 sm:p-10">
+<div class="bg-primary text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-fit mb-4">Plat Signature</div>
+<h1 class="font-serif text-4xl sm:text-5xl font-bold text-white mb-4 leading-tight">Goûtez l'Essence <br/> de l'Épice Dorée</h1>
+<p class="text-white/90 text-lg max-w-md font-light mb-6">Des saveurs authentiques créées avec passion. Découvrez nos plateaux primés conçus pour le partage.</p>
+<button class="bg-white text-gray-900 hover:bg-primary hover:text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2">
+<span>Voir le Menu Complet</span>
+<span class="material-icons text-sm">arrow_downward</span>
+</button>
+</div>
+</div>
+<div class="sticky top-24 z-40 bg-background-light dark:bg-background-dark py-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+<div class="flex space-x-3 overflow-x-auto no-scrollbar pb-2">
+<button class="flex-shrink-0 bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-md shadow-primary/20 transition-transform active:scale-95">Tout</button>
+<button class="flex-shrink-0 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary px-6 py-2.5 rounded-full font-medium transition-colors">Plateaux Repas</button>
+<button class="flex-shrink-0 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary px-6 py-2.5 rounded-full font-medium transition-colors">Entrées</button>
+<button class="flex-shrink-0 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary px-6 py-2.5 rounded-full font-medium transition-colors">Buffets</button>
+<button class="flex-shrink-0 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary px-6 py-2.5 rounded-full font-medium transition-colors">Boissons</button>
+</div>
+</div>
+<div>
+<div class="flex items-end justify-between mb-6">
+<h2 class="font-serif text-3xl font-bold text-gray-900 dark:text-white">Plateaux à Partager</h2>
+<span class="h-[1px] flex-grow mx-6 bg-gray-200 dark:bg-gray-700"></span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="group bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 border border-gray-100 dark:border-gray-800 transition-all duration-300">
+<div class="relative h-56 overflow-hidden">
+<img alt="Gourmet sharing platter with grilled meats" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Gourmet sharing platter with grilled meats" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH4M9P65OuuTDra-pgSjM-EO8SSVTxH2DGbmBlnexUlE768vnky99AM9VNG_y117nHv1kG46_jvigpOVgQJISx2hFGubrAkgQyv6xWqv71Pj3AWPU0eeTNcJ_IZi5sc8oJ4T6bXwORJmmPjG5i71J7ebv3Y1NLmNznDOSse61LY5xPBjW2sVCehDUTrCrSHODtA_eb-pwen43ha4aB8AwY_UuL8wui-rxIo3fuUvBWJxNET8gYjRD0iZbIW6z8DRVSbaIzRXA5ukk"/>
+<button class="absolute bottom-3 right-3 bg-white dark:bg-gray-900 text-primary p-2 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-icons">add</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">Le Festin Royal</h3>
+<span class="text-primary font-bold text-lg">€85</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">Une sélection majestueuse de côtelettes d'agneau grillées, crevettes épicées, riz jollof et aloco. Pour 2-3 personnes.</p>
+<div class="flex items-center space-x-2 text-xs text-gray-400">
+<span class="flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded"><span class="material-icons text-[14px] mr-1">local_fire_department</span> Épicé</span>
+<span class="flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Sans Gluten</span>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 border border-gray-100 dark:border-gray-800 transition-all duration-300">
+<div class="relative h-56 overflow-hidden">
+<img alt="Seafood platter with lobster and clams" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Seafood platter with lobster and clams" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABPDqn8HG0YXgdxM9FedNrZJKyJe5HJp8NAROTsvUtj-AGtHlA4i_yq0tVhAm77MJJpfc1_x01k45nFGEbRVY17cSsWA_B4HvocMJRobll5L5dvIrRQxTjWNfsihTSP0B0kQirG5isOHYjA0Yh9t1QEYjkd1E_8O23cCQTsjF2aI-1aa8L70gSZ2LavNySEZy46k9nO2uBpMWC7LIDWu3W2hQ-xvjqnPQown-vtVqyFfrTihjKo-GoDwocDJmgDiOgBtoaFPYHar0"/>
+<button class="absolute bottom-3 right-3 bg-white dark:bg-gray-900 text-primary p-2 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-icons">add</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">Terre &amp; Mer</h3>
+<span class="text-primary font-bold text-lg">€92</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">Queues de homard fraîches, bar grillé, légumes racines rôtis et riz infusé au safran.</p>
+<div class="flex items-center space-x-2 text-xs text-gray-400">
+<span class="flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Contient des Crustacés</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div>
+<div class="flex items-end justify-between mb-6 pt-4">
+<h2 class="font-serif text-3xl font-bold text-gray-900 dark:text-white">Plats Principaux</h2>
+<span class="h-[1px] flex-grow mx-6 bg-gray-200 dark:bg-gray-700"></span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="group bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 border border-gray-100 dark:border-gray-800 transition-all duration-300">
+<div class="relative h-56 overflow-hidden">
+<img alt="Traditional savory chicken stew bowl" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Traditional savory chicken stew bowl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDac40-nSJc2yrROxPME3pyPMovw-JOPcfkU1u5Y8oDloIsE0vf4P81PDPP5M-VDobtUkcmrvQP-SKeCq_gL1jwPEXGFRv4jT4IEKv982Cw1t8JtNqDMjzVINtggki1m9vx63bOwkPOU5crFTKPsilWX1I_RZfSh3GcF8xjOVBuV8CWd4xXNlnz8pzPH6k2Ar6BWULkUZRaGQ6PaQTEDxi64I8iRbYEZbnzJT1df_giEo5z-7BPDUimRyDYCvzAkGwiOR3R5KUwaW8"/>
+<div class="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded">Best-seller</div>
+<button class="absolute bottom-3 right-3 bg-white dark:bg-gray-900 text-primary p-2 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-icons">add</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">Thiéboudienne Rouge</h3>
+<span class="text-primary font-bold text-lg">€24</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">Le plat national du Sénégal. Poisson mijoté dans une riche sauce tomate avec aubergines, carottes et manioc.</p>
+<div class="flex items-center space-x-2 text-xs text-gray-400">
+<span class="flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Sans Produits Laitiers</span>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 border border-gray-100 dark:border-gray-800 transition-all duration-300">
+<div class="relative h-56 overflow-hidden">
+<img alt="Grilled chicken with onions and lemon sauce" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Grilled chicken with onions and lemon sauce" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYz7DdnjbSgpd9U-geTmABUr14b9gHZvJOkJomJMFtm11PNH0AcEKoi5H2_891eps9dOLmNzkhW_Sb-haWZokkp8oAQahpxalDpNl0X4zxqLbtqvCFBqVf9NBagsZuOEEVdFrvHQyr44g04o_GpAUK5_FPoLVkMuVrdjvgoczcGUkTFStEyJ6NXRvebt_W49FX9bl-1C4w8FaCMMreUO0xiH5GYU-P3oi334n5wTYAeRcWqwuLqjYhEAkR64g8NRm1XLhjE166D9M"/>
+<button class="absolute bottom-3 right-3 bg-white dark:bg-gray-900 text-primary p-2 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-icons">add</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">Poulet Yassa</h3>
+<span class="text-primary font-bold text-lg">€22</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">Poulet mariné et braisé avec des oignons caramélisés, du citron et de la moutarde. Servi avec du riz blanc.</p>
+<div class="flex items-center space-x-2 text-xs text-gray-400">
+<span class="flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Épicé</span>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 border border-gray-100 dark:border-gray-800 transition-all duration-300">
+<div class="relative h-56 overflow-hidden">
+<img alt="Vegetarian bowl with couscous and chickpeas" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Vegetarian bowl with couscous and chickpeas" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGlbYblSCsrKdzW3RyNeDdZWUgP__UAJplTSlAOZA-crXa7hG5quK0-_RhtvtBjQ-21abhldj50XYibJQfR-min4TMBIpBz53wAOGK8Qu9MlWwE0PppOuhq5x7uhJVoUJOOA6j4l08655k25G6y0BbS4NXvIWWVwj3HoiyVtdEgo7EDBwgCLW0Tfu8oeu3X7_QwInwOy8skFnrjZez0wZwliIHSDl5F8g8ftXar8QkCM5YxCqBAneQ9r3f4E6F83PhTl5xym4aBhI"/>
+<button class="absolute bottom-3 right-3 bg-white dark:bg-gray-900 text-primary p-2 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-icons">add</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">Couscous du Jardin</h3>
+<span class="text-primary font-bold text-lg">€18</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">Couscous moelleux garni d'un mélange de légumes de saison rôtis, de pois chiches et de raisins secs.</p>
+<div class="flex items-center space-x-2 text-xs text-gray-400">
+<span class="flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Végan</span>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 border border-gray-100 dark:border-gray-800 transition-all duration-300">
+<div class="relative h-56 overflow-hidden">
+<img alt="Spicy lamb stew with vegetables" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Spicy lamb stew with vegetables" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbSNkCaADcIBCyQU1Uha82lscf2Xc_3PtIDnp_lDi8H_ho0G8A1mMwXTZL4fwtaCDvpifmUs-OEkqrbtGg_DQcFD6v-Im_KTLTgMG5ge9Vs5GQxh7_q5m5EQEZ-tRrFzQI8qYOnyVcLU7rA_doWadxbmQPswvso1LIdR3O5JAO-wJT_RD3ZCe1MDPrT4qH1vzOfT0ywTf-cthq3TMw3waKNzAZl_K1uepFvE7EAqHLPDoFU48hGoyk_EIMG0hXfx_f57j-QXpxY3E"/>
+<button class="absolute bottom-3 right-3 bg-white dark:bg-gray-900 text-primary p-2 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors">
+<span class="material-icons">add</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">Agneau Mafé</h3>
+<span class="text-primary font-bold text-lg">€26</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">Morceaux d'agneau tendres mijotés dans une sauce crémeuse au beurre de cacahuète avec des patates douces.</p>
+<div class="flex items-center space-x-2 text-xs text-gray-400">
+<span class="flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Contient des Arachides</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-4 mt-12 lg:mt-0">
+<div class="sticky top-24 space-y-6">
+<div class="bg-white dark:bg-surface-dark rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-800">
+<div class="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg flex mb-6">
+<button class="flex-1 bg-white dark:bg-surface-dark shadow-sm text-gray-900 dark:text-white font-semibold py-2 rounded-md text-sm transition-all">Réserver une date</button>
+<button class="flex-1 text-gray-500 dark:text-gray-400 font-medium py-2 rounded-md text-sm hover:text-primary transition-all">Commander</button>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sélectionnez une date</label>
+<div class="relative">
+<input class="w-full bg-background-light dark:bg-background-dark border-gray-200 dark:border-gray-700 rounded-lg py-3 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none" type="date"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Nombre de convives</label>
+<select class="w-full bg-background-light dark:bg-background-dark border-gray-200 dark:border-gray-700 rounded-lg py-3 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none">
+<option>2 Personnes</option>
+<option>3 Personnes</option>
+<option>4 Personnes</option>
+<option>5+ Personnes</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Heures Disponibles</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary hover:bg-primary/5 hover:text-primary transition-colors">18:00</button>
+<button class="py-2 text-sm bg-primary text-white border border-primary rounded-lg shadow-md shadow-primary/20">19:30</button>
+<button class="py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary hover:bg-primary/5 hover:text-primary transition-colors">20:45</button>
+</div>
+</div>
+<hr class="border-gray-100 dark:border-gray-800 my-4"/>
+<button class="w-full bg-primary hover:bg-primary-dark text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-primary/30 transition-all active:scale-[0.98] flex items-center justify-center space-x-2">
+<span>Vérifier la disponibilité</span>
+<span class="material-icons">arrow_forward</span>
+</button>
+<p class="text-center text-xs text-gray-400">Aucun paiement requis pour la réservation.</p>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-2xl shadow-sm p-6 border border-gray-100 dark:border-gray-800 opacity-60 pointer-events-none grayscale">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-serif font-bold text-lg">Commande Actuelle</h3>
+<span class="text-sm text-gray-400">0 Articles</span>
+</div>
+<div class="flex flex-col items-center justify-center py-8 text-gray-400 space-y-2 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-xl">
+<span class="material-icons text-4xl text-gray-300">shopping_basket</span>
+<span class="text-sm">Votre panier est vide</span>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
+<img alt="Map view of city streets" class="w-full h-32 object-cover opacity-80" data-alt="Map view of city streets" data-location="Dakar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlWxT7BI-xnGWt2Ve_81uQkg77YVq0JWsLu5vAugpTR5w5m2Ac0EOOgO8vQHL4Rc87zYE9wF28PzeCCxTU07QjAKZ6NSRVXCxt-r4ioyTOfRctdkF4sM13ioR39EO8UWbJbYTzUAJoorD8G6q9mV7JHj-op8e6ymi3DD1wrS9zW5Ho6-_bG6ChrlMTRHDKq2pG79Gdw-nH0DlgxIZrQL-BQD4_Y8ny1xOk__LRZJ_vaSW82ppaXZLLq7NWlXt2Ja2eDHhWqsubaxo"/>
+<div class="p-4">
+<h4 class="font-serif font-bold text-gray-900 dark:text-white">Visitez-nous</h4>
+<p class="text-sm text-gray-500 mt-1">128 Rue de la République, Dakar</p>
+<a class="text-xs text-primary font-semibold mt-2 inline-block" href="#">Itinéraire</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 mt-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="md:flex md:justify-between">
+<div class="mb-8 md:mb-0">
+<div class="flex items-center space-x-2 mb-4">
+<span class="material-icons text-primary text-2xl">restaurant</span>
+<span class="font-serif font-bold text-xl text-gray-900 dark:text-white">Teranga.</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm max-w-xs">Élever la cuisine africaine à une expérience gastronomique. Nous apportons la chaleur de la Teranga dans chaque assiette.</p>
+</div>
+<div class="grid grid-cols-2 gap-8 sm:gap-16 sm:grid-cols-3">
+<div>
+<h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Entreprise</h3>
+<ul class="mt-4 space-y-2">
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">À propos</a></li>
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Carrières</a></li>
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Presse</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Support</h3>
+<ul class="mt-4 space-y-2">
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Centre d'aide</a></li>
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Conditions</a></li>
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Confidentialité</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Social</h3>
+<ul class="mt-4 space-y-2">
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Instagram</a></li>
+<li><a class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary" href="#">Contactez-nous</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="mt-12 border-t border-gray-100 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+<p class="text-xs text-gray-400">© 2023 Restaurant OS. Tous droits réservés.</p>
+<div class="flex space-x-6 mt-4 md:mt-0">
+<span class="text-xs text-gray-400">Propulsé par Restaurant OS</span>
+</div>
+</div>
+</div>
+</footer>
+
+</body></html>

@@ -30,19 +30,26 @@ export default async function SettingsPage() {
         .from("capacity_types")
         .select("*")
         .eq("organization_id", org.id)
+        .eq("organization_id", org.id)
         .order("load_cost", { ascending: true });
+
+    const { data: products } = await supabase
+        .from("products")
+        .select("*")
+        .eq("organization_id", org.id)
+        .eq("is_active", true);
 
     const kanbanColumns = settings.kanban_columns || DEFAULT_KANBAN_COLUMNS;
 
     return (
-        <div className="min-h-screen p-6 md:p-8 space-y-8 max-w-5xl mx-auto animate-in fade-in duration-500">
+        <div className="min-h-screen p-6 md:p-8 space-y-8 max-w-[1600px] mx-auto animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col gap-2 border-b border-border pb-6">
                 <div className="flex items-center gap-2 text-primary font-medium mb-1">
                     <Store className="h-5 w-5" />
                     <span>Configuration</span>
                 </div>
-                <h1 className="text-3xl font-bold font-serif text-secondary">
+                <h1 className="text-3xl font-bold font-serif text-foreground">
                     Paramètres de la Boutique
                 </h1>
                 <p className="text-muted-foreground">
@@ -79,13 +86,13 @@ export default async function SettingsPage() {
                     <div className="flex flex-col gap-1 pb-4">
                         <div className="flex items-center gap-2">
                             <Globe className="h-5 w-5 text-primary" />
-                            <h2 className="text-xl font-bold text-secondary">Personnalisation du site vitrine</h2>
+                            <h2 className="text-xl font-bold text-foreground">Personnalisation du site vitrine</h2>
                         </div>
                         <p className="text-sm text-muted-foreground">
                             Configurez les sections affichées sur votre site public, leur contenu et leurs textes.
                         </p>
                     </div>
-                    <SiteSettings org={org} settings={settings} />
+                    <SiteSettings org={org} settings={settings} products={products || []} />
                 </TabsContent>
 
                 {/* ── Menu & Infos ─────────────────────────────── */}

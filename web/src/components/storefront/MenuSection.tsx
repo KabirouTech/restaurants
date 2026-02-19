@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Minus, ShoppingBag, Trash2, ChevronRight, X } from "lucide-react";
+import { Plus, Minus, ShoppingBag, Trash2, ChevronRight, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/context/CartContext";
 import { cn } from "@/lib/utils";
@@ -16,18 +16,19 @@ interface Product {
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-const fmt = (cents: number) =>
-    (cents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+import { formatPrice } from "@/lib/currencies";
 
 // ─── Single product row (left panel) ─────────────────────────────────────────
 function ProductRow({
     product,
     qty,
+    currency,
     onAdd,
     onRemove,
 }: {
     product: Product;
     qty: number;
+    currency: string;
     onAdd: () => void;
     onRemove: () => void;
 }) {
@@ -60,7 +61,7 @@ function ProductRow({
                 )}>
                     {product.name}
                 </p>
-                <p className="text-xs font-bold text-muted-foreground mt-0.5">{fmt(product.price_cents)}</p>
+                <p className="text-xs font-bold text-muted-foreground mt-0.5">{formatPrice(product.price_cents, currency)}</p>
             </div>
 
             {/* Controls */}
@@ -98,11 +99,13 @@ function OrderSummary({
     totalCents,
     onRemoveLine,
     onOpenCart,
+    currency,
 }: {
     items: CartItem[];
     totalCents: number;
     onRemoveLine: (id: string) => void;
     onOpenCart: () => void;
+    currency: string;
 }) {
     const count = items.reduce((acc, l) => acc + l.quantity, 0);
 
@@ -141,11 +144,11 @@ function OrderSummary({
                             <div className="flex justify-between items-baseline mb-0.5">
                                 <p className="text-sm font-semibold text-secondary truncate pr-2">{item.name}</p>
                                 <p className="text-xs font-bold text-primary shrink-0">
-                                    {fmt(item.priceCents * item.quantity)}
+                                    {formatPrice(item.priceCents * item.quantity, currency)}
                                 </p>
                             </div>
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{item.quantity} × {fmt(item.priceCents)}</span>
+                                <span>{item.quantity} × {formatPrice(item.priceCents, currency)}</span>
                             </div>
                         </div>
                         <button
@@ -163,7 +166,7 @@ function OrderSummary({
             <div className="p-5 border-t border-border/50 space-y-4 bg-muted/5">
                 <div className="flex justify-between items-center">
                     <span className="text-sm font-semibold text-muted-foreground">Total à payer</span>
-                    <span className="text-2xl font-black text-primary tracking-tight">{fmt(totalCents)}</span>
+                    <span className="text-2xl font-black text-primary tracking-tight">{formatPrice(totalCents, currency)}</span>
                 </div>
                 <Button
                     onClick={onOpenCart}
@@ -178,29 +181,31 @@ function OrderSummary({
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
-export function MenuSection({ products }: { products: Product[] }) {
+export function MenuSection({ products, currency }: { products: Product[], currency: string }) {
     const categories = ["Tous", ...Array.from(new Set(products.map((p) => p.category))).sort()];
     const [activeCategory, setActiveCategory] = useState("Tous");
+    const [search, setSearch] = useState("");
 
-    // Use global cart context directly = persistence achieved
     const { items, addItem, updateQuantity, removeItem, totalCents, openCart } = useCart();
 
     const getQty = (id: string) => items.find((i) => i.productId === id)?.quantity ?? 0;
 
-    const handleAdd = (product: Product) => {
-        addItem(product);
-    };
-
+    const handleAdd = (product: Product) => addItem(product);
     const handleRemove = (product: Product) => {
         const currentQty = getQty(product.id);
-        if (currentQty > 0) {
-            updateQuantity(product.id, currentQty - 1);
-        }
+        if (currentQty > 0) updateQuantity(product.id, currentQty - 1);
     };
 
-    const filtered = activeCategory === "Tous"
-        ? products
-        : products.filter((p) => p.category === activeCategory);
+    const filtered = products
+        .filter((p) => activeCategory === "Tous" || p.category === activeCategory)
+        .filter((p) => {
+            const q = search.toLowerCase().trim();
+            if (!q) return true;
+            return (
+                p.name.toLowerCase().includes(q) ||
+                (p.description || "").toLowerCase().includes(q)
+            );
+        });
 
     return (
         <section id="menu" className="scroll-mt-24 py-16 lg:py-24">
@@ -211,49 +216,85 @@ export function MenuSection({ products }: { products: Product[] }) {
                 <div className="w-24 h-1 bg-primary mx-auto rounded-full" />
             </div>
 
-            {/* Category pills */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-6 sticky top-20 z-10 bg-background/80 backdrop-blur-sm py-2 -mx-4 px-4 lg:mx-0 lg:px-0">
-                {categories.map((cat) => (
-                    <button
-                        key={cat}
-                        onClick={() => setActiveCategory(cat)}
-                        className={cn(
-                            "px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 border select-none",
-                            activeCategory === cat
-                                ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 scale-105"
-                                : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-primary"
+            {/* Filters row: category pills + search bar */}
+            <div className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm py-2 -mx-4 px-4 lg:mx-0 lg:px-0 mb-6">
+                <div className="flex items-center gap-3">
+                    {/* Category pills — scrollable horizontally */}
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1 pb-1">
+                        {categories.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={cn(
+                                    "px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 border select-none shrink-0",
+                                    activeCategory === cat
+                                        ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 scale-105"
+                                        : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-primary"
+                                )}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Search input */}
+                    <div className="relative shrink-0 w-48 lg:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Rechercher un plat..."
+                            className="w-full pl-8 pr-8 py-2 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                        />
+                        {search && (
+                            <button
+                                onClick={() => setSearch("")}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
                         )}
-                    >
-                        {cat}
-                    </button>
-                ))}
+                    </div>
+                </div>
             </div>
 
             {/* Split layout */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start relative">
 
-                {/* LEFT — Product list */}
+                {/* LEFT — Product list (scrollable) */}
                 <div className="lg:col-span-3">
-                    <div className="space-y-4 min-h-[400px]">
+                    {/* Results count */}
+                    <p className="text-xs text-muted-foreground mb-3">
+                        {filtered.length} plat{filtered.length > 1 ? "s" : ""} affiché{filtered.length > 1 ? "s" : ""}
+                        {search && <span className="ml-1">pour « <strong>{search}</strong> »</span>}
+                    </p>
+
+                    {/* Scrollable product list */}
+                    <div className="max-h-[calc(100vh-220px)] overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
                         {filtered.length === 0 ? (
-                            <p className="text-center py-12 text-muted-foreground text-sm">
-                                Aucun plat dans cette catégorie.
-                            </p>
+                            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm text-center">
+                                <Search className="h-8 w-8 mb-3 opacity-30" />
+                                <p>Aucun plat trouvé{search ? ` pour « ${search} »` : " dans cette catégorie"}.</p>
+                                {search && (
+                                    <button onClick={() => setSearch("")} className="mt-2 text-primary text-xs underline">
+                                        Effacer la recherche
+                                    </button>
+                                )}
+                            </div>
                         ) : (
                             filtered.map((product) => (
                                 <ProductRow
                                     key={product.id}
                                     product={product}
                                     qty={getQty(product.id)}
+                                    currency={currency}
                                     onAdd={() => handleAdd(product)}
                                     onRemove={() => handleRemove(product)}
                                 />
                             ))
                         )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-6 text-center lg:text-left">
-                        {filtered.length} plat{filtered.length > 1 ? "s" : ""} affiché{filtered.length > 1 ? "s" : ""}
-                    </p>
                 </div>
 
                 {/* RIGHT — Live global cart summary (sticky) */}
@@ -263,10 +304,11 @@ export function MenuSection({ products }: { products: Product[] }) {
                         totalCents={totalCents}
                         onRemoveLine={removeItem}
                         onOpenCart={openCart}
+                        currency={currency}
                     />
                 </div>
 
-                {/* Mobile Floating Action Button (if cart has items, show summary trigger) */}
+                {/* Mobile Floating Action Button */}
                 {items.length > 0 && (
                     <div className="fixed bottom-6 left-4 right-4 z-40 lg:hidden animate-in slide-in-from-bottom-4 zoom-in duration-300">
                         <Button
@@ -278,7 +320,7 @@ export function MenuSection({ products }: { products: Product[] }) {
                                 <span className="bg-white/20 px-2 py-0.5 rounded text-sm">{items.reduce((a, b) => a + b.quantity, 0)}</span>
                                 <span>Voir ma commande</span>
                             </span>
-                            <span>{fmt(totalCents)}</span>
+                            <span>{formatPrice(totalCents, currency)}</span>
                         </Button>
                     </div>
                 )}

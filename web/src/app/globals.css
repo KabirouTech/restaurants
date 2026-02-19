@@ -4,81 +4,88 @@
 
 @layer base {
   :root {
-    /* TERANGA THEME (Warm, Food, Human) */
+    /* ── TERANGA THEME — Warm, Food, Human ───────────────────────────── */
 
-    /* Backgrounds: Warm Millet/Rice White */
-    --background: 40 40% 98%;
-    /* Stitch Secondary is our Foreground (Deep Brown) */
-    --foreground: 24 30% 12%;
-    /* Deep Earth Brown/Coffee */
+    /* Backgrounds: Warm Millet / Rice White */
+    --background: 36 33% 97%;
+    --foreground: 20 14% 12%;
 
-    /* Cards: Clean White but softer */
+    /* Cards: Clean slightly warm white */
     --card: 0 0% 100%;
-    --card-foreground: 24 30% 15%;
+    --card-foreground: 20 14% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 24 30% 15%;
+    --popover-foreground: 20 14% 12%;
 
-    /* Primary: Palm Oil / Golden Tiybou Dieune */
-    /* Vibrant Orange: HSL(24, 90%, 55%) */
-    --primary: 24 95% 53%;
+    /* Primary: Golden Orange — Palm Oil / Tiébou Dieune */
+    --primary: 24 88% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Deep Bissap / Terra Cotta */
-    /* Rich Carmine: HSL(345, 60%, 40%) */
-    /* Secondary: Deep Brown (Stitch Secondary) */
-    --secondary: 24 30% 12%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary: Deep Brown — Coffee / Earth */
+    --secondary: 20 25% 18%;
+    --secondary-foreground: 36 33% 97%;
 
-    /* Muted: Sand / Dry Landscape */
-    --muted: 36 25% 92%;
-    --muted-foreground: 25 10% 55%;
+    /* Muted: Sand */
+    --muted: 36 20% 92%;
+    --muted-foreground: 20 10% 40%;
 
-    /* Accents: Fresh Green (Okra/Mafe) */
-    --accent: 85 55% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Warm Terracotta */
+    --accent: 24 40% 90%;
+    --accent-foreground: 20 25% 18%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 40 30% 85%;
-    --input: 36 20% 88%;
-    --ring: 24 95% 53%;
+    --border: 36 15% 86%;
+    --input: 36 15% 86%;
+    --ring: 24 88% 50%;
 
     --radius: 0.5rem;
+
+    --chart-1: 24 88% 50%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 345 60% 45%;
   }
 
   .dark {
-    /* Dark Mode (Midnight in Dakar): Deep Indigos & Golds */
-    --background: 240 20% 8%;
-    --foreground: 40 20% 90%;
+    /* ── DARK MODE — Midnight in Dakar ───────────────────────────────── */
+    --background: 20 14% 8%;
+    --foreground: 36 33% 95%;
 
-    --card: 240 15% 12%;
-    --card-foreground: 40 20% 90%;
+    --card: 20 14% 11%;
+    --card-foreground: 36 33% 95%;
 
-    --popover: 240 15% 12%;
-    --popover-foreground: 40 20% 90%;
+    --popover: 20 14% 11%;
+    --popover-foreground: 36 33% 95%;
 
-    --primary: 38 90% 60%;
-    /* Baobab Gold */
-    --primary-foreground: 240 20% 8%;
+    /* Primary stays golden orange in dark mode */
+    --primary: 24 88% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 345 50% 50%;
-    /* Lighter Bissap */
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary: lighter warm brown */
+    --secondary: 20 20% 20%;
+    --secondary-foreground: 36 30% 90%;
 
-    --muted: 240 10% 18%;
-    --muted-foreground: 240 5% 60%;
+    --muted: 20 14% 16%;
+    --muted-foreground: 36 15% 60%;
 
-    --accent: 85 45% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 20 20% 20%;
+    --accent-foreground: 36 33% 95%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 10% 20%;
-    --input: 240 10% 20%;
-    --ring: 38 90% 60%;
+    --border: 20 14% 20%;
+    --input: 20 14% 20%;
+    --ring: 24 88% 55%;
+
+    --chart-1: 24 88% 55%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 345 75% 55%;
   }
 }
 

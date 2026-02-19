@@ -3,6 +3,7 @@
 import { Resend } from "resend";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js"; // Import Admin Client
+import { formatPrice } from "@/lib/currencies";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -49,8 +50,10 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
         }
 
         // Calculate Totals
-        const total = (order.total_amount_cents || 0) / 100;
+        const totalCents = order.total_amount_cents || 0;
         const orgName = order.organizations?.name || "Restaurant";
+        const settings = (order.organizations?.settings as any) || {};
+        const currency = settings.currency || "EUR";
         // TODO: Get brand color from organization settings if available
         const brandColor = "#d97706"; // Default Amber-600
 
@@ -60,7 +63,7 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
             <tr style="border-bottom: 1px solid #e5e7eb;">
                 <td style="padding: 12px; color: #111827;">${item.products?.name}</td>
                 <td style="padding: 12px; text-align: center; color: #6b7280;">${item.quantity}</td>
-                <td style="padding: 12px; text-align: right; color: #111827; font-family: monospace;">${(item.unit_price_cents / 100).toFixed(2)} €</td>
+                <td style="padding: 12px; text-align: right; color: #111827; font-family: monospace;">${formatPrice(item.unit_price_cents * item.quantity, currency)}</td>
             </tr>
         `).join("");
 
@@ -107,7 +110,7 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
                                 <tfoot>
                                     <tr style="background-color: #fffbeb;">
                                         <td colspan="2" style="padding: 16px; text-align: right; font-weight: bold; color: ${brandColor};">Total</td>
-                                        <td style="padding: 16px; text-align: right; font-weight: bold; color: ${brandColor}; font-size: 18px;">${total.toFixed(2)} €</td>
+                                        <td style="padding: 16px; text-align: right; font-weight: bold; color: ${brandColor}; font-size: 18px;">${formatPrice(totalCents, currency)}</td>
                                     </tr>
                                 </tfoot>
                             </table>

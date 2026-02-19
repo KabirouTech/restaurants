@@ -112,3 +112,34 @@ export async function searchCustomersAction(query: string) {
 
     return data || [];
 }
+
+// --- Bulk Delete Orders ---
+export async function bulkDeleteOrdersAction(ids: string[]) {
+    if (!ids.length) return { error: "Aucune commande sélectionnée." };
+
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Non authentifié" };
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+
+    // Delete order_items first (FK constraint)
+    await supabase.from("order_items").delete().in("order_id", ids);
+
+    // Then delete orders, scoped to org for safety
+    const { error } = await supabase
+        .from("orders")
+        .delete()
+        .in("id", ids)
+        .eq("organization_id", profile.organization_id);
+
+    if (error) return { error: "Erreur lors de la suppression : " + error.message };
+
+    revalidatePath("/dashboard/orders");
+    return { success: true, count: ids.length };
+}

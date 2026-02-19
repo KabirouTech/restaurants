@@ -25,7 +25,7 @@ async function setupStorage() {
     const { data, error } = await supabaseAdmin.storage.createBucket('organizations', {
         public: true,
         fileSizeLimit: 5242880, // 5MB
-        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml']
     });
 
     if (error) {

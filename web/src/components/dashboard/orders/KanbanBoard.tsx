@@ -22,6 +22,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { updateOrderStatusAction } from "@/actions/kanban";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/currencies";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,7 +56,7 @@ export const DEFAULT_KANBAN_COLUMNS: KanbanColumn[] = [
 
 // ─── Order card ───────────────────────────────────────────────────────────────
 
-function OrderCard({ order, isDragging = false }: { order: KanbanOrder; isDragging?: boolean }) {
+function OrderCard({ order, isDragging = false, currency }: { order: KanbanOrder; isDragging?: boolean; currency: string }) {
     const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
     const capacityType = Array.isArray(order.capacity_types) ? order.capacity_types[0] : order.capacity_types;
 
@@ -67,7 +68,7 @@ function OrderCard({ order, isDragging = false }: { order: KanbanOrder; isDraggi
             {/* Client */}
             <div className="flex items-start justify-between gap-2 mb-2.5">
                 <div className="min-w-0">
-                    <p className="font-semibold text-secondary text-sm truncate leading-tight">
+                    <p className="font-semibold text-foreground text-sm truncate leading-tight">
                         {customer?.full_name || "Client inconnu"}
                     </p>
                     {customer?.phone && (
@@ -77,7 +78,7 @@ function OrderCard({ order, isDragging = false }: { order: KanbanOrder; isDraggi
                 <Link
                     href={`/dashboard/orders/${order.id}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 rounded-md flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-secondary"
+                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 rounded-md flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground"
                 >
                     <Eye className="h-3.5 w-3.5" />
                 </Link>
@@ -111,7 +112,7 @@ function OrderCard({ order, isDragging = false }: { order: KanbanOrder; isDraggi
             {order.total_amount_cents > 0 && (
                 <div className="mt-2.5 pt-2 border-t border-border/50 flex justify-end">
                     <span className="font-mono font-bold text-sm text-primary">
-                        {((order.total_amount_cents) / 100).toFixed(2)} €
+                        {formatPrice(order.total_amount_cents, currency)}
                     </span>
                 </div>
             )}
@@ -121,7 +122,7 @@ function OrderCard({ order, isDragging = false }: { order: KanbanOrder; isDraggi
 
 // ─── Sortable order card wrapper ──────────────────────────────────────────────
 
-function SortableOrderCard({ order }: { order: KanbanOrder }) {
+function SortableOrderCard({ order, currency }: { order: KanbanOrder; currency: string }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: order.id,
         data: { order },
@@ -135,7 +136,7 @@ function SortableOrderCard({ order }: { order: KanbanOrder }) {
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <OrderCard order={order} />
+            <OrderCard order={order} currency={currency} />
         </div>
     );
 }
@@ -146,10 +147,12 @@ function KanbanColumnView({
     column,
     orders,
     isOver,
+    currency,
 }: {
     column: KanbanColumn;
     orders: KanbanOrder[];
     isOver: boolean;
+    currency: string;
 }) {
     const { setNodeRef } = useDroppable({ id: column.id });
 
@@ -162,7 +165,7 @@ function KanbanColumnView({
                         className="h-2.5 w-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: column.color }}
                     />
-                    <span className="font-semibold text-sm text-secondary">{column.label}</span>
+                    <span className="font-semibold text-sm text-foreground">{column.label}</span>
                 </div>
                 <span className="text-xs bg-muted text-muted-foreground font-medium px-2 py-0.5 rounded-full">
                     {orders.length}
@@ -181,7 +184,7 @@ function KanbanColumnView({
             >
                 <SortableContext items={orders.map((o) => o.id)} strategy={verticalListSortingStrategy}>
                     {orders.map((order) => (
-                        <SortableOrderCard key={order.id} order={order} />
+                        <SortableOrderCard key={order.id} order={order} currency={currency} />
                     ))}
                 </SortableContext>
 
@@ -201,9 +204,10 @@ function KanbanColumnView({
 interface KanbanBoardProps {
     initialOrders: KanbanOrder[];
     columns: KanbanColumn[];
+    currency: string;
 }
 
-export function KanbanBoard({ initialOrders, columns }: KanbanBoardProps) {
+export function KanbanBoard({ initialOrders, columns, currency }: KanbanBoardProps) {
     const [orders, setOrders] = useState<KanbanOrder[]>(initialOrders);
     const [activeOrder, setActiveOrder] = useState<KanbanOrder | null>(null);
     const [overColumnId, setOverColumnId] = useState<string | null>(null);
@@ -296,13 +300,14 @@ export function KanbanBoard({ initialOrders, columns }: KanbanBoardProps) {
                         column={column}
                         orders={getOrdersByColumn(column.id)}
                         isOver={overColumnId === column.id}
+                        currency={currency}
                     />
                 ))}
             </div>
 
             {/* Drag overlay */}
             <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-                {activeOrder && <OrderCard order={activeOrder} isDragging />}
+                {activeOrder && <OrderCard order={activeOrder} isDragging currency={currency} />}
             </DragOverlay>
         </DndContext>
     );

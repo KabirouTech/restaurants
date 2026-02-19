@@ -138,7 +138,7 @@ export function CalendarQuickOrderDialog({
 
                 {/* Header */}
                 <DialogHeader className="px-6 pt-5 pb-4 bg-primary/5 border-b border-border shrink-0">
-                    <DialogTitle className="flex items-center gap-2 text-secondary font-serif text-lg">
+                    <DialogTitle className="flex items-center gap-2 text-foreground font-serif text-lg">
                         <CalendarDays className="h-5 w-5 text-primary" />
                         Nouveau Devis
                     </DialogTitle>

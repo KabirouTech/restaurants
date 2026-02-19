@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/currencies";
 
 type Product = {
     id: string;
@@ -17,9 +18,10 @@ type Product = {
 interface ProductSelectorProps {
     products: Product[];
     onAdd: (product: Product) => void;
+    currency?: string;
 }
 
-export function ProductSelector({ products, onAdd }: ProductSelectorProps) {
+export function ProductSelector({ products, onAdd, currency = "EUR" }: ProductSelectorProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("Tout");
 
@@ -77,7 +79,7 @@ export function ProductSelector({ products, onAdd }: ProductSelectorProps) {
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-mono font-medium">
-                                    {(product.price_cents / 100).toFixed(2)}€
+                                    {formatPrice(product.price_cents, currency)}
                                 </span>
                                 <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-full opacity-0 group-hover:opacity-100">
                                     +
