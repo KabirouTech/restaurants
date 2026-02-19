@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PlusCircle, Calendar as CalendarIcon, User, Calculator } from "lucide-react";
+import { toast } from "sonner";
 import { createOrderAction } from "@/actions/orders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -37,7 +38,7 @@ export function NewOrderDialog({ organizationId, services }: NewOrderDialogProps
         const { success, error } = await createOrderAction(formData);
 
         if (error) {
-            alert(error);
+            toast.error(error);
             setLoading(false);
         } else {
             setOpen(false);

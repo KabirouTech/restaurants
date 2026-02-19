@@ -3,7 +3,8 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Search, Filter, Phone, Mail, Instagram, MessageCircle } from "lucide-react";
+import { Search, Filter, Phone, Mail, Instagram, MessageCircle, Globe } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -48,9 +49,11 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
             case 'whatsapp': return <Phone className="h-3 w-3" />;
             case 'instagram': return <Instagram className="h-3 w-3" />;
             case 'email': return <Mail className="h-3 w-3" />;
+            case 'website': return <Globe className="h-3 w-3" />;
             default: return <MessageCircle className="h-3 w-3" />;
         }
     };
+
 
     return (
         <div className={cn("flex flex-col h-full border-r border-border bg-card/50", className)}>
@@ -111,8 +114,10 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
                                         <span className={cn(
                                             "flex items-center justify-center h-4 w-4 rounded-full bg-muted text-muted-foreground shrink-0",
                                             conv.channels?.platform === 'whatsapp' && "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-                                            conv.channels?.platform === 'instagram' && "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400"
+                                            conv.channels?.platform === 'instagram' && "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
+                                            conv.channels?.platform === 'website' && "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
                                         )}>
+
                                             {getIcon(conv.channels?.platform)}
                                         </span>
                                         <p className={cn(

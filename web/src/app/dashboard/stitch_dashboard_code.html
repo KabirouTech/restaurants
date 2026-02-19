@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Restaurant OS - Tableau de Bord (FR)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "hsl(24, 95%, 53%)","primary-dark": "hsl(24, 90%, 45%)",
+                        "secondary": "hsl(24, 30%, 12%)","background-light": "hsl(40, 40%, 98%)","card-border": "hsl(40, 30%, 85%)","fresh-green": "hsl(140, 60%, 45%)",
+                        "text-muted": "hsl(25, 10%, 55%)",
+                    },
+                    fontFamily: {
+                        "display": ["Playfair Display", "serif"],
+                        "body": ["Outfit", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: hsl(40, 30%, 85%); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: hsl(24, 95%, 53%); 
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6, .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light text-secondary font-body min-h-screen flex overflow-hidden">
+<aside class="w-64 bg-white border-r border-card-border flex flex-col hidden md:flex z-20 shadow-sm">
+<div class="p-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg font-display">R</div>
+<span class="text-2xl font-bold tracking-tight text-secondary font-display">Restaurant<span class="text-primary">OS</span></span>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary border border-primary/20" href="#">
+<span class="material-icons text-xl">dashboard</span>
+<span class="font-medium">Accueil</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-background-light hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">forum</span>
+<span class="font-medium">Messagerie</span>
+<span class="ml-auto text-xs font-bold bg-primary text-white px-2 py-0.5 rounded-full">3</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-background-light hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">calendar_today</span>
+<span class="font-medium">Calendrier</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-background-light hover:text-primary transition-colors group" href="#">
+<div class="relative">
+<span class="material-icons text-xl">restaurant_menu</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
+</div>
+<span class="font-medium">Commandes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-background-light hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">inventory_2</span>
+<span class="font-medium">Catalogue</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-background-light hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">people</span>
+<span class="font-medium">CRM</span>
+</a>
+</nav>
+<div class="p-6 border-t border-card-border">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-500 hover:text-primary transition-colors mb-4" href="#">
+<span class="material-icons text-xl">settings</span>
+<span class="font-medium">Paramètres</span>
+</a>
+<div class="flex items-center gap-3 px-2 bg-background-light p-3 rounded-xl border border-card-border">
+<img alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover" data-alt="Profile picture of the user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAljVHLgzeP4R_xR2egL23GX64-JAINcld-3emu8jJk5by1xj9RGPKAlwN-5x8krgzVqns7atm38HR-9u-A2ZTQDWw_FaTkjEPy0gueg6jm-o1n0QwxTpbEi5ip2bLJNmM5frYD0b3LUsOb7sEaiWHOokxuB4lhQ-SlzI6w6dAMVbNWIvbAQxPTKYnGSp9hbq89BmZHVD5iEZqRhH8Mt86oiS81vRrOnwtvGx9D5JRRxNgS1mCdHls5tBapn2NoLtFw8ZRxz2zmcY"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-secondary font-display">Alex Johnson</span>
+<span class="text-xs text-text-muted">Chef de Cuisine</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+<header class="h-20 bg-background-light/80 backdrop-blur border-b border-card-border flex items-center justify-between px-8 z-10">
+<div>
+<h1 class="text-3xl font-bold text-secondary">Tableau de bord</h1>
+<p class="text-sm text-text-muted font-light">Bonjour, voici le programme culinaire du jour.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">search</span>
+<input class="pl-10 pr-4 py-2.5 rounded-full bg-white border border-card-border focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-64 text-secondary placeholder-gray-400 transition-all shadow-sm" placeholder="Rechercher commandes, clients..." type="text"/>
+</div>
+<button class="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 text-primary hover:bg-primary/5 transition-colors font-medium text-sm">
+<span class="material-icons text-base">block</span>
+                    Fermer une date
+                </button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-md shadow-orange-500/20 transition-all transform hover:scale-105">
+<span class="material-icons text-base">add</span>
+                    Créer un devis
+                </button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-6 md:p-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="bg-white p-6 rounded-xl border border-card-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons">monetization_on</span>
+</div>
+<div>
+<p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Revenu Mensuel</p>
+<h3 class="text-2xl font-bold text-secondary font-display">42 590 €</h3>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-card-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+<span class="material-icons">pending_actions</span>
+</div>
+<div>
+<p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Devis en Attente</p>
+<h3 class="text-2xl font-bold text-secondary font-display">12</h3>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-card-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons">local_shipping</span>
+</div>
+<div>
+<p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Livraisons du Jour</p>
+<h3 class="text-2xl font-bold text-secondary font-display">4</h3>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-card-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
+<span class="material-icons">star</span>
+</div>
+<div>
+<p class="text-xs text-text-muted uppercase tracking-wider font-semibold">Note Moyenne</p>
+<h3 class="text-2xl font-bold text-secondary font-display">4.9</h3>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-white rounded-xl border border-card-border shadow-sm overflow-hidden">
+<div class="p-6 border-b border-card-border flex justify-between items-center bg-background-light/30">
+<h2 class="text-lg font-bold text-secondary flex items-center gap-2">
+<span class="material-icons text-primary text-xl">bar_chart</span>
+                                Aperçu de la Capacité
+                            </h2>
+<select class="bg-transparent text-sm text-text-muted border-none focus:ring-0 cursor-pointer font-medium hover:text-primary transition-colors">
+<option>Cette Semaine</option>
+<option>Semaine Prochaine</option>
+</select>
+</div>
+<div class="p-6">
+<div class="space-y-5">
+<div class="grid grid-cols-12 gap-4 items-center group">
+<div class="col-span-2 text-sm font-medium text-gray-400 group-hover:text-secondary transition-colors">Lun, 12</div>
+<div class="col-span-9 relative h-3 bg-gray-100 rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-primary/40 rounded-full" style="width: 25%"></div>
+</div>
+<div class="col-span-1 text-xs text-right text-text-muted font-medium">25%</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center group">
+<div class="col-span-2 text-sm font-medium text-gray-400 group-hover:text-secondary transition-colors">Mar, 13</div>
+<div class="col-span-9 relative h-3 bg-gray-100 rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-primary/60 rounded-full" style="width: 45%"></div>
+</div>
+<div class="col-span-1 text-xs text-right text-text-muted font-medium">45%</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center group">
+<div class="col-span-2 text-sm font-medium text-gray-400 group-hover:text-secondary transition-colors">Mer, 14</div>
+<div class="col-span-9 relative h-3 bg-gray-100 rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-primary rounded-full" style="width: 15%"></div>
+</div>
+<div class="col-span-1 text-xs text-right text-text-muted font-medium">15%</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center group">
+<div class="col-span-2 text-sm font-bold text-secondary">Jeu, 15</div>
+<div class="col-span-9 relative h-3 bg-gray-100 rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-primary rounded-full shadow-[0_0_10px_rgba(242,100,25,0.4)]" style="width: 80%"></div>
+</div>
+<div class="col-span-1 text-xs text-right font-bold text-primary">80%</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center group">
+<div class="col-span-2 text-sm font-bold text-secondary">Ven, 16</div>
+<div class="col-span-9 relative h-3 bg-gray-100 rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-red-500 rounded-full" style="width: 100%"></div>
+</div>
+<div class="col-span-1 text-xs text-right font-bold text-red-500">PLEIN</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center group">
+<div class="col-span-2 text-sm font-bold text-secondary">Sam, 17</div>
+<div class="col-span-9 relative h-3 bg-gray-100 rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-red-500 rounded-full" style="width: 95%"></div>
+</div>
+<div class="col-span-1 text-xs text-right font-bold text-red-500">95%</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-card-border shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-card-border flex justify-between items-center bg-background-light/30">
+<h2 class="text-lg font-bold text-secondary flex items-center gap-2">
+<span class="material-icons text-primary text-xl">receipt_long</span>
+                                Commandes à venir
+                            </h2>
+<a class="text-sm text-primary hover:text-primary-dark font-medium border-b border-transparent hover:border-primary transition-all" href="#">Voir tout</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-xs text-text-muted border-b border-card-border bg-gray-50/50">
+<th class="px-6 py-4 font-semibold uppercase tracking-wider font-display text-secondary">Client</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider font-display text-secondary">Événement</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider font-display text-secondary">Date &amp; Heure</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider font-display text-secondary">Couverts</th>
+<th class="px-6 py-4 font-semibold uppercase tracking-wider font-display text-secondary">Statut</th>
+<th class="px-6 py-4"></th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="border-b border-card-border hover:bg-background-light transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold text-xs">TS</div>
+<span class="font-bold text-secondary font-display">Tech Solutions Inc.</span>
+</div>
+</td>
+<td class="px-6 py-4 text-gray-600">Déjeuner d'entreprise</td>
+<td class="px-6 py-4 text-gray-600">Jeu, 15 Oct • 11h30</td>
+<td class="px-6 py-4 text-gray-600">45 pers.</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-xs font-semibold bg-fresh-green/10 text-fresh-green border border-fresh-green/20">Confirmé</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-primary opacity-0 group-hover:opacity-100 transition-all"><span class="material-icons text-lg">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-card-border hover:bg-background-light transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-pink-50 text-pink-600 border border-pink-100 flex items-center justify-center font-bold text-xs">EW</div>
+<span class="font-bold text-secondary font-display">Elena Woods</span>
+</div>
+</td>
+<td class="px-6 py-4 text-gray-600">Réception Mariage</td>
+<td class="px-6 py-4 text-gray-600">Sam, 17 Oct • 16h00</td>
+<td class="px-6 py-4 text-gray-600">120 pers.</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-200">En attente</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-primary opacity-0 group-hover:opacity-100 transition-all"><span class="material-icons text-lg">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-background-light transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold text-xs">GH</div>
+<span class="font-bold text-secondary font-display">Green Hills HOA</span>
+</div>
+</td>
+<td class="px-6 py-4 text-gray-600">BBQ Communautaire</td>
+<td class="px-6 py-4 text-gray-600">Dim, 18 Oct • 12h00</td>
+<td class="px-6 py-4 text-gray-600">80 pers.</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-200">Brouillon</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-primary opacity-0 group-hover:opacity-100 transition-all"><span class="material-icons text-lg">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-white rounded-xl border border-card-border shadow-sm flex flex-col h-[500px]">
+<div class="p-6 border-b border-card-border flex justify-between items-center bg-background-light/30">
+<h2 class="text-lg font-bold text-secondary flex items-center gap-2">
+<span class="material-icons text-primary text-xl">inbox</span>
+                                Messages récents
+                            </h2>
+<span class="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">3 Nouv.</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-3">
+<div class="p-4 bg-white hover:bg-background-light border border-gray-100 hover:border-card-border rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-[#25D366]/10 flex items-center justify-center">
+<span class="material-icons text-[#25D366] text-sm">chat</span>
+</div>
+<span class="text-sm font-bold text-secondary font-display">Sarah Jenkins</span>
+</div>
+<span class="text-[10px] text-text-muted font-medium">il y a 2m</span>
+</div>
+<p class="text-xs text-gray-500 line-clamp-2 pl-9 group-hover:text-secondary transition-colors">Bonjour ! Je voulais savoir si vous avez de la disponibilité pour une baby shower le 24 ?</p>
+</div>
+<div class="p-4 bg-background-light border border-card-border rounded-xl cursor-pointer transition-all shadow-sm group relative">
+<div class="absolute right-2 top-2 w-2 h-2 bg-primary rounded-full"></div>
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[1.5px]">
+<div class="w-full h-full bg-white rounded-full flex items-center justify-center">
+<span class="material-icons text-black text-[10px]">camera_alt</span>
+</div>
+</div>
+<span class="text-sm font-bold text-secondary font-display">@foodie_mike</span>
+</div>
+<span class="text-[10px] text-text-muted font-medium">il y a 1h</span>
+</div>
+<p class="text-xs text-secondary font-medium line-clamp-2 pl-9">Votre dernier post a l'air incroyable ! Faites-vous des services traiteur pour de petits dîners privés ?</p>
+</div>
+<div class="p-4 bg-white hover:bg-background-light border border-gray-100 hover:border-card-border rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
+<span class="material-icons text-blue-500 text-sm">mail</span>
+</div>
+<span class="text-sm font-bold text-secondary font-display">Équipe Événementielle</span>
+</div>
+<span class="text-[10px] text-text-muted font-medium">il y a 3h</span>
+</div>
+<p class="text-xs text-gray-500 line-clamp-2 pl-9 group-hover:text-secondary transition-colors">RE: Devis #4092 - Nous souhaitons procéder avec l'Option B mais devons changer le nombre de végétariens.</p>
+</div>
+<div class="p-4 bg-white/60 hover:bg-background-light border border-gray-100 hover:border-card-border rounded-xl cursor-pointer transition-all shadow-sm group opacity-80">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
+<span class="material-icons text-blue-500 text-sm">mail</span>
+</div>
+<span class="text-sm font-bold text-secondary font-display">Fournisseur : Frais</span>
+</div>
+<span class="text-[10px] text-text-muted font-medium">Hier</span>
+</div>
+<p class="text-xs text-gray-500 line-clamp-2 pl-9">Mise à jour hebdomadaire des prix en pièce jointe. Veuillez noter l'augmentation des prix des avocats.</p>
+</div>
+</div>
+<div class="p-4 border-t border-card-border bg-gray-50/50">
+<button class="w-full py-2 text-sm text-center text-gray-500 hover:text-primary font-medium transition-colors">Aller à la Messagerie</button>
+</div>
+</div>
+<div class="relative rounded-xl overflow-hidden h-40 group shadow-md border border-card-border">
+<img alt="Promo background" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" data-alt="A beautifully plated gourmet dish with vibrant greens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUfdUylzGzLzBshyEBmKXuRANNT_blksrHC4ohCy82tSjbepa5QZtTDKfEVdpPyAuxNvAYtUt_MhefLzEsYGAgIMHvfJrOGIuGtRWQ3NKR_lMZOX2Pgf1VpddXu0KdOGFkk_j37Ui4PrhI6oVT6Hb_r8Y9U5-V2Au5i-g2NdH97rHbKvpla_Hg1WGWjhTMh4MbUx2_Q24o1D1XTAFufoos1Of3Xls9a65LmumXu5t_CiTikaqPZ89HTzQDR_2OWj8QhTy4Y5NTK64"/>
+<div class="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent p-6 flex flex-col justify-end">
+<h3 class="text-white font-display font-bold text-xl mb-1">Menu de Saison</h3>
+<p class="text-xs text-gray-200 mb-3 font-medium">Il est temps de mettre à jour vos offres pour l'Automne ?</p>
+<button class="w-fit px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/40 transition-colors">Mettre à jour le Menu</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

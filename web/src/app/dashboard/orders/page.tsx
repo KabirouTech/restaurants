@@ -1,63 +1,53 @@
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChefHat, FilePenLine, Plus, Search, Eye } from "lucide-react";
+import { ChefHat, Plus } from "lucide-react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
+import { OrdersView } from "@/components/dashboard/orders/OrdersView";
+import { DEFAULT_KANBAN_COLUMNS } from "@/components/dashboard/orders/KanbanBoard";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
-    // 1. Verify Authentication (Cookie Client)
     const supabaseUser = await createServerClient();
     const { data: { user } } = await supabaseUser.auth.getUser();
-
     if (!user) return <div>Non authentifié</div>;
 
-    // 2. Get Organization ID
     const { data: profile } = await supabaseUser.from("profiles").select("organization_id").eq("id", user.id).single();
     if (!profile?.organization_id) return <div>Aucune organisation</div>;
+    const orgId = profile.organization_id;
 
-    // 3. Fetch Orders using Service Role Client (Bypass RLS)
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-            auth: {
-                persistSession: false,
-                autoRefreshToken: false,
-                detectSessionInUrl: false
-            }
-        }
+        { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
     );
 
-    const { data: ordersData, error: ordersError } = await supabaseAdmin
-        .from("orders")
-        .select(`
-            id,
-            created_at,
-            event_date,
-            event_time,
-            status,
-            total_amount_cents,
-            guest_count,
-            customers (full_name, email, phone),
-            capacity_types (name)
-        `)
-        .eq("organization_id", profile.organization_id)
-        .order("created_at", { ascending: false });
-
-    if (ordersError) {
-        console.error("Error fetching orders:", ordersError);
-    }
+    // Fetch orders + org settings (for kanban columns) in parallel
+    const [{ data: ordersData }, { data: org }] = await Promise.all([
+        supabaseAdmin
+            .from("orders")
+            .select(`
+                id, event_date, event_time, status,
+                total_amount_cents, guest_count,
+                customers (full_name, email, phone),
+                capacity_types (name)
+            `)
+            .eq("organization_id", orgId)
+            .order("created_at", { ascending: false }),
+        supabaseAdmin
+            .from("organizations")
+            .select("settings")
+            .eq("id", orgId)
+            .single(),
+    ]);
 
     const orders = ordersData || [];
+    const settings = (org?.settings as Record<string, any>) || {};
+    const kanbanColumns = settings.kanban_columns || DEFAULT_KANBAN_COLUMNS;
 
     return (
-        <div className="min-h-screen p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="min-h-screen p-6 md:p-8 space-y-6 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-6">
                 <div>
@@ -65,14 +55,9 @@ export default async function OrdersPage() {
                         <ChefHat className="h-5 w-5" />
                         <span>Gestion</span>
                     </div>
-                    <h1 className="text-3xl font-bold font-serif text-secondary">
-                        Devis & Commandes
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Gérez vos événements, devis et facturations.
-                    </p>
+                    <h1 className="text-3xl font-bold font-serif text-secondary">Devis & Commandes</h1>
+                    <p className="text-muted-foreground mt-1">Gérez vos événements, devis et facturations.</p>
                 </div>
-
                 <Link href="/dashboard/orders/new">
                     <Button className="bg-primary hover:bg-primary/90 text-white shadow-sm font-medium gap-2">
                         <Plus className="h-4 w-4" /> Nouveau Devis
@@ -80,85 +65,8 @@ export default async function OrdersPage() {
                 </Link>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-4">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Rechercher un client, N° devis..." className="pl-9 bg-background" />
-                </div>
-                {/* Placeholder for status filter */}
-            </div>
-
-            {/* Orders List */}
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-muted/30">
-                        <TableRow>
-                            <TableHead className="w-[100px]">Date</TableHead>
-                            <TableHead>Client</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Statut</TableHead>
-                            <TableHead className="text-right">Montant</TableHead>
-                            <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {orders && orders.length > 0 ? (
-                            orders.map((order: any) => {
-                                const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
-                                const capacityType = Array.isArray(order.capacity_types) ? order.capacity_types[0] : order.capacity_types;
-
-                                return (
-                                    <TableRow key={order.id} className="group hover:bg-muted/5 transition-colors cursor-pointer relative">
-                                        <TableCell className="font-medium">
-                                            <Link href={`/dashboard/orders/${order.id}`} className="absolute inset-0 z-10" aria-label="Voir la commande"></Link>
-                                            <div className="flex flex-col">
-                                                <span>{order.event_date ? format(new Date(order.event_date), "dd MMM yyyy", { locale: fr }) : format(new Date(order.created_at), "dd MMM yyyy", { locale: fr })}</span>
-                                                <span className="text-xs text-muted-foreground">{order.event_time ? order.event_time.slice(0, 5) : (order.event_date ? "Heure à définir" : "Date de création")}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="font-medium text-secondary dark:text-foreground">{customer?.full_name || "Client Inconnu"}</span>
-                                                <span className="text-xs text-muted-foreground">{customer?.email}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/10 dark:bg-secondary/20 text-secondary dark:text-secondary-foreground">
-                                                {capacityType?.name || "Standard"} {order.guest_count ? `(${order.guest_count} pers.)` : ""}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${order.status === 'confirmed' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
-                                                order.status === 'draft' ? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700' :
-                                                    'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800'
-                                                }`}>
-                                                {order.status === 'draft' ? 'Brouillon' :
-                                                    order.status === 'quotation' ? 'Devis Envoyé' :
-                                                        order.status === 'confirmed' ? 'Confirmé' : order.status}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono font-medium">
-                                            {((order.total_amount_cents || 0) / 100).toFixed(2)} €
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" className="group-hover:opacity-100 transition-opacity relative z-20 pointer-events-none">
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                    Aucune commande trouvée. Créez votre premier devis !
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+            {/* Orders view (Kanban default) */}
+            <OrdersView orders={orders as any} kanbanColumns={kanbanColumns} />
         </div>
     );
 }

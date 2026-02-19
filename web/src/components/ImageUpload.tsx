@@ -14,9 +14,12 @@ interface ImageUploadProps {
     defaultValue?: string;
     label?: string;
     folder?: string;
+    onUpload?: (url: string) => void;
 }
 
-export function ImageUpload({ name, defaultValue, label, folder = "uploads" }: ImageUploadProps) {
+
+export function ImageUpload({ name, defaultValue, label, folder = "uploads", onUpload }: ImageUploadProps) {
+
     const [preview, setPreview] = useState<string | null>(defaultValue || null);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,7 +64,9 @@ export function ImageUpload({ name, defaultValue, label, folder = "uploads" }: I
                 .getPublicUrl(fileName);
 
             setPreview(publicUrl);
+            onUpload?.(publicUrl);
             toast.success("Image téléchargée avec succès !");
+
         } catch (error: any) {
             console.error("Upload error:", error);
             toast.error("Erreur lors du téléchargement: " + (error.message || "Erreur inconnue"));
@@ -72,10 +77,10 @@ export function ImageUpload({ name, defaultValue, label, folder = "uploads" }: I
 
     const handleRemove = () => {
         setPreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        onUpload?.("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
+
 
     return (
         <div className="space-y-2">

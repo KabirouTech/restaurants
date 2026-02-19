@@ -28,13 +28,12 @@ export default function LandingPage() {
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
                         <Link href="#features" className="hover:text-primary transition-colors">Fonctionnalités</Link>
                         <Link href="#testimonials" className="hover:text-primary transition-colors">Témoignages</Link>
-                        <Link href="#pricing" className="hover:text-primary transition-colors">Tarifs</Link>
+                        <Link href="/auth/login" className="px-6 py-2 text-primary hover:text-primary/80 font-medium transition-colors">
+                            Connexion
+                        </Link>
                     </nav>
 
                     <div className="flex items-center gap-4">
-                        <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
-                            Connexion
-                        </Link>
                         <Link href="/auth/signup">
                             <Button className="rounded-full bg-primary hover:bg-primary/90 text-white font-medium px-6 py-2 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
                                 Essai Gratuit

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +32,6 @@ type Product = {
 type CapacityType = {
     id: string;
     name: string;
-    description: string;
 };
 
 type Customer = {
@@ -213,10 +213,17 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
 
                         {/* Capacity Type */}
                         <div className="space-y-2">
-                            <Label>Type de Prestation</Label>
-                            <Select value={capacityTypeId} onValueChange={setCapacityTypeId}>
+                            <div className="flex justify-between items-center">
+                                <Label>Type de Prestation</Label>
+                                {capacityTypes.length === 0 && (
+                                    <span className="text-xs text-red-500 font-medium animate-pulse">
+                                        <Link href="/dashboard/settings?tab=capacity" className="underline hover:text-red-700">Aucun type trouvé. Configurer ?</Link>
+                                    </span>
+                                )}
+                            </div>
+                            <Select value={capacityTypeId} onValueChange={setCapacityTypeId} disabled={capacityTypes.length === 0}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Mariage, Livraison..." />
+                                    <SelectValue placeholder={capacityTypes.length === 0 ? "Aucun type (Voir Paramètres)" : "Mariage, Livraison..."} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {capacityTypes.map(ct => (
@@ -224,6 +231,7 @@ export function CreateOrderForm({ products, capacityTypes, customers }: CreateOr
                                     ))}
                                 </SelectContent>
                             </Select>
+
                         </div>
 
                         {/* Guest Count */}

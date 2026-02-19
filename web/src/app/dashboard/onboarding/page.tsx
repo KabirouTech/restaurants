@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, ChefHat, Plus, Trash2, Utensils, Check, Calendar } from "lucide-react";
 import { createOrganizationAction } from "@/actions/onboarding";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function OnboardingWizard() {
     const [step, setStep] = useState(1);
@@ -41,7 +42,7 @@ export default function OnboardingWizard() {
 
         const res = await createOrganizationAction(data);
         if (res.error) {
-            alert("Erreur: " + res.error);
+            toast.error("Erreur lors de la création : " + res.error);
             setLoading(false);
         } else {
             router.push("/dashboard");

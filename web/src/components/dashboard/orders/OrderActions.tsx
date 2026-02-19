@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Printer, Mail, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -15,37 +16,57 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Import Textarea
+import { Textarea } from "@/components/ui/textarea";
 import { sendOrderEmailAction } from "@/actions/email";
+import { updateOrderStatusAction } from "@/actions/kanban";
 
-export function OrderActions({ orderId, customerEmail }: { orderId: string, customerEmail?: string }) {
+
+export function OrderActions({
+    orderId,
+    customerEmail,
+    currentStatus,
+}: {
+    orderId: string;
+    customerEmail?: string;
+    currentStatus?: string;
+}) {
+    const router = useRouter();
     const [email, setEmail] = useState(customerEmail || "");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
 
-    const handleSendEmail = async () => {
-        if (!email) {
-            toast.error("Veuillez entrer une adresse email");
-            return;
+    /** Move to "quotation" only if still in draft */
+    const promoteToQuotation = async () => {
+        if (currentStatus === "draft") {
+            await updateOrderStatusAction(orderId, "quotation");
+            router.refresh();
         }
+    };
 
-        setLoading(true);
+    const handleSendEmail = async () => {
+        if (!email) { toast.error("Veuillez entrer une adresse email"); return; }
         setLoading(true);
         try {
-            const result = await sendOrderEmailAction(orderId, email, message); // Pass message
+            const result = await sendOrderEmailAction(orderId, email, message);
             if (result.error) {
                 toast.error(result.error || "Erreur lors de l'envoi");
             } else {
                 toast.success("Email envoyé avec succès !");
                 setOpen(false);
-                setMessage(""); // Reset message
+                setMessage("");
+                await promoteToQuotation(); // ← move to quotation
             }
-        } catch (error) {
+        } catch {
             toast.error("Erreur inattendue");
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePrint = async () => {
+        await promoteToQuotation(); // ← move to quotation before printing
+        window.print();
     };
 
     return (
@@ -100,7 +121,10 @@ export function OrderActions({ orderId, customerEmail }: { orderId: string, cust
                 </DialogContent>
             </Dialog>
 
-            <Button className="bg-primary text-white gap-2" onClick={() => window.print()}>
+            <Button
+                className="bg-primary text-white gap-2"
+                onClick={handlePrint}
+            >
                 <Printer className="h-4 w-4" /> Imprimer / PDF
             </Button>
         </div>

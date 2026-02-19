@@ -3,65 +3,64 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Hero } from "@/components/storefront/Hero";
 import { MenuSection } from "@/components/storefront/MenuSection";
+import { AboutSection } from "@/components/storefront/AboutSection";
+import { ServicesSection } from "@/components/storefront/ServicesSection";
+import { GallerySection } from "@/components/storefront/GallerySection";
+import { TestimonialsSection } from "@/components/storefront/TestimonialsSection";
+import { ContactSection } from "@/components/storefront/ContactSection";
 import { StorefrontHeader } from "@/components/storefront/Header";
 import { StorefrontFooter } from "@/components/storefront/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { CartDrawer } from "@/components/storefront/CartDrawer";
 import { CartFloatingButton } from "@/components/storefront/CartFloatingButton";
-import { BookingWidget } from "@/components/storefront/BookingWidget";
-import { LocationWidget } from "@/components/storefront/LocationWidget";
-import { CurrentOrderWidget } from "@/components/storefront/CurrentOrderWidget";
-import { ShoppingBasket } from "lucide-react";
+import { DEFAULT_SECTIONS } from "@/lib/storefront-types";
+import type { StorefrontSection } from "@/lib/storefront-types";
 
-// Force dynamic if needed, but ISR/Static is better for storefronts.
 export const dynamic = "force-dynamic";
 
-type Props = {
-    params: Promise<{ slug: string }>
-};
+type Props = { params: Promise<{ slug: string }> };
 
 async function getOrganization(slug: string) {
     const supabase = await createClient();
     const { data, error } = await supabase
-        .from("organizations")
-        .select("*")
-        .eq("slug", slug)
-        .single();
-
+        .from("organizations").select("*").eq("slug", slug).single();
     if (error || !data) return null;
     return data;
 }
 
 async function getProducts(orgId: string) {
     const supabase = await createClient();
-    const { data: products } = await supabase
-        .from("products")
-        .select("*")
+    const { data } = await supabase
+        .from("products").select("*")
         .eq("organization_id", orgId)
         .eq("is_active", true);
-
-    return products || [];
+    return data || [];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
     const org = await getOrganization(slug);
     if (!org) return { title: "Restaurant non trouvé" };
+    const s = (org.settings || {}) as Record<string, any>;
 
     return {
-        title: `${org.name} - Carte & Menu`,
-        description: `Découvrez la carte de ${org.name}. Commandez en ligne pour vos événements.`,
+        title: s.meta_title || `${org.name} – Carte & Événements`,
+        description: s.meta_description || s.description ||
+            `Découvrez la carte de ${org.name}. Traiteur, événements et commandes en ligne.`,
+        openGraph: {
+            title: s.meta_title || org.name,
+            description: s.meta_description || s.description,
+            images: s.hero_image ? [{ url: s.hero_image }] : [],
+        },
     };
 }
 
-// Helper to convert Hex to HSL for Tailwind variable injection
 function hexToHsl(hex: string): string | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return null;
-    let r = parseInt(result[1], 16);
-    let g = parseInt(result[2], 16);
-    let b = parseInt(result[3], 16);
-    r /= 255; g /= 255; b /= 255;
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
     let h = 0, s = 0, l = (max + min) / 2;
     if (max !== min) {
@@ -74,50 +73,81 @@ function hexToHsl(hex: string): string | null {
         }
         h /= 6;
     }
-    // Return space delimited values for Tailwind
     return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
+
+const SECTION_COMPONENTS: Record<string, React.ComponentType<{ settings: any; products?: any[] }>> = {
+    about: AbouWrap,
+    services: ServicesWrap,
+    gallery: GalleryWrap,
+    testimonials: TestimonialsWrap,
+    contact: ContactWrap,
+};
+
+// Thin wrappers to match generic signature
+function AbouWrap({ settings }: { settings: any }) { return <AboutSection settings={settings} />; }
+function ServicesWrap({ settings }: { settings: any }) { return <ServicesSection settings={settings} />; }
+function GalleryWrap({ settings }: { settings: any }) { return <GallerySection settings={settings} />; }
+function TestimonialsWrap({ settings }: { settings: any }) { return <TestimonialsSection settings={settings} />; }
+function ContactWrap({ settings }: { settings: any }) { return <ContactSection settings={settings} />; }
 
 export default async function StorefrontPage({ params }: Props) {
     const { slug } = await params;
     const org = await getOrganization(slug);
-
-    if (!org) {
-        notFound();
-    }
+    if (!org) notFound();
 
     const products = await getProducts(org.id);
-    const primaryHsl = org.settings?.primary_color ? hexToHsl(org.settings.primary_color) : null;
+    const s = (org.settings || {}) as Record<string, any>;
+    const primaryHsl = s.primary_color ? hexToHsl(s.primary_color) : null;
+
+    // Resolve sections: merge saved config with defaults so new defaults appear
+    const savedSections: StorefrontSection[] = s.sections || [];
+    const sections: StorefrontSection[] = DEFAULT_SECTIONS.map((def) => {
+        const saved = savedSections.find((sec) => sec.id === def.id);
+        return saved ? { ...def, ...saved } : def;
+    });
+
+    const enabledSections = sections.filter((sec) => sec.enabled);
+
+    // Enrich settings with org_id so client components (e.g. ContactSection) can use it
+    const settingsWithOrgId = { ...(org.settings || {}), org_id: org.id };
+
 
     return (
         <CartProvider>
             <div
-                className="min-h-screen flex flex-col font-sans bg-background text-foreground selection:bg-primary/30 relative"
+                className="min-h-screen flex flex-col font-sans bg-background text-foreground selection:bg-primary/30"
                 style={primaryHsl ? { "--primary": primaryHsl } as React.CSSProperties : {}}
             >
-                <StorefrontHeader orgName={org.name} />
+                <StorefrontHeader orgName={org.name} settings={org.settings} sections={sections} />
 
-                <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 w-full">
-                    <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-start">
+                {/* Hero — constrained with side margins, not full-bleed */}
+                <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-28 pb-4">
+                    <Hero orgName={org.name} settings={org.settings} />
+                </div>
 
-                        {/* LEFT COLUMN (Content) */}
-                        <div className="lg:col-span-8 space-y-12">
-                            <Hero orgName={org.name} settings={org.settings} />
 
-                            <MenuSection products={products} />
-                        </div>
-
-                        {/* RIGHT COLUMN (Sidebar) */}
-                        <div className="hidden lg:block lg:col-span-4 mt-12 lg:mt-0 space-y-8 sticky top-24">
-                            <BookingWidget />
-
-                            {/* Current Order (Dynamic Cart) */}
-                            <CurrentOrderWidget />
-
-                            <LocationWidget address={org.settings?.contact_address} />
-                        </div>
-
+                {/* Dynamic sections */}
+                <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-0 divide-y divide-border/30">
+                    {/* Menu is always present */}
+                    <div className="py-0">
+                        <MenuSection products={products} />
                     </div>
+
+                    {/* Remaining enabled sections */}
+                    {enabledSections
+                        .filter((sec) => sec.id !== "menu")
+                        .map((sec) => {
+                            const Component = SECTION_COMPONENTS[sec.id];
+                            if (!Component) return null;
+                            return (
+                                <div key={sec.id}>
+                                    <Component settings={settingsWithOrgId} products={products} />
+                                </div>
+                            );
+                        })
+                    }
+
                 </main>
 
                 <StorefrontFooter orgName={org.name} settings={org.settings} />

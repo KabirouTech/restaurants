@@ -8,6 +8,7 @@
 
     /* Backgrounds: Warm Millet/Rice White */
     --background: 40 40% 98%;
+    /* Stitch Secondary is our Foreground (Deep Brown) */
     --foreground: 24 30% 12%;
     /* Deep Earth Brown/Coffee */
 
@@ -25,12 +26,13 @@
 
     /* Secondary: Deep Bissap / Terra Cotta */
     /* Rich Carmine: HSL(345, 60%, 40%) */
-    --secondary: 345 50% 40%;
+    /* Secondary: Deep Brown (Stitch Secondary) */
+    --secondary: 24 30% 12%;
     --secondary-foreground: 0 0% 98%;
 
     /* Muted: Sand / Dry Landscape */
     --muted: 36 25% 92%;
-    --muted-foreground: 36 10% 45%;
+    --muted-foreground: 25 10% 55%;
 
     /* Accents: Fresh Green (Okra/Mafe) */
     --accent: 85 55% 45%;
@@ -39,7 +41,7 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 36 20% 88%;
+    --border: 40 30% 85%;
     --input: 36 20% 88%;
     --ring: 24 95% 53%;
 

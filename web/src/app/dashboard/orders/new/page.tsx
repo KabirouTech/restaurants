@@ -26,7 +26,7 @@ export default async function NewOrderPage() {
     // 2. Fetch Capacity Types
     const { data: capacityTypes } = await supabase
         .from("capacity_types")
-        .select("id, name, description")
+        .select("id, name")
         .eq("organization_id", orgId);
 
     // 3. Fetch Customers (Limit 50 for now, or implement async search later)

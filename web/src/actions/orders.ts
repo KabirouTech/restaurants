@@ -47,21 +47,25 @@ export async function createOrderAction(formData: any) {
         if (!customerId) throw new Error("Client requis");
 
         // 2. Create Order
+        const eventTime = formData.eventTime || null;
+        const guestCount = parseInt(formData.guestCount) || null;
+
         const { data: order, error: orderError } = await supabase
             .from("orders")
             .insert({
                 organization_id: orgId,
                 customer_id: customerId,
                 event_date: formData.eventDate,
-                event_time: formData.eventTime,
-                guest_count: parseInt(formData.guestCount),
+                event_time: eventTime,
+                guest_count: guestCount,
                 capacity_type_id: formData.capacityTypeId,
-                status: "draft", // Starts as draft
+                status: "draft",
                 total_amount_cents: formData.totalAmountCents,
-                internal_notes: formData.internalNotes
+                internal_notes: formData.internalNotes || null,
             })
             .select()
             .single();
+
 
         if (orderError) throw new Error("Erreur création commande: " + orderError.message);
 

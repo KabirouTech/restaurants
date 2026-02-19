@@ -81,7 +81,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
                 {/* Client Component for Actions */}
                 <div className="flex gap-2">
-                    <OrderActions orderId={order.id} customerEmail={customer?.email} />
+                    <OrderActions orderId={order.id} customerEmail={customer?.email} currentStatus={order.status} />
+
                     {/* Could add Edit button linking to /edit later */}
                 </div>
             </div>

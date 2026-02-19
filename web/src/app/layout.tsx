@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-dm" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
@@ -19,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${dmSans.variable} ${playfair.variable}`} suppressHydrationWarning>
-      <body className="font-[family-name:var(--font-dm)] antialiased bg-background text-foreground min-h-screen">
+    <html lang="fr" className={`${inter.variable} ${dmSans.variable} ${outfit.variable} ${playfair.variable}`} suppressHydrationWarning>
+      <body className="font-outfit antialiased bg-background text-foreground min-h-screen">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -12,7 +12,7 @@ export function Hero({ orgName, settings }: { orgName: string, settings?: any })
     const description = settings?.description || "Des saveurs authentiques créées avec passion. Découvrez nos plateaux primés conçus pour le partage.";
 
     return (
-        <div className="relative rounded-2xl overflow-hidden shadow-xl group h-[400px] w-full">
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl group h-[480px] sm:h-[520px] w-full ring-1 ring-black/5">
             <Image
                 src={heroImage}
                 alt={title}
