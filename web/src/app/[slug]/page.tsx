@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Hero } from "@/components/storefront/Hero";
@@ -20,8 +20,16 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
+function getAdminClient() {
+    return createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { persistSession: false } }
+    );
+}
+
 async function getOrganization(slug: string) {
-    const supabase = await createClient();
+    const supabase = getAdminClient();
     const { data, error } = await supabase
         .from("organizations").select("*").eq("slug", slug).single();
     if (error || !data) return null;
@@ -29,7 +37,7 @@ async function getOrganization(slug: string) {
 }
 
 async function getProducts(orgId: string) {
-    const supabase = await createClient();
+    const supabase = getAdminClient();
     const { data } = await supabase
         .from("products").select("*")
         .eq("organization_id", orgId)

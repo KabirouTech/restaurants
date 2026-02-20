@@ -46,6 +46,7 @@ export type KanbanOrder = {
 // ─── Default columns (can be overridden from settings) ────────────────────────
 
 export const DEFAULT_KANBAN_COLUMNS: KanbanColumn[] = [
+    { id: "pending", label: "Reçu du Frontstore", color: "#F97316" },
     { id: "draft", label: "Brouillon", color: "#94A3B8" },
     { id: "quotation", label: "Devis Envoyé", color: "#60A5FA" },
     { id: "confirmed", label: "Confirmé", color: "#34D399" },

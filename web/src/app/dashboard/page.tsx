@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { format, addDays, startOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, addDays, addWeeks, subWeeks, startOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Search,
@@ -17,12 +17,18 @@ import {
   Receipt,
   MoreVertical,
   MessageSquare,
-  ChevronDown
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/currencies";
+import { CapacityFilter } from "@/components/dashboard/CapacityFilter";
+import { RevenueFilter } from "@/components/dashboard/RevenueFilter";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ capacityRange?: string; revenueRange?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient(); // Standard client for auth
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -54,10 +60,35 @@ export default async function DashboardPage() {
 
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
-  const monthStart = format(startOfMonth(today), "yyyy-MM-dd");
-  const monthEnd = format(endOfMonth(today), "yyyy-MM-dd");
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const weekDates = Array.from({ length: 6 }).map((_, i) => addDays(weekStart, i));
+
+  // Revenue date range
+  const revenueRange = params.revenueRange || "this-month";
+  let revenueStart: string;
+  let revenueEnd: string;
+  if (revenueRange === "last-month") {
+    const lastMonth = subMonths(today, 1);
+    revenueStart = format(startOfMonth(lastMonth), "yyyy-MM-dd");
+    revenueEnd = format(endOfMonth(lastMonth), "yyyy-MM-dd");
+  } else if (revenueRange === "this-week") {
+    const ws = startOfWeek(today, { weekStartsOn: 1 });
+    revenueStart = format(ws, "yyyy-MM-dd");
+    revenueEnd = format(addDays(ws, 6), "yyyy-MM-dd");
+  } else {
+    revenueStart = format(startOfMonth(today), "yyyy-MM-dd");
+    revenueEnd = format(endOfMonth(today), "yyyy-MM-dd");
+  }
+
+  // Capacity date range
+  const capacityRange = params.capacityRange || "this-week";
+  let baseWeekStart: Date;
+  if (capacityRange === "next-week") {
+    baseWeekStart = addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1);
+  } else if (capacityRange === "last-week") {
+    baseWeekStart = subWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1);
+  } else {
+    baseWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+  }
+  const weekDates = Array.from({ length: 6 }).map((_, i) => addDays(baseWeekStart, i));
   const weekStartStr = format(weekDates[0], "yyyy-MM-dd");
   const weekEndStr = format(weekDates[5], "yyyy-MM-dd");
 
@@ -132,9 +163,10 @@ export default async function DashboardPage() {
   const settings = (org?.settings as Record<string, any>) || {};
   const currency = settings.currency || "EUR";
 
-  // Revenue: current month only, exclude cancelled/draft
+  // Revenue: only count confirmed/completed orders (exclude drafts, quotes, pending, cancelled)
+  const REVENUE_STATUSES = ['confirmed', 'in_progress', 'completed', 'delivered', 'preparing'];
   const monthlyRevenue = allOrders
-    ?.filter(o => o.event_date >= monthStart && o.event_date <= monthEnd && o.status !== 'cancelled')
+    ?.filter(o => o.event_date >= revenueStart && o.event_date <= revenueEnd && REVENUE_STATUSES.includes(o.status))
     .reduce((acc, curr) => acc + (curr.total_amount_cents || 0), 0) || 0;
 
   // Pending quotes
@@ -237,7 +269,10 @@ export default async function DashboardPage() {
               <DollarSign className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Revenu Mensuel</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Revenu</p>
+                <RevenueFilter />
+              </div>
               <h3 className="text-2xl font-bold text-foreground font-serif">{formatPrice(monthlyRevenue, currency)}</h3>
             </div>
           </div>
@@ -287,9 +322,7 @@ export default async function DashboardPage() {
                   <BarChart className="text-primary h-5 w-5" />
                   Aperçu de la Capacité
                 </h2>
-                <div className="flex items-center text-sm text-muted-foreground font-medium hover:text-primary cursor-pointer transition-colors">
-                  Cette Semaine <ChevronDown className="h-4 w-4 ml-1" />
-                </div>
+                <CapacityFilter />
               </div>
               <div className="p-6">
                 <div className="space-y-5">

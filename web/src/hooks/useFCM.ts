@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { initMessaging } from "@/lib/firebase";
 import { getToken, onMessage } from "firebase/messaging";
 import { toast } from "sonner";
+import { saveTokenAction } from "@/actions/notifications";
 
 export function useFCM() {
     const [token, setToken] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export function useFCM() {
                 if (currentToken) {
                     console.log("[FCM] Token generated:", currentToken);
                     setToken(currentToken);
-                    // TODO: Send this token to your backend to associate with the user
+                    await saveTokenAction(currentToken);
                 } else {
                     console.log("[FCM] No registration token available. Request permission to generate one.");
                 }

@@ -2,6 +2,7 @@
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { sendPushNotification } from "@/lib/firebase-admin";
 
 interface ContactFormPayload {
     orgId: string;
@@ -124,6 +125,31 @@ export async function submitContactFormAction(payload: ContactFormPayload) {
 
         if (msgError) {
             return { error: "Message non enregistré: " + msgError.message };
+        }
+
+        // 6. Send push notifications to org members with FCM tokens
+        try {
+            const { data: profiles } = await supabase
+                .from("profiles")
+                .select("fcm_token")
+                .eq("organization_id", payload.orgId)
+                .not("fcm_token", "is", null);
+
+            if (profiles && profiles.length > 0) {
+                const preview = payload.message.slice(0, 100);
+                await Promise.allSettled(
+                    profiles.map((p) =>
+                        sendPushNotification(
+                            p.fcm_token!,
+                            `Nouveau message de ${payload.name}`,
+                            preview,
+                            { url: "/dashboard/inbox" }
+                        )
+                    )
+                );
+            }
+        } catch {
+            // Push failure should not break the contact form
         }
 
         revalidatePath("/dashboard/inbox");
