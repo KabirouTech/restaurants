@@ -45,13 +45,13 @@ function getInitials(name: string) {
 }
 
 const AVATAR_COLORS = [
-    "bg-orange-100 text-orange-700",
-    "bg-violet-100 text-violet-700",
-    "bg-cyan-100 text-cyan-700",
-    "bg-emerald-100 text-emerald-700",
-    "bg-rose-100 text-rose-700",
-    "bg-amber-100 text-amber-700",
-    "bg-blue-100 text-blue-700",
+    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
+    "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
 ];
 function avatarColor(name: string) {
     let hash = 0;
@@ -192,7 +192,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 <>
                     {/* ── LIST / TABLE VIEW ─────────────────────────────────── */}
                     {view === "list" && (
-                        <div className="rounded-md border bg-white shadow-sm animate-in fade-in duration-300">
+                        <div className="rounded-md border bg-card shadow-sm animate-in fade-in duration-300">
                             <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
                                 <Table>
                                     <TableHeader>

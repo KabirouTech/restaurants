@@ -126,7 +126,7 @@ export default function SignupPage() {
                     <blockquote className="text-xl font-medium font-serif italic mb-4">
                         "La cuisine, c'est de l'art. L'organisation, c'est Restaurant OS."
                     </blockquote>
-                    <cite className="not-italic text-sm text-gray-300 font-medium">— Cheikh N., Traiteur à Dakar</cite>
+                    <cite className="not-italic text-sm text-white/70 font-medium">— Cheikh N., Traiteur à Dakar</cite>
                 </div>
             </div>
 

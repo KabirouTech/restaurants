@@ -94,7 +94,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
             <div className="flex flex-col h-screen bg-background text-foreground animate-in fade-in duration-500 overflow-hidden">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-border bg-white shadow-sm shrink-0 z-10">
+                <div className="flex items-center justify-between p-6 border-b border-border bg-card shadow-sm shrink-0 z-10">
                     <div>
                         <h1 className="text-2xl font-bold font-serif text-foreground capitalize flex items-center gap-2">
                             {format(viewDate, "MMMM yyyy", { locale: fr })}

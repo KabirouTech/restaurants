@@ -49,7 +49,7 @@ export function ConfirmDialog({
                             </div>
                         )}
                         <div>
-                            <AlertDialogTitle className="text-base font-semibold text-secondary">
+                            <AlertDialogTitle className="text-base font-semibold text-foreground">
                                 {title}
                             </AlertDialogTitle>
                             <AlertDialogDescription className="mt-1 text-sm text-muted-foreground leading-relaxed">
@@ -61,7 +61,7 @@ export function ConfirmDialog({
 
                 {/* Footer */}
                 <AlertDialogFooter className="px-6 py-4 bg-muted/30 border-t border-border flex-row justify-end gap-2">
-                    <AlertDialogCancel className="mt-0 h-9 px-4 text-sm font-medium border-border text-secondary hover:bg-muted/50">
+                    <AlertDialogCancel className="mt-0 h-9 px-4 text-sm font-medium border-border text-foreground hover:bg-muted/50">
                         {cancelLabel}
                     </AlertDialogCancel>
                     <AlertDialogAction

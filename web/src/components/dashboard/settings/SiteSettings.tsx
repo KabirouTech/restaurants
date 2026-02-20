@@ -158,7 +158,7 @@ function TestimonialsEditor({ testimonials, onChange }: {
                             {[1, 2, 3, 4, 5].map((n) => (
                                 <button key={n} type="button" onClick={() => update(t.id, "rating", n)}>
                                     <Star className="h-4 w-4" fill={n <= t.rating ? "currentColor" : "none"}
-                                        style={{ color: n <= t.rating ? "var(--primary)" : "#d1d5db" }} />
+                                        style={{ color: n <= t.rating ? "hsl(var(--primary))" : "hsl(var(--border))" }} />
                                 </button>
                             ))}
                         </div>
@@ -500,10 +500,10 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                     {/* Monitor Bezel */}
                     <div className="relative bg-zinc-900 p-3 rounded-2xl shadow-2xl border border-zinc-700 z-10">
                         {/* Screen Area (16:10 Aspect Ratio) */}
-                        <div className="relative aspect-[16/10] w-full bg-white rounded-md overflow-hidden ring-1 ring-white/10 group">
+                        <div className="relative aspect-[16/10] w-full bg-background rounded-md overflow-hidden ring-1 ring-white/10 group">
 
                             {/* Browser Header / OS Bar */}
-                            <div className="h-6 bg-zinc-100 border-b flex items-center px-3 gap-2 sticky top-0 z-50">
+                            <div className="h-6 bg-muted border-b flex items-center px-3 gap-2 sticky top-0 z-50">
                                 <div className="flex gap-1.5 opacity-60">
                                     <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
                                     <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
@@ -515,7 +515,7 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                             </div>
 
                             {/* Scaled Content Container */}
-                            <div className="w-full h-[calc(100%-24px)] overflow-hidden bg-white">
+                            <div className="w-full h-[calc(100%-24px)] overflow-hidden bg-background">
                                 <div className="w-[200%] h-[200%] origin-top-left transform scale-[0.5] overflow-y-auto no-scrollbar">
                                     <CartProvider>
                                         <div className="min-h-full bg-background font-sans text-foreground pb-20">

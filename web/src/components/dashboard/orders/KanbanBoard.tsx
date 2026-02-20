@@ -62,7 +62,7 @@ function OrderCard({ order, isDragging = false, currency }: { order: KanbanOrder
 
     return (
         <div className={cn(
-            "bg-white rounded-xl border border-border p-3.5 shadow-sm group transition-all",
+            "bg-card rounded-xl border border-border p-3.5 shadow-sm group transition-all",
             isDragging ? "shadow-xl rotate-1 opacity-90 scale-105 cursor-grabbing" : "hover:shadow-md cursor-grab"
         )}>
             {/* Client */}

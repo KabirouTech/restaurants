@@ -36,7 +36,7 @@ export function Hero({ orgName, settings }: { orgName: string, settings?: any })
                 </p>
 
                 <Button
-                    className="bg-white !text-gray-900 hover:bg-primary hover:!text-white rounded-lg font-semibold font-sans transition-colors gap-2 animate-in fade-in zoom-in duration-500 delay-300"
+                    className="bg-card !text-foreground hover:bg-primary hover:!text-white rounded-lg font-semibold font-sans transition-colors gap-2 animate-in fade-in zoom-in duration-500 delay-300"
                     size="lg"
                     onClick={() => {
                         const menu = document.getElementById("menu");

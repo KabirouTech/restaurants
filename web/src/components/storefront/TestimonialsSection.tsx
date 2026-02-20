@@ -36,7 +36,7 @@ export function TestimonialsSection({ settings }: TestimonialsSectionProps) {
                                     key={i}
                                     className="h-4 w-4"
                                     fill={i < t.rating ? "currentColor" : "none"}
-                                    style={{ color: i < t.rating ? "var(--primary)" : "#d1d5db" }}
+                                    style={{ color: i < t.rating ? "hsl(var(--primary))" : "hsl(var(--border))" }}
                                 />
                             ))}
                         </div>

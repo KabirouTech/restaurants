@@ -28,7 +28,7 @@ export default async function CustomersPage() {
     return (
         <div className="h-screen flex flex-col bg-muted/10 animate-in fade-in duration-500 overflow-hidden">
             {/* Header */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-white shadow-sm shrink-0">
+            <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card shadow-sm shrink-0">
                 <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
                     <h1 className="text-xl font-bold font-serif text-foreground">Clients</h1>

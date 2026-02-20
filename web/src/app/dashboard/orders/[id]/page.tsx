@@ -89,7 +89,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
 
             {/* Quote / Invoice Paper */}
-            <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden print:shadow-none print:max-w-none print:rounded-none print:w-full">
+            <div className="max-w-4xl mx-auto bg-card shadow-xl rounded-xl overflow-hidden print:shadow-none print:max-w-none print:rounded-none print:w-full">
 
                 {/* Header */}
                 <div className="p-8 border-b border-border flex justify-between items-start bg-secondary text-white print:text-black print:bg-transparent print:border-b-2 print:border-black print:p-0 print:mb-8 text-black">
@@ -200,7 +200,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
 
             {/* Platform Footer for Print Only */}
-            <div className="hidden print:block text-center mt-12 text-[10px] text-gray-400 font-mono">
+            <div className="hidden print:block text-center mt-12 text-[10px] text-muted-foreground font-mono">
                 Propulsé par Restaurant OS
             </div>
         </div>

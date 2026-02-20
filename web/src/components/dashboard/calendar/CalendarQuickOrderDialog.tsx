@@ -272,7 +272,7 @@ export function CalendarQuickOrderDialog({
                         <div className="p-3 border-b border-border space-y-2 shrink-0">
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="Rechercher un plat..." className="pl-9 h-9 bg-white text-sm" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} />
+                                <Input placeholder="Rechercher un plat..." className="pl-9 h-9 bg-card text-sm" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} />
                             </div>
                             <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
                                 {categories.map((cat) => (
@@ -283,7 +283,7 @@ export function CalendarQuickOrderDialog({
                                             "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition-colors shrink-0",
                                             categoryFilter === cat
                                                 ? "bg-secondary text-white border-secondary"
-                                                : "bg-white text-muted-foreground border-border hover:bg-muted"
+                                                : "bg-card text-muted-foreground border-border hover:bg-muted"
                                         )}
                                     >
                                         {cat}
@@ -306,7 +306,7 @@ export function CalendarQuickOrderDialog({
                                             "flex items-center justify-between gap-2 p-2.5 rounded-lg cursor-pointer transition-all border",
                                             inCart
                                                 ? "bg-primary/5 border-primary/30"
-                                                : "bg-white border-transparent hover:border-border hover:bg-white"
+                                                : "bg-card border-transparent hover:border-border hover:bg-card"
                                         )}
                                     >
                                         <div className="flex-1 min-w-0">

@@ -164,7 +164,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
             <div className="lg:col-span-2 flex flex-col gap-6 overflow-y-auto pr-2">
 
                 {/* 1. Client & Details */}
-                <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-4">
+                <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
                     <h3 className="font-serif text-lg font-bold text-foreground border-b pb-2 mb-4">Informations Client & Événement</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -255,7 +255,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                 </div>
 
                 {/* 2. Cart Summary */}
-                <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex-1 flex flex-col">
+                <div className="bg-card p-6 rounded-xl border border-border shadow-sm flex-1 flex flex-col">
                     <h3 className="font-serif text-lg font-bold text-foreground border-b pb-2 mb-4 flex justify-between items-center">
                         <span>Détail de la commande</span>
                         <span className="text-sm font-sans font-medium text-muted-foreground">{cart.length} articles</span>
@@ -316,7 +316,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
             </div>
 
             {/* Right Column: Menu Selector */}
-            <div className="lg:col-span-1 h-full overflow-hidden flex flex-col rounded-xl border border-border bg-white shadow-sm">
+            <div className="lg:col-span-1 h-full overflow-hidden flex flex-col rounded-xl border border-border bg-card shadow-sm">
                 <div className="p-3 bg-secondary text-white font-serif font-bold text-center">
                     Carte & Menu
                 </div>

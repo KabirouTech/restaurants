@@ -189,7 +189,7 @@ export function ImportCustomersDialog({ open, onOpenChange }: {
                         </div>
 
                         {/* Rows preview */}
-                        <div className="max-h-64 overflow-y-auto rounded-lg border bg-white text-xs">
+                        <div className="max-h-64 overflow-y-auto rounded-lg border bg-card text-xs">
                             <table className="w-full">
                                 <thead className="bg-muted/50 sticky top-0">
                                     <tr>
@@ -204,7 +204,7 @@ export function ImportCustomersDialog({ open, onOpenChange }: {
                                     {rows.map((row, i) => (
                                         <tr key={i} className={cn(
                                             "border-t border-border/50",
-                                            !row._valid && "opacity-50 bg-red-50"
+                                            !row._valid && "opacity-50 bg-red-50 dark:bg-red-900/20"
                                         )}>
                                             <td className="px-3 py-2">
                                                 {row._valid

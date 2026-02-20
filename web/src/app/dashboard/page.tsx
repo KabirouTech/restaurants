@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { format, addDays, startOfWeek } from "date-fns";
+import { format, addDays, startOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Search,
@@ -12,16 +12,15 @@ import {
   DollarSign,
   FileText,
   Truck,
-  Star,
+  Users,
   BarChart,
   Receipt,
   MoreVertical,
   MessageSquare,
-  Camera,
-  Mail,
   ChevronDown
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { formatPrice } from "@/lib/currencies";
 
 export default async function DashboardPage() {
   const supabase = await createClient(); // Standard client for auth
@@ -53,38 +52,147 @@ export default async function DashboardPage() {
     { auth: { persistSession: false } }
   );
 
-  // 1. Fetch Orders Stats
-  const { count: orderCount, data: revenueData } = await supabaseAdmin
-    .from("orders")
-    .select("total_amount_cents, status", { count: "exact" })
-    .eq("organization_id", orgId);
-
-  const totalRevenue = revenueData?.reduce((acc, curr) => acc + (curr.total_amount_cents || 0), 0) || 0;
-  const pendingQuotesCount = revenueData?.filter(o => o.status === 'draft' || o.status === 'pending').length || 0;
-
-  // 2. Fetch Recent Orders
-  const { data: recentOrders } = await supabaseAdmin
-    .from("orders")
-    .select("*, customers(full_name)")
-    .eq("organization_id", orgId)
-    .order("event_date", { ascending: true }) // Upcoming orders
-    .gte("event_date", format(new Date(), "yyyy-MM-dd"))
-    .limit(5);
-
-  // Mock Data for UI elements not yet fully backend-supported
-  const deliveryCount = 4; // Mocked
-  const averageRating = 4.9; // Mocked
-
-  // Mock Dates for Capacity
   const today = new Date();
+  const todayStr = format(today, "yyyy-MM-dd");
+  const monthStart = format(startOfMonth(today), "yyyy-MM-dd");
+  const monthEnd = format(endOfMonth(today), "yyyy-MM-dd");
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const capacityDays = Array.from({ length: 6 }).map((_, i) => {
-    const date = addDays(weekStart, i);
+  const weekDates = Array.from({ length: 6 }).map((_, i) => addDays(weekStart, i));
+  const weekStartStr = format(weekDates[0], "yyyy-MM-dd");
+  const weekEndStr = format(weekDates[5], "yyyy-MM-dd");
+
+  // Parallel data fetching
+  const [
+    { data: allOrders },
+    { data: recentOrders },
+    { count: customerCount },
+    { data: defaultsCalendar },
+    { data: dailyLoads },
+    { data: calendarOverrides },
+    { data: conversations },
+    { data: org },
+  ] = await Promise.all([
+    // 1. All orders for stats (current month revenue + pending quotes + today's deliveries)
+    supabaseAdmin
+      .from("orders")
+      .select("total_amount_cents, status, event_date")
+      .eq("organization_id", orgId),
+    // 2. Upcoming orders for the table
+    supabaseAdmin
+      .from("orders")
+      .select("*, customers(full_name)")
+      .eq("organization_id", orgId)
+      .order("event_date", { ascending: true })
+      .gte("event_date", todayStr)
+      .limit(5),
+    // 3. Total customers count
+    supabaseAdmin
+      .from("customers")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId),
+    // 4. Calendar defaults (for capacity max per day of week)
+    supabaseAdmin
+      .from("defaults_calendar")
+      .select("day_of_week, max_daily_load, is_open")
+      .eq("organization_id", orgId),
+    // 5. Daily load usage for this week (from the view)
+    supabaseAdmin
+      .from("daily_load_usage")
+      .select("event_date, current_load")
+      .eq("organization_id", orgId)
+      .gte("event_date", weekStartStr)
+      .lte("event_date", weekEndStr),
+    // 6. Calendar overrides for this week
+    supabaseAdmin
+      .from("calendar_overrides")
+      .select("date, override_max_load, is_blocked")
+      .eq("organization_id", orgId)
+      .gte("date", weekStartStr)
+      .lte("date", weekEndStr),
+    // 7. Recent conversations with last message
+    supabaseAdmin
+      .from("conversations")
+      .select(`
+        id, last_message_at, unread_count, status,
+        customers (full_name),
+        channels (platform),
+        messages (content, sender_type, created_at)
+      `)
+      .eq("organization_id", orgId)
+      .order("last_message_at", { ascending: false })
+      .limit(3),
+    // 8. Organization settings (for currency)
+    supabaseAdmin
+      .from("organizations")
+      .select("settings")
+      .eq("id", orgId)
+      .single(),
+  ]);
+
+  const settings = (org?.settings as Record<string, any>) || {};
+  const currency = settings.currency || "EUR";
+
+  // Revenue: current month only, exclude cancelled/draft
+  const monthlyRevenue = allOrders
+    ?.filter(o => o.event_date >= monthStart && o.event_date <= monthEnd && o.status !== 'cancelled')
+    .reduce((acc, curr) => acc + (curr.total_amount_cents || 0), 0) || 0;
+
+  // Pending quotes
+  const pendingQuotesCount = allOrders?.filter(o => o.status === 'draft' || o.status === 'pending' || o.status === 'pending_approval').length || 0;
+
+  // Today's deliveries/events
+  const todayOrdersCount = allOrders?.filter(o =>
+    o.event_date === todayStr && o.status !== 'cancelled' && o.status !== 'draft'
+  ).length || 0;
+
+  // Total unread messages
+  const totalUnread = conversations?.reduce((acc, c) => acc + (c.unread_count || 0), 0) || 0;
+
+  // Build capacity data from real DB
+  const capacityDays = weekDates.map(date => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    const dayOfWeek = date.getDay(); // 0=Sun, 6=Sat
+
+    // Check overrides first
+    const override = calendarOverrides?.find(o => o.date === dateStr);
+    const defaults = defaultsCalendar?.find(d => d.day_of_week === dayOfWeek);
+
+    const isBlocked = override?.is_blocked || false;
+    const isOpen = defaults?.is_open ?? true;
+    const maxLoad = override?.override_max_load ?? defaults?.max_daily_load ?? 0;
+    const currentLoad = dailyLoads?.find(d => d.event_date === dateStr)?.current_load || 0;
+
+    const percent = maxLoad > 0 ? Math.min(Math.round((currentLoad / maxLoad) * 100), 100) : 0;
+    const isFull = isBlocked || (maxLoad > 0 && currentLoad >= maxLoad);
+    const isClosed = !isOpen || isBlocked;
+
     return {
       date,
       dayName: format(date, "EEE, d", { locale: fr }),
-      percent: [25, 45, 15, 80, 100, 95][i], // Mocked percentages from Stitch
-      isFull: [false, false, false, false, true, false][i]
+      percent: isClosed ? 0 : percent,
+      isFull,
+      isClosed,
+    };
+  });
+
+  // Process conversations for the messages widget
+  const recentMessages = (conversations || []).map(conv => {
+    // Get the last message from the messages array
+    const msgs = (conv.messages as any[]) || [];
+    const lastMsg = msgs.sort((a: any, b: any) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+
+    const platform = (conv.channels as any)?.platform || "email";
+    const customerName = (conv.customers as any)?.full_name || "Client";
+
+    return {
+      id: conv.id,
+      customerName,
+      platform,
+      lastMessage: lastMsg?.content || "",
+      time: conv.last_message_at,
+      unread: conv.unread_count || 0,
     };
   });
 
@@ -130,7 +238,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Revenu Mensuel</p>
-              <h3 className="text-2xl font-bold text-foreground font-serif">{(totalRevenue / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</h3>
+              <h3 className="text-2xl font-bold text-foreground font-serif">{formatPrice(monthlyRevenue, currency)}</h3>
             </div>
           </div>
 
@@ -145,25 +253,25 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Today's Deliveries */}
+          {/* Today's Events */}
           <div className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <Truck className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Livraisons du Jour</p>
-              <h3 className="text-2xl font-bold text-foreground font-serif">{deliveryCount}</h3>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Événements du Jour</p>
+              <h3 className="text-2xl font-bold text-foreground font-serif">{todayOrdersCount}</h3>
             </div>
           </div>
 
-          {/* Average Rating */}
+          {/* Total Customers */}
           <div className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
-              <Star className="h-6 w-6" />
+              <Users className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Note Moyenne</p>
-              <h3 className="text-2xl font-bold text-foreground font-serif">{averageRating}</h3>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Clients</p>
+              <h3 className="text-2xl font-bold text-foreground font-serif">{customerCount || 0}</h3>
             </div>
           </div>
         </div>
@@ -191,13 +299,17 @@ export default async function DashboardPage() {
                         {day.dayName}
                       </div>
                       <div className="col-span-9 relative h-3 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${day.isFull ? 'bg-red-500' : 'bg-primary'}`}
-                          style={{ width: `${day.percent}%`, opacity: day.isFull ? 1 : 0.4 + (day.percent / 200) }}
-                        ></div>
+                        {day.isClosed ? (
+                          <div className="absolute inset-0 bg-muted-foreground/20 rounded-full" />
+                        ) : (
+                          <div
+                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${day.isFull ? 'bg-red-500' : 'bg-primary'}`}
+                            style={{ width: `${day.percent}%`, opacity: day.isFull ? 1 : 0.4 + (day.percent / 200) }}
+                          />
+                        )}
                       </div>
-                      <div className={`col-span-1 text-xs text-right font-medium ${day.isFull ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
-                        {day.isFull ? 'PLEIN' : `${day.percent}%`}
+                      <div className={`col-span-1 text-xs text-right font-medium ${day.isClosed ? 'text-muted-foreground' : day.isFull ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
+                        {day.isClosed ? 'Fermé' : day.isFull ? 'PLEIN' : `${day.percent}%`}
                       </div>
                     </div>
                   ))}
@@ -233,9 +345,9 @@ export default async function DashboardPage() {
                       recentOrders.map((order) => {
                         const initials = order.customers?.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || "C";
                         const statusStyles =
-                          order.status === 'confirmed' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                            order.status === 'draft' ? "bg-orange-100 text-orange-700 border-orange-200" :
-                              "bg-yellow-100 text-yellow-700 border-yellow-200";
+                          order.status === 'confirmed' ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" :
+                            order.status === 'draft' ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800" :
+                              "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
                         const statusLabel =
                           order.status === 'confirmed' ? "Confirmé" :
                             order.status === 'draft' ? "Brouillon" : "En attente";
@@ -290,56 +402,61 @@ export default async function DashboardPage() {
                   <MessageSquare className="text-primary h-5 w-5" />
                   Messages récents
                 </h2>
-                <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">3 Nouv.</span>
+                {totalUnread > 0 && (
+                  <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">{totalUnread} Nouv.</span>
+                )}
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {/* Message 1 */}
-                <div className="p-4 bg-card hover:bg-muted/50 border border-border/50 hover:border-primary/20 rounded-xl cursor-pointer transition-all shadow-sm group">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#25D366]/10 flex items-center justify-center">
-                        <MessageSquare className="text-[#25D366] h-3 w-3" />
-                      </div>
-                      <span className="text-sm font-bold text-foreground font-serif">Sarah Jenkins</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground font-medium">il y a 2m</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 pl-9 group-hover:text-foreground transition-colors">Bonjour ! Je voulais savoir si vous avez de la disponibilité pour une baby shower le 24 ?</p>
-                </div>
+                {recentMessages.length > 0 ? (
+                  recentMessages.map((msg) => {
+                    const platformStyles: Record<string, { bg: string; text: string }> = {
+                      whatsapp: { bg: "bg-[#25D366]/10", text: "text-[#25D366]" },
+                      instagram: { bg: "bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500", text: "" },
+                      email: { bg: "bg-blue-500/10", text: "text-blue-500" },
+                      messenger: { bg: "bg-blue-600/10", text: "text-blue-600" },
+                    };
+                    const style = platformStyles[msg.platform] || platformStyles.email;
+                    const initial = msg.customerName[0]?.toUpperCase() || "C";
+                    const timeAgo = msg.time ? formatTimeAgo(new Date(msg.time)) : "";
 
-                {/* Message 2 */}
-                <div className="p-4 bg-muted/30 border border-border rounded-xl cursor-pointer transition-all shadow-sm group relative">
-                  <div className="absolute right-2 top-2 w-2 h-2 bg-primary rounded-full"></div>
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[1.5px]">
-                        <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
-                          <Camera className="text-black h-3 w-3" />
+                    return (
+                      <Link key={msg.id} href="/dashboard/inbox">
+                        <div className={`p-4 ${msg.unread > 0 ? 'bg-muted/30 border-border' : 'bg-card border-border/50 hover:border-primary/20'} border hover:bg-muted/50 rounded-xl cursor-pointer transition-all shadow-sm group relative`}>
+                          {msg.unread > 0 && <div className="absolute right-2 top-2 w-2 h-2 bg-primary rounded-full" />}
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-7 h-7 rounded-full ${style.bg} flex items-center justify-center ${style.text}`}>
+                                {msg.platform === 'instagram' ? (
+                                  <div className="w-full h-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-full p-[1.5px]">
+                                    <div className="w-full h-full bg-card rounded-full flex items-center justify-center text-foreground text-[10px] font-bold">{initial}</div>
+                                  </div>
+                                ) : (
+                                  <MessageSquare className="h-3 w-3" />
+                                )}
+                              </div>
+                              <span className="text-sm font-bold text-foreground font-serif">{msg.customerName}</span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground font-medium">{timeAgo}</span>
+                          </div>
+                          <p className={`text-xs line-clamp-2 pl-9 ${msg.unread > 0 ? 'text-foreground font-medium' : 'text-muted-foreground group-hover:text-foreground'} transition-colors`}>
+                            {msg.lastMessage || "Pas de message"}
+                          </p>
                         </div>
-                      </div>
-                      <span className="text-sm font-bold text-foreground font-serif">@foodie_mike</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground font-medium">il y a 1h</span>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-12 text-muted-foreground">
+                    <MessageSquare className="h-10 w-10 mb-3 text-muted-foreground/40" />
+                    <p className="text-sm font-medium">Aucun message</p>
+                    <p className="text-xs mt-1">Les conversations apparaîtront ici</p>
                   </div>
-                  <p className="text-xs text-foreground font-medium line-clamp-2 pl-9">Votre dernier post a l'air incroyable ! Faites-vous des services traiteur pour de petits dîners privés ?</p>
-                </div>
-
-                {/* Message 3 */}
-                <div className="p-4 bg-card hover:bg-muted/50 border border-border/50 hover:border-primary/20 rounded-xl cursor-pointer transition-all shadow-sm group">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
-                        <Mail className="text-blue-500 h-3 w-3" />
-                      </div>
-                      <span className="text-sm font-bold text-foreground font-serif">Équipe Événementielle</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground font-medium">il y a 3h</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 pl-9 group-hover:text-foreground transition-colors">RE: Devis #4092 - Nous souhaitons procéder avec l'Option B mais devons changer le nombre de végétariens.</p>
-                </div>
+                )}
               </div>
-              <div className="p-4 border-t border-border bg-gray-50/50">
-                <Button variant="ghost" className="w-full text-sm text-muted-foreground hover:text-primary font-medium">Aller à la Messagerie</Button>
+              <div className="p-4 border-t border-border bg-muted/50">
+                <Link href="/dashboard/inbox">
+                  <Button variant="ghost" className="w-full text-sm text-muted-foreground hover:text-primary font-medium">Aller à la Messagerie</Button>
+                </Link>
               </div>
             </div>
 
@@ -356,7 +473,7 @@ export default async function DashboardPage() {
 
               <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent p-6 flex flex-col justify-end">
                 <h3 className="text-white font-serif font-bold text-xl mb-1">Menu de Saison</h3>
-                <p className="text-xs text-gray-200 mb-3 font-medium">Il est temps de mettre à jour vos offres pour l'Automne ?</p>
+                <p className="text-xs text-white/70 mb-3 font-medium">Il est temps de mettre à jour vos offres pour l'Automne ?</p>
                 <button className="w-fit px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/40 transition-colors">Mettre à jour le Menu</button>
               </div>
             </div>
@@ -367,5 +484,17 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "à l'instant";
+  if (diffMin < 60) return `il y a ${diffMin}m`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `il y a ${diffH}h`;
+  const diffD = Math.floor(diffH / 24);
+  return `il y a ${diffD}j`;
 }
 

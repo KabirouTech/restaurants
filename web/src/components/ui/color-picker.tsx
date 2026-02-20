@@ -82,7 +82,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
             <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                className="flex items-center gap-2 h-8 px-2.5 rounded-md border border-border bg-white hover:bg-muted/30 transition-colors"
+                className="flex items-center gap-2 h-8 px-2.5 rounded-md border border-border bg-popover hover:bg-muted/30 transition-colors"
             >
                 <span
                     className="h-4 w-4 rounded-sm border border-black/10 shrink-0 shadow-inner"
@@ -93,7 +93,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
 
             {/* Popover */}
             {open && (
-                <div className="absolute left-0 top-full mt-1.5 z-50 w-[228px] rounded-xl border border-border bg-white shadow-xl p-3 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="absolute left-0 top-full mt-1.5 z-50 w-[228px] rounded-xl border border-border bg-popover shadow-xl p-3 animate-in fade-in slide-in-from-top-1 duration-150">
 
                     {/* Palette grid - 5 cols × 10 rows */}
                     <div className="grid grid-cols-10 gap-1 mb-3">

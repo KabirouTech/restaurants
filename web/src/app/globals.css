@@ -50,36 +50,36 @@
   }
 
   .dark {
-    /* ── DARK MODE — Midnight in Dakar ───────────────────────────────── */
-    --background: 20 14% 8%;
-    --foreground: 36 33% 95%;
+    /* ── DARK MODE — Warm Charcoal ─────────────────────────────────── */
+    --background: 20 14% 14%;
+    --foreground: 36 25% 93%;
 
-    --card: 20 14% 11%;
-    --card-foreground: 36 33% 95%;
+    --card: 20 12% 18%;
+    --card-foreground: 36 25% 93%;
 
-    --popover: 20 14% 11%;
-    --popover-foreground: 36 33% 95%;
+    --popover: 20 12% 18%;
+    --popover-foreground: 36 25% 93%;
 
     /* Primary stays golden orange in dark mode */
-    --primary: 24 88% 55%;
+    --primary: 24 88% 58%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: lighter warm brown */
-    --secondary: 20 20% 20%;
-    --secondary-foreground: 36 30% 90%;
+    --secondary: 20 18% 24%;
+    --secondary-foreground: 36 25% 92%;
 
-    --muted: 20 14% 16%;
-    --muted-foreground: 36 15% 60%;
+    --muted: 20 10% 22%;
+    --muted-foreground: 36 12% 65%;
 
-    --accent: 20 20% 20%;
-    --accent-foreground: 36 33% 95%;
+    --accent: 20 14% 22%;
+    --accent-foreground: 36 25% 93%;
 
-    --destructive: 0 62% 40%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 20 14% 20%;
-    --input: 20 14% 20%;
-    --ring: 24 88% 55%;
+    --border: 20 10% 26%;
+    --input: 20 10% 26%;
+    --ring: 24 88% 58%;
 
     --chart-1: 24 88% 55%;
     --chart-2: 160 60% 45%;

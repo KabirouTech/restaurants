@@ -49,7 +49,7 @@ export default function LandingPage() {
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[100px] -z-10 -translate-x-1/2 translate-y-1/2"></div>
 
                 <div className="container mx-auto max-w-5xl text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100 text-orange-800 text-xs font-semibold uppercase tracking-wide border border-orange-200 shadow-sm mx-auto">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800/40 text-xs font-semibold uppercase tracking-wide border border-orange-200 shadow-sm mx-auto">
                         <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
                         Conçu pour les Traiteurs Modernes
                     </div>
@@ -81,14 +81,14 @@ export default function LandingPage() {
                     <div className="pt-16 md:pt-24 relative w-full max-w-6xl mx-auto">
                         <div className="relative rounded-2xl border bg-background shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] group transition-all hover:shadow-[0_20px_60px_-15px_rgba(234,88,12,0.15)]">
                             {/* Visual Placeholder: Replace with generate_image later if needed */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-white flex items-center justify-center">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-white dark:from-muted dark:to-background flex items-center justify-center">
                                 <div className="text-center opacity-40">
                                     <LayoutDashboard className="h-24 w-24 mx-auto text-primary mb-4" />
                                     <p className="font-serif italic text-2xl text-secondary">Tableau de Bord Intuitif</p>
                                 </div>
                             </div>
                             {/* Overlay UI elements simulating dashboard */}
-                            <div className="absolute top-8 left-8 right-8 bottom-0 bg-white shadow-lg rounded-t-xl border border-border p-6 grid grid-cols-3 gap-6 opacity-90 translate-y-4 group-hover:translate-y-2 transition-transform duration-500">
+                            <div className="absolute top-8 left-8 right-8 bottom-0 bg-card shadow-lg rounded-t-xl border border-border p-6 grid grid-cols-3 gap-6 opacity-90 translate-y-4 group-hover:translate-y-2 transition-transform duration-500">
                                 <div className="col-span-1 space-y-3">
                                     <div className="h-4 w-32 bg-primary/10 rounded"></div>
                                     <div className="h-24 w-full bg-primary/5 rounded-lg border border-primary/10"></div>
@@ -96,10 +96,10 @@ export default function LandingPage() {
                                 </div>
                                 <div className="col-span-2 space-y-3">
                                     <div className="flex justify-between">
-                                        <div className="h-4 w-48 bg-gray-100 rounded"></div>
+                                        <div className="h-4 w-48 bg-muted rounded"></div>
                                         <div className="h-8 w-24 bg-primary text-white rounded-full flex items-center justify-center text-xs">Nouveau Devis</div>
                                     </div>
-                                    <div className="h-48 w-full bg-gray-50 rounded-lg border border-dashed border-gray-200"></div>
+                                    <div className="h-48 w-full bg-muted/50 rounded-lg border border-dashed border-muted-foreground/20"></div>
                                 </div>
                             </div>
                         </div>
@@ -108,7 +108,7 @@ export default function LandingPage() {
             </section>
 
             {/* Features Grid - Warm & Spacious */}
-            <section id="features" className="py-24 bg-white dark:bg-zinc-900/50">
+            <section id="features" className="py-24 bg-card">
                 <div className="container mx-auto px-6">
                     <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
                         <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-serif text-secondary">Tout est là, comme un bon Thiéboudienne.</h2>
@@ -215,7 +215,7 @@ export default function LandingPage() {
 
 function FeatureCard({ icon, title, description, color }: { icon: React.ReactNode, title: string, description: string, color: string }) {
     return (
-        <div className="p-8 rounded-2xl bg-white border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+        <div className="p-8 rounded-2xl bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
             <div className={cn("h-14 w-14 rounded-xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-300", color)}>
                 {icon}
             </div>

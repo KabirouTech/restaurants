@@ -34,7 +34,7 @@ export function ProductSelector({ products, onAdd, currency = "EUR" }: ProductSe
     });
 
     return (
-        <div className="flex flex-col h-full border rounded-lg overflow-hidden bg-white shadow-sm">
+        <div className="flex flex-col h-full border rounded-lg overflow-hidden bg-card shadow-sm">
             <div className="p-3 border-b bg-muted/10 space-y-3">
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -54,7 +54,7 @@ export function ProductSelector({ products, onAdd, currency = "EUR" }: ProductSe
                                 "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition-colors",
                                 categoryFilter === cat
                                     ? "bg-secondary text-white border-secondary"
-                                    : "bg-white text-muted-foreground border-border hover:bg-muted"
+                                    : "bg-card text-muted-foreground border-border hover:bg-muted"
                             )}
                         >
                             {cat}

@@ -42,17 +42,17 @@ function LivePreview({
     return (
         <div className="rounded-xl border border-border overflow-hidden shadow-lg text-[9px] select-none pointer-events-none">
             {/* Mini header */}
-            <div className="bg-white border-b border-border/50 px-3 py-1.5 flex items-center justify-between">
+            <div className="bg-card border-b border-border/50 px-3 py-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-1">
                     {logoUrl
                         ? <img src={logoUrl} alt="" className="h-3 w-3 object-cover rounded-sm" />
                         : <div className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: primaryColor }} />
                     }
-                    <span className="font-bold text-[8px] text-gray-800">{orgName || "Mon Restaurant"}</span>
+                    <span className="font-bold text-[8px] text-foreground">{orgName || "Mon Restaurant"}</span>
                 </div>
-                <div className="flex gap-2 text-gray-400">
-                    <div className="w-5 h-1.5 rounded-full bg-gray-200" />
-                    <div className="w-5 h-1.5 rounded-full bg-gray-200" />
+                <div className="flex gap-2 text-muted-foreground">
+                    <div className="w-5 h-1.5 rounded-full bg-muted" />
+                    <div className="w-5 h-1.5 rounded-full bg-muted" />
                 </div>
             </div>
             {/* Mini hero */}
@@ -74,13 +74,13 @@ function LivePreview({
                 </div>
             </div>
             {/* Mini content */}
-            <div className="bg-gray-50 px-2 py-1.5 space-y-1">
-                <p className="text-gray-500 leading-tight" style={{ fontSize: "6px" }}>
+            <div className="bg-muted px-2 py-1.5 space-y-1">
+                <p className="text-muted-foreground leading-tight" style={{ fontSize: "6px" }}>
                     {description || "Votre description..."}
                 </p>
                 <div className="flex gap-1">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex-1 h-8 rounded bg-white border border-gray-200" />
+                        <div key={i} className="flex-1 h-8 rounded bg-card border border-border" />
                     ))}
                 </div>
             </div>

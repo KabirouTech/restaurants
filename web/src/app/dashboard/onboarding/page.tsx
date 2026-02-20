@@ -66,7 +66,7 @@ export default function OnboardingWizard() {
                 </p>
             </div>
 
-            <div className="bg-white border border-border shadow-xl rounded-2xl overflow-hidden p-8 min-h-[400px]">
+            <div className="bg-card border border-border shadow-xl rounded-2xl overflow-hidden p-8 min-h-[400px]">
 
                 {/* STEP 1: IDENTITY */}
                 {step === 1 && (
@@ -157,7 +157,7 @@ export default function OnboardingWizard() {
                                     <button onClick={() => {
                                         const newItems = formData.menuItems.filter((_, i) => i !== idx);
                                         setFormData({ ...formData, menuItems: newItems });
-                                    }} className="absolute top-2 right-2 p-1 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive">
+                                    }} className="absolute top-2 right-2 p-1 bg-card/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive">
                                         <Trash2 className="h-4 w-4" />
                                     </button>
                                     <CardContent className="p-4 space-y-3">

@@ -125,7 +125,7 @@ export function NewOrderDialog({ organizationId, services }: NewOrderDialogProps
                         </div>
                     </div>
 
-                    <div className="bg-muted/30 p-3 rounded-lg flex items-center gap-3 text-xs text-muted-foreground border border-blue-100/50">
+                    <div className="bg-muted/30 p-3 rounded-lg flex items-center gap-3 text-xs text-muted-foreground border border-primary/10">
                         <Calculator className="h-4 w-4 text-primary" />
                         <p>La capacité sera recalculée automatiquement après l'ajout.</p>
                     </div>

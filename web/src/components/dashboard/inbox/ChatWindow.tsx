@@ -132,7 +132,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
                                     "p-3 rounded-2xl shadow-sm text-sm relative group",
                                     isAgent
                                         ? "bg-primary text-primary-foreground rounded-tr-none"
-                                        : "bg-white dark:bg-card border border-border rounded-tl-none"
+                                        : "bg-card border border-border rounded-tl-none"
                                 )}
                             >
                                 <p>{msg.content}</p>

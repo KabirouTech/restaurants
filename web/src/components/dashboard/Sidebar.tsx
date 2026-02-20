@@ -38,7 +38,7 @@ export function Sidebar() {
     return (
         <div
             className={cn(
-                "flex flex-col h-full bg-white dark:bg-card border-r border-border shrink-0 z-50 transition-all duration-300 ease-in-out relative group print:hidden",
+                "flex flex-col h-full bg-card border-r border-border shrink-0 z-50 transition-all duration-300 ease-in-out relative group print:hidden",
                 collapsed ? "w-[70px]" : "w-64"
             )}
         >
@@ -47,7 +47,7 @@ export function Sidebar() {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                    "absolute -right-3 top-6 h-6 w-6 rounded-full border border-border bg-white dark:bg-card shadow-md z-50 text-muted-foreground hover:text-foreground hidden group-hover:flex items-center justify-center",
+                    "absolute -right-3 top-6 h-6 w-6 rounded-full border border-border bg-card shadow-md z-50 text-muted-foreground hover:text-foreground hidden group-hover:flex items-center justify-center",
                     collapsed && "flex"
                 )}
                 onClick={() => setCollapsed(!collapsed)}
@@ -95,7 +95,7 @@ export function Sidebar() {
 
                                 {/* Tooltip for collapsed state */}
                                 {collapsed && (
-                                    <div className="absolute left-full ml-2 px-2 py-1 bg-secondary text-white text-xs rounded opacity-0 group-hover/item:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
+                                    <div className="absolute left-full ml-2 px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded opacity-0 group-hover/item:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
                                         {item.name}
                                     </div>
                                 )}

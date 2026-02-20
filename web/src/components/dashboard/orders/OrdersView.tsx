@@ -69,7 +69,7 @@ function ListView({
     const someSelected = orders.some(o => selectedIds.has(o.id));
 
     return (
-        <div className="rounded-xl border border-border bg-white shadow-sm">
+        <div className="rounded-xl border border-border bg-card shadow-sm">
             <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
                 <table className="w-full text-sm">
                     <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm border-b border-border">
@@ -153,7 +153,7 @@ function GridView({
                         <div
                             key={order.id}
                             className={cn(
-                                "group relative bg-white border border-border rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all",
+                                "group relative bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all",
                                 isSelected && "ring-2 ring-primary border-primary"
                             )}
                         >
@@ -166,7 +166,7 @@ function GridView({
                                     checked={isSelected}
                                     onCheckedChange={() => toggleSelect(order.id)}
                                     aria-label={`Sélectionner commande ${customer?.full_name}`}
-                                    className="bg-white/90 border-white/60 opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity shadow-sm"
+                                    className="bg-card/90 border-border/60 opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity shadow-sm"
                                 />
                             </div>
 
@@ -274,7 +274,7 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
                             onClick={() => { setView(id); setSelectedIds(new Set()); }}
                             className={cn(
                                 "h-7 px-2.5 gap-1.5 text-xs",
-                                view === id ? "bg-white shadow-sm text-primary font-semibold" : "text-muted-foreground"
+                                view === id ? "bg-card shadow-sm text-primary font-semibold" : "text-muted-foreground"
                             )}
                         >
                             <Icon className="h-3.5 w-3.5" />{label}

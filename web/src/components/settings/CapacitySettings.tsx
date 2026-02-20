@@ -120,7 +120,7 @@ export function CapacitySettings({ capacityTypes }: CapacitySettingsProps) {
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <div
-                                            className="h-4 w-4 rounded-full border border-gray-200"
+                                            className="h-4 w-4 rounded-full border border-border"
                                             style={{ backgroundColor: type.color_code }}
                                         />
                                         <span className="text-xs text-muted-foreground">{type.color_code}</span>

@@ -42,11 +42,11 @@ export default function InboxChat({ conversationId }: InboxChatProps) {
                         <h3 className="font-semibold text-foreground font-serif text-lg leading-none">{conversation.clientName}</h3>
                         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                             {conversation.platform === "whatsapp" ? (
-                                <span className="flex items-center gap-1 text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                                <span className="flex items-center gap-1 text-emerald-600 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">
                                     <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></span> WhatsApp
                                 </span>
                             ) : (
-                                <span className="flex items-center gap-1 text-fuchsia-600 font-medium bg-fuchsia-50 px-1.5 py-0.5 rounded-full">
+                                <span className="flex items-center gap-1 text-fuchsia-600 font-medium bg-fuchsia-50 dark:bg-fuchsia-900/30 px-1.5 py-0.5 rounded-full">
                                     <span className="h-1.5 w-1.5 bg-fuchsia-500 rounded-full"></span> Instagram
                                 </span>
                             )}
@@ -66,7 +66,7 @@ export default function InboxChat({ conversationId }: InboxChatProps) {
             {/* Messages Area - Teranga Details */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/5">
                 <div className="flex justify-center my-4">
-                    <span className="text-xs text-muted-foreground bg-white border border-border px-3 py-1 rounded-full shadow-sm">Aujourd'hui</span>
+                    <span className="text-xs text-muted-foreground bg-card border border-border px-3 py-1 rounded-full shadow-sm">Aujourd'hui</span>
                 </div>
                 {messages.map((msg, i) => {
                     const isMe = msg.sender === "me";
@@ -78,7 +78,7 @@ export default function InboxChat({ conversationId }: InboxChatProps) {
                                 "max-w-[75%] px-4 py-2.5 shadow-sm text-sm relative group transition-all hover:shadow-md",
                                 isMe
                                     ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
-                                    : "bg-white border border-border text-foreground rounded-2xl rounded-tl-sm"
+                                    : "bg-card border border-border text-foreground rounded-2xl rounded-tl-sm"
                             )}>
                                 <p className="leading-relaxed">{msg.text}</p>
                                 <span className={cn(

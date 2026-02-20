@@ -149,7 +149,7 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
                                             checked={selectedIds.has(product.id)}
                                             onCheckedChange={() => toggleSelect(product.id)}
                                             aria-label={`Sélectionner ${product.name}`}
-                                            className="bg-white/90 border-white/60 opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity shadow-sm"
+                                            className="bg-card/90 border-border/60 opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity shadow-sm"
                                         />
                                     </div>
 

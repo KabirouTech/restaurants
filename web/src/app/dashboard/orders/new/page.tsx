@@ -48,7 +48,7 @@ export default async function NewOrderPage() {
     return (
         <div className="h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-500 overflow-hidden">
             {/* Minimal Header */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-white shadow-sm shrink-0">
+            <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card shadow-sm shrink-0">
                 <div className="flex items-center gap-2">
                     <ChefHat className="h-5 w-5 text-primary" />
                     <h1 className="text-xl font-bold font-serif text-foreground">Nouveau Devis</h1>

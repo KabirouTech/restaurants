@@ -72,7 +72,7 @@ export function KanbanSettings({ initialColumns }: KanbanSettingsProps) {
                         onDragOver={(e) => handleDragOver(e, idx)}
                         onDrop={() => handleDrop(idx)}
                         onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
-                        className={`flex items-center gap-2 p-2 rounded-lg border bg-white transition-all ${dragOverIdx === idx ? "border-primary/50 bg-primary/5 scale-[1.01]" : "border-border"
+                        className={`flex items-center gap-2 p-2 rounded-lg border bg-card transition-all ${dragOverIdx === idx ? "border-primary/50 bg-primary/5 scale-[1.01]" : "border-border"
                             }`}
                     >
                         {/* Drag handle */}
