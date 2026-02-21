@@ -2,20 +2,34 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { AnnouncementBar } from "@/components/dashboard/AnnouncementBar";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Check super admin status
+    // Check super admin status and onboarding
     let isSuperAdmin = false;
+    let hasOrganization = true;
     if (user) {
         const { data: profile } = await supabase
             .from("profiles")
-            .select("is_super_admin")
+            .select("is_super_admin, organization_id")
             .eq("id", user.id)
             .single();
         isSuperAdmin = profile?.is_super_admin === true;
+        hasOrganization = !!profile?.organization_id;
+    }
+
+    // Redirect to onboarding if user has no organization
+    if (user && !hasOrganization) {
+        const headersList = await headers();
+        const pathname = headersList.get("x-invoke-path") || "";
+        if (!pathname.includes("/onboarding")) {
+            redirect("/dashboard/onboarding");
+        }
+        return <>{children}</>;
     }
 
     // Fetch active announcements
