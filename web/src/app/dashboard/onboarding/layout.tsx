@@ -11,11 +11,20 @@ export default function OnboardingLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className={`min-h-screen bg-background text-foreground flex items-center justify-center p-4 md:p-8 ${inter.variable} ${dmSans.variable} ${playfair.variable}`}>
-            {/* Subtle Background */}
-            <div className="fixed inset-0 pattern-grid opacity-[0.2] pointer-events-none -z-10 mix-blend-multiply dark:opacity-[0.05]"></div>
+        <div
+            className={`fixed inset-0 z-[100] bg-background text-foreground overflow-y-auto ${inter.variable} ${dmSans.variable} ${playfair.variable}`}
+        >
+            {/* Dot grid background */}
+            <div className="fixed inset-0 pattern-grid opacity-[0.15] pointer-events-none dark:opacity-[0.05]" />
 
-            {children}
+            {/* Decorative gradient orbs */}
+            <div className="fixed top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+            <div className="fixed bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+
+            {/* Content */}
+            <div className="relative z-10 min-h-full flex items-center justify-center p-4 md:p-8">
+                {children}
+            </div>
         </div>
     );
 }

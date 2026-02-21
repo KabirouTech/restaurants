@@ -89,9 +89,10 @@ export async function createOrganizationAction(formData: FormData) {
         }
     }
 
-    // 6. Add Menu Items (Products)
+    // 6. Add Menu Items (Products) — skip if user skipped this step
+    const menuSkipped = formData.get("menuSkipped") === "true";
     const menuItemsJson = formData.get("menuItems") as string;
-    if (menuItemsJson) {
+    if (!menuSkipped && menuItemsJson) {
         const menuItems = JSON.parse(menuItemsJson);
         if (menuItems.length > 0) {
             const productInserts = menuItems.map((p: any) => ({
