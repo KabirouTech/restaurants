@@ -4,7 +4,8 @@ export default function StorefrontLayout({ children }: { children: React.ReactNo
     return (
         <ThemeProvider
             attribute="class"
-            forcedTheme="light"
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
         >
             {children}

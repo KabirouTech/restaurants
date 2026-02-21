@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 
 import { useState, useEffect } from "react";
-import { ChefHat, Instagram, Facebook, Twitter, Menu, X, ShoppingCart } from "lucide-react";
+import { ChefHat, Instagram, Facebook, Twitter, Menu, X, ShoppingCart, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StorefrontSection } from "@/lib/storefront-types";
 import { useCart } from "@/context/CartContext";
+import { useTheme } from "next-themes";
 
 interface StorefrontHeaderProps {
     orgName: string;
@@ -23,6 +24,7 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
     const [activeSection, setActiveSection] = useState("hero");
     const pathname = usePathname();
     const { items, openCart } = useCart();
+    const { theme, setTheme } = useTheme();
 
     const cartCount = items.reduce((s, i) => s + i.quantity, 0);
 
@@ -121,6 +123,16 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
                                 <Facebook className="h-4 w-4" />
                             </a>
                         )}
+
+                        {/* Theme toggle */}
+                        <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="relative p-2 transition-colors text-muted-foreground hover:text-primary"
+                            aria-label="Changer le thème"
+                        >
+                            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                            <Moon className="absolute top-2 left-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                        </button>
 
                         {/* Cart icon */}
                         <button
