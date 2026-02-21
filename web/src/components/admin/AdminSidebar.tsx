@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
     LayoutDashboard,
     Building2,
+    Users,
     Image,
     Megaphone,
     Settings,
@@ -22,6 +23,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 const navItems = [
     { name: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard },
     { name: "Organisations", href: "/admin/organizations", icon: Building2 },
+    { name: "Utilisateurs", href: "/admin/users", icon: Users },
     { name: "Bannières", href: "/admin/banners", icon: Image },
     { name: "Annonces", href: "/admin/announcements", icon: Megaphone },
 ];
