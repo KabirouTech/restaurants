@@ -1,12 +1,15 @@
 "use client";
 
-import { User, Building2, AlignLeft } from "lucide-react";
+import { User, Building2, AlignLeft, Coins, Palette } from "lucide-react";
+import { CURRENCIES } from "@/lib/currencies";
 
 interface IdentityStepProps {
     formData: {
         fullName: string;
         orgName: string;
         orgDescription: string;
+        currency: string;
+        primaryColor: string;
     };
     onChange: (updates: Partial<IdentityStepProps["formData"]>) => void;
 }
@@ -85,6 +88,64 @@ export function IdentityStep({ formData, onChange }: IdentityStepProps) {
                         </div>
                     );
                 })}
+
+                {/* Currency select */}
+                <div
+                    className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+                    style={{ animationDelay: `${4 * 150}ms` }}
+                >
+                    <label className="text-sm font-medium text-foreground">
+                        Devise
+                    </label>
+                    <div className="relative">
+                        <Coins className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground pointer-events-none" />
+                        <select
+                            value={formData.currency}
+                            onChange={(e) => onChange({ currency: e.target.value })}
+                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all appearance-none"
+                        >
+                            {CURRENCIES.map((c) => (
+                                <option key={c.code} value={c.code}>
+                                    {c.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                {/* Brand color picker */}
+                <div
+                    className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+                    style={{ animationDelay: `${5 * 150}ms` }}
+                >
+                    <label className="text-sm font-medium text-foreground">
+                        Couleur de Marque
+                    </label>
+                    <div className="relative flex items-center gap-3">
+                        <div className="relative flex-1">
+                            <Palette className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground pointer-events-none" />
+                            <input
+                                type="text"
+                                value={formData.primaryColor}
+                                onChange={(e) => onChange({ primaryColor: e.target.value })}
+                                className="w-full pl-11 pr-4 py-3 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+                                placeholder="#f4af25"
+                            />
+                        </div>
+                        <label className="relative cursor-pointer">
+                            <div
+                                className="h-11 w-11 rounded-full border-2 border-input shadow-sm transition-all hover:scale-105"
+                                style={{ backgroundColor: formData.primaryColor }}
+                            />
+                            <input
+                                type="color"
+                                value={formData.primaryColor}
+                                onChange={(e) => onChange({ primaryColor: e.target.value })}
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                            />
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -31,6 +31,8 @@ export default function OnboardingWizard() {
         fullName: "",
         orgName: "",
         orgDescription: "",
+        currency: "XOF",
+        primaryColor: "#f4af25",
         services: [
             { name: "Mariage", loadCost: 50, color: "#10b981" },
             { name: "Cocktail Dînatoire", loadCost: 10, color: "#f59e0b" },
@@ -74,6 +76,8 @@ export default function OnboardingWizard() {
         data.append("fullName", formData.fullName);
         data.append("orgName", formData.orgName);
         data.append("orgDescription", formData.orgDescription);
+        data.append("currency", formData.currency);
+        data.append("primaryColor", formData.primaryColor);
         data.append("services", JSON.stringify(formData.services));
         data.append("menuItems", JSON.stringify(formData.menuItems));
         if (formData.servicesSkipped) data.append("servicesSkipped", "true");

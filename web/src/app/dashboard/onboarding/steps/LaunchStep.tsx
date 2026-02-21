@@ -1,6 +1,7 @@
 "use client";
 
-import { Rocket, User, Utensils, ChefHat } from "lucide-react";
+import { Rocket, User, Utensils, ChefHat, Coins, Palette } from "lucide-react";
+import { CURRENCIES } from "@/lib/currencies";
 import { useMemo } from "react";
 
 interface LaunchStepProps {
@@ -8,6 +9,8 @@ interface LaunchStepProps {
         fullName: string;
         orgName: string;
         orgDescription: string;
+        currency: string;
+        primaryColor: string;
         services: { name: string; loadCost: number; color: string }[];
         menuItems: { name: string; description: string; price: string; category: string }[];
         servicesSkipped: boolean;
@@ -97,6 +100,34 @@ export function LaunchStep({ formData, loading, success }: LaunchStepProps) {
                     <div>
                         <p className="text-xs text-muted-foreground">Chef</p>
                         <p className="font-medium text-foreground">{formData.fullName || "Non spécifié"}</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Coins className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Devise</p>
+                        <p className="font-medium text-foreground">
+                            {CURRENCIES.find((c) => c.code === formData.currency)?.label || formData.currency}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Palette className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div>
+                            <p className="text-xs text-muted-foreground">Couleur de marque</p>
+                            <p className="font-medium text-foreground">{formData.primaryColor}</p>
+                        </div>
+                        <div
+                            className="h-6 w-6 rounded-full border border-border shadow-sm"
+                            style={{ backgroundColor: formData.primaryColor }}
+                        />
                     </div>
                 </div>
 

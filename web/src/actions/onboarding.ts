@@ -27,6 +27,8 @@ export async function createOrganizationAction(formData: FormData) {
     const name = formData.get("orgName") as string;
     const description = formData.get("orgDescription") as string;
     const fullName = formData.get("fullName") as string;
+    const currency = (formData.get("currency") as string) || "XOF";
+    const primaryColor = (formData.get("primaryColor") as string) || "#f4af25";
 
     // Create slug from name, only add suffix if already taken
     let slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -46,7 +48,7 @@ export async function createOrganizationAction(formData: FormData) {
             name,
             slug,
             subscription_plan: "free",
-            settings: { description },
+            settings: { description, currency, primary_color: primaryColor },
         })
         .select()
         .single();
