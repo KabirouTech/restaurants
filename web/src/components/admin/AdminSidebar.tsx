@@ -5,36 +5,30 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useFCM } from "@/hooks/useFCM";
 import {
     LayoutDashboard,
-    CalendarDays,
-    FileText,
-    Utensils,
-    MessageSquare,
-    Users,
+    Building2,
+    Image,
+    Megaphone,
     Settings,
     LogOut,
     ChevronLeft,
-    Bell,
+    ArrowLeft,
     Shield,
 } from "lucide-react";
-import { Logo, LogoMark } from "@/components/Logo";
+import { Logo } from "@/components/Logo";
 import { ModeToggle } from "@/components/mode-toggle";
 
 const navItems = [
-    { name: "Tableau de Bord", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Devis & Commandes", href: "/dashboard/orders", icon: FileText },
-    { name: "Calendrier", href: "/dashboard/calendar", icon: CalendarDays },
-    { name: "Carte & Menu", href: "/dashboard/menu", icon: Utensils },
-    { name: "Messages", href: "/dashboard/inbox", icon: MessageSquare },
-    { name: "Clients", href: "/dashboard/customers", icon: Users },
+    { name: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard },
+    { name: "Organisations", href: "/admin/organizations", icon: Building2 },
+    { name: "Bannières", href: "/admin/banners", icon: Image },
+    { name: "Annonces", href: "/admin/announcements", icon: Megaphone },
 ];
 
-export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
+export function AdminSidebar() {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
-    const { requestPermission, permissionStatus } = useFCM();
 
     return (
         <div
@@ -56,35 +50,43 @@ export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
                 <ChevronLeft className={cn("h-3 w-3 transition-transform", collapsed && "rotate-180")} />
             </Button>
 
-            {/* Logo */}
+            {/* Logo + Admin Badge */}
             <div className={cn(
                 "border-b border-border flex items-center h-[4.5rem] overflow-hidden whitespace-nowrap",
                 collapsed ? "justify-center px-0" : "px-6"
             )}>
                 {collapsed ? (
-                    <Logo size="sm" showText={false} href="/dashboard" />
+                    <div className="relative">
+                        <Logo size="sm" showText={false} href="/admin" />
+                        <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-orange-500 border border-card" />
+                    </div>
                 ) : (
-                    <Logo size="sm" showText href="/dashboard" className="text-secondary dark:text-foreground" />
+                    <div className="flex items-center gap-2">
+                        <Logo size="sm" showText href="/admin" className="text-secondary dark:text-foreground" />
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded">
+                            Admin
+                        </span>
+                    </div>
                 )}
             </div>
 
             {/* Navigation */}
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                    const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
                     return (
                         <Link key={item.href} href={item.href}>
                             <div
                                 className={cn(
                                     "flex items-center rounded-lg text-sm font-medium transition-all mb-1 h-10 group/item relative",
                                     isActive
-                                        ? "bg-primary/10 text-primary"
+                                        ? "bg-orange-500/10 text-orange-600 dark:text-orange-400"
                                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                     collapsed ? "justify-center px-0" : "px-3 gap-3"
                                 )}
                                 title={collapsed ? item.name : undefined}
                             >
-                                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+                                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground")} />
                                 <span className={cn(
                                     "whitespace-nowrap transition-all duration-300",
                                     collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
@@ -100,66 +102,23 @@ export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
                                 )}
                             </div>
                         </Link>
-                    )
+                    );
                 })}
             </nav>
 
             {/* Bottom Actions */}
             <div className="p-3 border-t border-border space-y-1 overflow-hidden">
-                {/* Notification Request Button */}
-                {permissionStatus === "default" && (
-                    <button
-                        onClick={requestPermission}
-                        className={cn(
-                            "flex items-center rounded-lg text-sm font-medium transition-colors text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 h-10 w-full mb-2",
-                            collapsed ? "justify-center px-0" : "px-3 gap-3"
-                        )}
-                        title="Activer les notifications"
-                    >
-                        <Bell className="h-4 w-4 shrink-0 animate-pulse" />
-                        <span className={cn(
-                            "whitespace-nowrap transition-all duration-300",
-                            collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
-                        )}>
-                            Activer Notifs
-                        </span>
-                    </button>
-                )}
-
-                {isSuperAdmin && (
-                    <Link href="/admin">
-                        <div className={cn(
-                            "flex items-center rounded-lg text-sm font-medium transition-colors text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/30 h-10 group/item relative",
-                            collapsed ? "justify-center px-0" : "px-3 gap-3"
-                        )} title={collapsed ? "Super Admin" : undefined}>
-                            <Shield className="h-4 w-4 shrink-0" />
-                            <span className={cn(
-                                "whitespace-nowrap transition-all duration-300",
-                                collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
-                            )}>
-                                Super Admin
-                            </span>
-                            {collapsed && (
-                                <div className="absolute left-full ml-2 px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded opacity-0 group-hover/item:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
-                                    Super Admin
-                                </div>
-                            )}
-                        </div>
-                    </Link>
-                )}
-
-                <Link href="/dashboard/settings">
+                <Link href="/dashboard">
                     <div className={cn(
                         "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground h-10",
-                        pathname === "/dashboard/settings" && "bg-muted text-foreground",
                         collapsed ? "justify-center px-0" : "px-3 gap-3"
-                    )} title={collapsed ? "Paramètres" : undefined}>
-                        <Settings className="h-4 w-4 shrink-0" />
+                    )} title={collapsed ? "Retour au Dashboard" : undefined}>
+                        <ArrowLeft className="h-4 w-4 shrink-0" />
                         <span className={cn(
                             "whitespace-nowrap transition-all duration-300",
                             collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
                         )}>
-                            Paramètres
+                            Retour au Dashboard
                         </span>
                     </div>
                 </Link>
@@ -173,7 +132,7 @@ export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
                             <ModeToggle />
                             <span className={cn(
                                 "whitespace-nowrap transition-all duration-300",
-                                "opacity-100" // ModeToggle usually handles its own visibility or we can wrap it better. Keeping simplified logic.
+                                "opacity-100"
                             )}>
                                 {!collapsed && "Apparence"}
                             </span>

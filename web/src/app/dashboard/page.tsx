@@ -6,7 +6,6 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { format, addDays, addWeeks, subWeeks, startOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  Search,
   Ban,
   Plus,
   DollarSign,
@@ -18,7 +17,6 @@ import {
   MoreVertical,
   MessageSquare,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/currencies";
 import { CapacityFilter } from "@/components/dashboard/CapacityFilter";
 import { RevenueFilter } from "@/components/dashboard/RevenueFilter";
@@ -102,6 +100,7 @@ export default async function DashboardPage({
     { data: calendarOverrides },
     { data: conversations },
     { data: org },
+    { data: activeBanners },
   ] = await Promise.all([
     // 1. All orders for stats (current month revenue + pending quotes + today's deliveries)
     supabaseAdmin
@@ -158,10 +157,20 @@ export default async function DashboardPage({
       .select("settings")
       .eq("id", orgId)
       .single(),
+    // 9. Active platform banner
+    supabaseAdmin
+      .from("platform_banners")
+      .select("title, description, image_url, link_url")
+      .eq("is_active", true)
+      .or("start_date.is.null,start_date.lte.now()")
+      .or("end_date.is.null,end_date.gte.now()")
+      .limit(1),
   ]);
 
   const settings = (org?.settings as Record<string, any>) || {};
   const currency = settings.currency || "EUR";
+
+  const activeBanner = activeBanners?.[0] || null;
 
   // Revenue: only count confirmed/completed orders (exclude drafts, quotes, pending, cancelled)
   const REVENUE_STATUSES = ['confirmed', 'in_progress', 'completed', 'delivered', 'preparing'];
@@ -237,18 +246,12 @@ export default async function DashboardPage({
           <p className="text-sm text-muted-foreground font-light">Bonjour, voici le programme culinaire du jour.</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative hidden lg:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              className="pl-10 pr-4 py-2.5 rounded-full bg-background border border-border focus:ring-1 focus:ring-primary text-sm w-64 shadow-sm"
-              placeholder="Rechercher commandes, clients..."
-              type="text"
-            />
-          </div>
-          <Button variant="outline" className="hidden sm:flex items-center gap-2 rounded-full border-primary/30 text-primary hover:bg-primary/5 font-medium text-sm h-10 px-5">
-            <Ban className="h-4 w-4" />
-            Fermer une date
-          </Button>
+          <Link href="/dashboard/calendar" className="hidden sm:block">
+            <Button variant="outline" className="flex items-center gap-2 rounded-full border-primary/30 text-primary hover:bg-primary/5 font-medium text-sm h-10 px-5">
+              <Ban className="h-4 w-4" />
+              Fermer une date
+            </Button>
+          </Link>
           <Link href="/dashboard/orders/new">
             <Button className="flex items-center gap-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md shadow-primary/20 transition-all transform hover:scale-105 h-10 px-5">
               <Plus className="h-4 w-4" />
@@ -264,7 +267,7 @@ export default async function DashboardPage({
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Revenue */}
-          <div className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/orders" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <DollarSign className="h-6 w-6" />
             </div>
@@ -275,10 +278,10 @@ export default async function DashboardPage({
               </div>
               <h3 className="text-2xl font-bold text-foreground font-serif">{formatPrice(monthlyRevenue, currency)}</h3>
             </div>
-          </div>
+          </Link>
 
           {/* Pending Quotes */}
-          <div className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/orders" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-blue-500/30 transition-all">
             <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
               <FileText className="h-6 w-6" />
             </div>
@@ -286,10 +289,10 @@ export default async function DashboardPage({
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Devis en Attente</p>
               <h3 className="text-2xl font-bold text-foreground font-serif">{pendingQuotesCount}</h3>
             </div>
-          </div>
+          </Link>
 
           {/* Today's Events */}
-          <div className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/calendar" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <Truck className="h-6 w-6" />
             </div>
@@ -297,10 +300,10 @@ export default async function DashboardPage({
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Événements du Jour</p>
               <h3 className="text-2xl font-bold text-foreground font-serif">{todayOrdersCount}</h3>
             </div>
-          </div>
+          </Link>
 
           {/* Total Customers */}
-          <div className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/customers" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-green-500/30 transition-all">
             <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
               <Users className="h-6 w-6" />
             </div>
@@ -308,7 +311,7 @@ export default async function DashboardPage({
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Clients</p>
               <h3 className="text-2xl font-bold text-foreground font-serif">{customerCount || 0}</h3>
             </div>
-          </div>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -327,7 +330,7 @@ export default async function DashboardPage({
               <div className="p-6">
                 <div className="space-y-5">
                   {capacityDays.map((day, i) => (
-                    <div key={i} className="grid grid-cols-12 gap-4 items-center group">
+                    <Link key={i} href="/dashboard/calendar" className="grid grid-cols-12 gap-4 items-center group hover:bg-muted/30 -mx-2 px-2 py-1 rounded-lg transition-colors">
                       <div className="col-span-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors capitalize">
                         {day.dayName}
                       </div>
@@ -344,7 +347,7 @@ export default async function DashboardPage({
                       <div className={`col-span-1 text-xs text-right font-medium ${day.isClosed ? 'text-muted-foreground' : day.isFull ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
                         {day.isClosed ? 'Fermé' : day.isFull ? 'PLEIN' : `${day.percent}%`}
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -388,12 +391,12 @@ export default async function DashboardPage({
                         return (
                           <tr key={order.id} className="border-b border-border hover:bg-muted/30 transition-colors group">
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
+                              <Link href={`/dashboard/orders/${order.id}`} className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs">
                                   {initials}
                                 </div>
                                 <span className="font-bold text-foreground font-serif">{order.customers?.full_name || "Client Inconnu"}</span>
-                              </div>
+                              </Link>
                             </td>
                             <td className="px-6 py-4 text-muted-foreground">{order.internal_notes || "Commande"}</td>
                             <td className="px-6 py-4 text-muted-foreground capitalize">
@@ -406,9 +409,9 @@ export default async function DashboardPage({
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <button className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
+                              <Link href={`/dashboard/orders/${order.id}`} className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
                                 <MoreVertical className="h-4 w-4" />
-                              </button>
+                              </Link>
                             </td>
                           </tr>
                         );
@@ -453,7 +456,7 @@ export default async function DashboardPage({
                     const timeAgo = msg.time ? formatTimeAgo(new Date(msg.time)) : "";
 
                     return (
-                      <Link key={msg.id} href="/dashboard/inbox">
+                      <Link key={msg.id} href={`/dashboard/inbox?conversationId=${msg.id}`}>
                         <div className={`p-4 ${msg.unread > 0 ? 'bg-muted/30 border-border' : 'bg-card border-border/50 hover:border-primary/20'} border hover:bg-muted/50 rounded-xl cursor-pointer transition-all shadow-sm group relative`}>
                           {msg.unread > 0 && <div className="absolute right-2 top-2 w-2 h-2 bg-primary rounded-full" />}
                           <div className="flex justify-between items-start mb-2">
@@ -493,23 +496,31 @@ export default async function DashboardPage({
               </div>
             </div>
 
-            {/* Promo Card */}
-            <div className="relative rounded-xl overflow-hidden h-40 group shadow-md border border-border">
-              {/* Placeholder Image because we can't fetch external images reliably in all envs without config. Using a colored gradient as fallback or a safe internal image would be better, but sticking to requested design concept with CSS gradient for now if image fails, or just the gradient overlay. */}
-              <div className="absolute inset-0 bg-secondary/80 mix-blend-multiply transition-colors"></div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt="Promo background"
-                className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 -z-10"
-                src="https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=2070&auto=format&fit=crop"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent p-6 flex flex-col justify-end">
-                <h3 className="text-white font-serif font-bold text-xl mb-1">Menu de Saison</h3>
-                <p className="text-xs text-white/70 mb-3 font-medium">Il est temps de mettre à jour vos offres pour l'Automne ?</p>
-                <button className="w-fit px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/40 transition-colors">Mettre à jour le Menu</button>
+            {/* Promo Banner (dynamic from platform_banners) */}
+            {activeBanner && (
+              <div className="relative rounded-xl overflow-hidden h-40 group shadow-md border border-border">
+                <div className="absolute inset-0 bg-secondary/80 mix-blend-multiply transition-colors"></div>
+                {activeBanner.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt={activeBanner.title}
+                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 -z-10"
+                    src={activeBanner.image_url}
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent p-6 flex flex-col justify-end">
+                  <h3 className="text-white font-serif font-bold text-xl mb-1">{activeBanner.title}</h3>
+                  {activeBanner.description && (
+                    <p className="text-xs text-white/70 mb-3 font-medium">{activeBanner.description}</p>
+                  )}
+                  {activeBanner.link_url && (
+                    <Link href={activeBanner.link_url} className="w-fit px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/40 transition-colors">
+                      En savoir plus
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
         </div>

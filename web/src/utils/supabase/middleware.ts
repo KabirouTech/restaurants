@@ -39,6 +39,22 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(new URL('/auth/login', request.url))
     }
 
+    // Admin routes: require authentication + super admin
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+        if (!user) {
+            return NextResponse.redirect(new URL('/auth/login', request.url))
+        }
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_super_admin')
+            .eq('id', user.id)
+            .single()
+
+        if (!profile?.is_super_admin) {
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+    }
+
     if (request.nextUrl.pathname.startsWith('/auth') && user) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
