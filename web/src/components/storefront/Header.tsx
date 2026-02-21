@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 
 import { useState, useEffect } from "react";
-import { ChefHat, Instagram, Facebook, Twitter, Menu, X, ShoppingCart, Sun, Moon } from "lucide-react";
+import { Instagram, Facebook, Twitter, Menu, X, ShoppingCart, Sun, Moon } from "lucide-react";
+import { LogoMark } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import type { StorefrontSection } from "@/lib/storefront-types";
 import { useCart } from "@/context/CartContext";
@@ -82,9 +83,7 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
                         {logoUrl ? (
                             <Image src={logoUrl} alt={orgName} width={40} height={40} className="object-contain rounded-md" />
                         ) : (
-                            <div className="h-9 w-9 rounded-lg bg-primary/20 flex items-center justify-center">
-                                <ChefHat className="h-5 w-5 text-primary" />
-                            </div>
+                            <LogoMark size="md" />
                         )}
                         <span className="font-serif font-bold text-xl tracking-tight text-foreground transition-colors">
                             {orgName}<span className="text-primary">.</span>

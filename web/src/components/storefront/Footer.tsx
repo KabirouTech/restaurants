@@ -1,5 +1,6 @@
-import { Mail, Phone, MapPin, Instagram, Facebook, Twitter, ChefHat } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Facebook, Twitter } from "lucide-react";
 import Link from "next/link";
+import { LogoMark } from "@/components/Logo";
 
 export function StorefrontFooter({ orgName, settings }: { orgName: string; settings?: any }) {
     const description = settings?.description || "Célébrez vos moments importants avec une cuisine faite maison.";
@@ -20,8 +21,8 @@ export function StorefrontFooter({ orgName, settings }: { orgName: string; setti
 
                     {/* Brand */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <ChefHat className="h-6 w-6 text-primary" />
+                        <div className="flex items-center gap-2.5">
+                            <LogoMark size="sm" />
                             <h3 className="font-serif text-2xl font-bold">{orgName}</h3>
                         </div>
                         <p className="text-sm opacity-80 leading-relaxed">{description}</p>
@@ -89,8 +90,12 @@ export function StorefrontFooter({ orgName, settings }: { orgName: string; setti
 
                 <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs opacity-50 gap-4">
                     <p>&copy; {new Date().getFullYear()} {orgName}. Tous droits réservés.</p>
-                    <p className="flex items-center gap-1">
-                        Propulsé par <Link href="/" className="font-bold text-primary ml-1 hover:underline">Restaurant OS</Link>
+                    <p className="flex items-center gap-1.5">
+                        Propulsé par
+                        <Link href="/" className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline ml-1">
+                            <LogoMark size="sm" />
+                            Restaurant<span>OS</span>
+                        </Link>
                     </p>
 
                 </div>

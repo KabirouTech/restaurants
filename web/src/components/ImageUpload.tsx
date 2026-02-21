@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Image as ImageIcon, X } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from "@/utils/getCroppedImg";
 
 interface ImageUploadProps {
     name: string;
@@ -22,6 +25,12 @@ export function ImageUpload({ name, defaultValue, label, folder = "uploads", onU
 
     const [preview, setPreview] = useState<string | null>(defaultValue || null);
     const [uploading, setUploading] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [aspect, setAspect] = useState<number | undefined>(16 / 9);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,20 +47,38 @@ export function ImageUpload({ name, defaultValue, label, folder = "uploads", onU
             return;
         }
 
+        // Load into Cropper
+        const reader = new FileReader();
+        reader.onload = () => {
+            setCropImageSrc(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    };
+
+    const handleUploadCroppedImage = async () => {
+        if (!cropImageSrc || !croppedAreaPixels) return;
+
         setUploading(true);
+        setCropImageSrc(null); // Close dialog
         const supabase = createClient();
 
         try {
+            const croppedBlob = await getCroppedImg(cropImageSrc, croppedAreaPixels);
+
             // Create a unique filename
             const timestamp = Date.now();
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${folder}/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            const fileName = `${folder}/${timestamp}_${Math.random().toString(36).substr(2, 9)}.webp`;
 
             const { data, error } = await supabase.storage
                 .from('organizations') // Enforce 'organizations' bucket
-                .upload(fileName, file, {
+                .upload(fileName, croppedBlob, {
                     cacheControl: '3600',
-                    upsert: false
+                    upsert: false,
+                    contentType: 'image/webp'
                 });
 
             if (error) {
@@ -65,13 +92,14 @@ export function ImageUpload({ name, defaultValue, label, folder = "uploads", onU
 
             setPreview(publicUrl);
             onUpload?.(publicUrl);
-            toast.success("Image téléchargée avec succès !");
+            toast.success("Image cadrée et téléchargée avec succès !");
 
         } catch (error: any) {
             console.error("Upload error:", error);
             toast.error("Erreur lors du téléchargement: " + (error.message || "Erreur inconnue"));
         } finally {
             setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
@@ -143,6 +171,43 @@ export function ImageUpload({ name, defaultValue, label, folder = "uploads", onU
                     </div>
                 )}
             </div>
+
+            <Dialog open={!!cropImageSrc} onOpenChange={(open) => !open && setCropImageSrc(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Cadrage de l'image</DialogTitle>
+                        <DialogDescription>Ajustez le format et la portion de l'image à afficher.</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <div className="flex gap-2 mb-2">
+                            <Button size="sm" variant={aspect === 16 / 9 ? "default" : "outline"} onClick={() => setAspect(16 / 9)}>16:9 (Bannière)</Button>
+                            <Button size="sm" variant={aspect === 1 ? "default" : "outline"} onClick={() => setAspect(1)}>1:1 (Carré / Logo)</Button>
+                            <Button size="sm" variant={aspect === 4 / 3 ? "default" : "outline"} onClick={() => setAspect(4 / 3)}>4:3 (Standard)</Button>
+                            <Button size="sm" variant={aspect === undefined ? "default" : "outline"} onClick={() => setAspect(undefined)}>Libre</Button>
+                        </div>
+
+                        <div className="relative w-full h-[400px] bg-black rounded-lg overflow-hidden">
+                            {cropImageSrc && (
+                                <Cropper
+                                    image={cropImageSrc}
+                                    crop={crop}
+                                    zoom={zoom}
+                                    aspect={aspect}
+                                    onCropChange={setCrop}
+                                    onCropComplete={handleCropComplete}
+                                    onZoomChange={setZoom}
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setCropImageSrc(null)}>Annuler</Button>
+                        <Button onClick={handleUploadCroppedImage}>Valider et Télécharger</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

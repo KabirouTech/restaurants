@@ -1,8 +1,9 @@
 import { createClient } from "@/utils/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { InboxSidebar } from "@/components/dashboard/inbox/InboxSidebar";
 import { ChatWindow } from "@/components/dashboard/inbox/ChatWindow";
 import { cn } from "@/lib/utils";
-import { Search, Loader2 } from "lucide-react";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";
@@ -12,9 +13,30 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 1. Fetch Conversations + Last Message
-    // Tip: Supabase join is powerful.
-    const { data: conversations } = await supabase
+    if (!user) {
+        redirect("/auth/login");
+    }
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+
+    if (!profile?.organization_id) {
+        redirect("/dashboard/onboarding");
+    }
+
+    const orgId = profile.organization_id;
+
+    // Use admin client to bypass RLS (consistent with all dashboard pages)
+    const supabaseAdmin = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { persistSession: false } }
+    );
+
+    const { data: conversations } = await supabaseAdmin
         .from("conversations")
         .select(`
             id,
@@ -33,24 +55,23 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
                 created_at
             )
         `)
+        .eq("organization_id", orgId)
         .order("last_message_at", { ascending: false })
         .limit(20);
 
-    // Filter/Sort messages manually if needed, or rely on .order above for conversations.
-    // Ideally we want the *latest* message for the snippet.
-    // The query above returns ALL messages if not limited by foreign table view, which is bad for perf.
-    // A better approach in production is to store 'last_message_preview' on the conversation table.
-    // For now, we'll just slice it in JS or assume the array is small per fetch.
-
-    // Let's refine the conversation object for the client component
-    const formattedConversations = conversations?.map((c: any) => ({
-        ...c,
-        messages: c.messages?.slice(0, 1) || [] // Just take one for preview
-    })) || [];
-
+    // Get the latest message for each conversation's preview
+    const formattedConversations = conversations?.map((c: any) => {
+        const sortedMessages = (c.messages || []).sort(
+            (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        return {
+            ...c,
+            messages: sortedMessages.slice(0, 1),
+        };
+    }) || [];
 
     const selectedConversationId = searchParams.conversationId;
-    const selectedConversation = formattedConversations.find(c => c.id === selectedConversationId);
+    const selectedConversation = formattedConversations.find((c: any) => c.id === selectedConversationId);
 
     return (
         <div className="flex h-[calc(100vh-theme(spacing.2))] max-h-[800px] border border-border rounded-xl bg-background overflow-hidden relative shadow-sm">
@@ -71,10 +92,11 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
             )}>
                 {selectedConversationId ? (
                     <ChatWindow
-                        key={selectedConversationId} // Force re-mount on change
+                        key={selectedConversationId}
                         conversationId={selectedConversationId}
                         customerName={selectedConversation?.customers?.full_name || "Client"}
                         customerAvatar={selectedConversation?.customers?.avatar_url}
+                        channelPlatform={selectedConversation?.channels?.platform}
                     />
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center animate-in fade-in duration-500">

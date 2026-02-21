@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { useFCM } from "@/hooks/useFCM";
 import {
     LayoutDashboard,
-    ChefHat,
     CalendarDays,
     FileText,
     Utensils,
@@ -19,6 +18,7 @@ import {
     ChevronLeft,
     Bell
 } from "lucide-react";
+import { Logo, LogoMark } from "@/components/Logo";
 import { ModeToggle } from "@/components/mode-toggle";
 
 const navItems = [
@@ -58,15 +58,13 @@ export function Sidebar() {
             {/* Logo */}
             <div className={cn(
                 "border-b border-border flex items-center h-[4.5rem] overflow-hidden whitespace-nowrap",
-                collapsed ? "justify-center px-0" : "px-6 gap-2"
+                collapsed ? "justify-center px-0" : "px-6"
             )}>
-                <ChefHat className="h-6 w-6 text-primary shrink-0" />
-                <span className={cn(
-                    "font-serif font-bold text-lg text-secondary dark:text-foreground transition-opacity duration-300",
-                    collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
-                )}>
-                    Restaurant OS
-                </span>
+                {collapsed ? (
+                    <Logo size="sm" showText={false} href="/dashboard" />
+                ) : (
+                    <Logo size="sm" showText href="/dashboard" className="text-secondary dark:text-foreground" />
+                )}
             </div>
 
             {/* Navigation */}

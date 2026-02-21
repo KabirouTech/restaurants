@@ -3,43 +3,47 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { Send, Paperclip, MoreVertical, CheckCheck } from "lucide-react";
+import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { fetchMessagesAction, sendMessageAction } from "@/actions/messages";
 
 interface ChatWindowProps {
     conversationId: string;
     customerName: string;
     customerAvatar?: string;
+    channelPlatform?: string;
 }
 
-export function ChatWindow({ conversationId, customerName, customerAvatar }: ChatWindowProps) {
+const platformConfig: Record<string, { icon: typeof Phone; label: string; colorClass: string }> = {
+    whatsapp: { icon: Phone, label: "WhatsApp", colorClass: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" },
+    instagram: { icon: Instagram, label: "Instagram", colorClass: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400" },
+    email: { icon: Mail, label: "Email", colorClass: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+    website: { icon: Globe, label: "Site Web", colorClass: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400" },
+};
+
+export function ChatWindow({ conversationId, customerName, customerAvatar, channelPlatform }: ChatWindowProps) {
     const supabase = createClient();
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState("");
-    const scrollRef = useRef<HTMLDivElement>(null);
+    const [sending, setSending] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        // Fetch existing messages
-        const fetchMessages = async () => {
-            const { data } = await supabase
-                .from("messages")
-                .select("*")
-                .eq("conversation_id", conversationId)
-                .order("created_at", { ascending: true });
+    const platform = channelPlatform ? platformConfig[channelPlatform] : null;
+    const PlatformIcon = platform?.icon || MessageCircle;
 
-            if (data) setMessages(data);
+    useEffect(() => {
+        // Fetch existing messages via server action
+        const fetchMessages = async () => {
+            const result = await fetchMessagesAction(conversationId);
+            if (result.messages) setMessages(result.messages);
         };
 
         fetchMessages();
 
-        // Realtime Subscription
+        // Realtime Subscription for new messages
         const channel = supabase
             .channel(`conversation:${conversationId}`)
             .on(
@@ -51,7 +55,11 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
                     filter: `conversation_id=eq.${conversationId}`
                 },
                 (payload) => {
-                    setMessages((prev) => [...prev, payload.new]);
+                    setMessages((prev) => {
+                        // Avoid duplicates (from optimistic update)
+                        if (prev.some(m => m.id === payload.new.id)) return prev;
+                        return [...prev, payload.new];
+                    });
                 }
             )
             .subscribe();
@@ -66,17 +74,23 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
     }, [messages]);
 
     const handleSend = async () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || sending) return;
+        setSending(true);
 
-        // Optimistic UI could be added here
-
-        await supabase.from("messages").insert({
-            conversation_id: conversationId,
-            sender_type: "agent",
-            content: newMessage,
-        });
-
+        const content = newMessage.trim();
         setNewMessage("");
+
+        const result = await sendMessageAction(conversationId, content);
+
+        if (result.message) {
+            // Add message if not already added by realtime
+            setMessages((prev) => {
+                if (prev.some(m => m.id === result.message.id)) return prev;
+                return [...prev, result.message];
+            });
+        }
+
+        setSending(false);
     };
 
     return (
@@ -90,10 +104,19 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
                     </Avatar>
                     <div>
                         <h3 className="font-semibold text-sm">{customerName}</h3>
-                        <p className="text-xs text-green-500 flex items-center gap-1">
-                            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                            En ligne
-                        </p>
+                        {platform ? (
+                            <div className="flex items-center gap-1.5">
+                                <span className={cn("flex items-center justify-center h-4 w-4 rounded-full", platform.colorClass)}>
+                                    <PlatformIcon className="h-2.5 w-2.5" />
+                                </span>
+                                <span className="text-xs text-muted-foreground">{platform.label}</span>
+                            </div>
+                        ) : (
+                            <p className="text-xs text-green-500 flex items-center gap-1">
+                                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                                En ligne
+                            </p>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -105,7 +128,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/5">
-                {messages.map((msg, i) => {
+                {messages.map((msg) => {
                     const isAgent = msg.sender_type === "agent" || msg.sender_type === "system";
                     const isSystem = msg.sender_type === "system";
 
@@ -140,7 +163,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
                                     "text-[10px] absolute bottom-1 right-2 opacity-60",
                                     isAgent ? "text-primary-foreground" : "text-muted-foreground"
                                 )}>
-                                    {format(new Date(msg.created_at), "HH:mm")}
+                                    {msg.created_at ? format(new Date(msg.created_at), "HH:mm") : ""}
                                 </span>
                             </div>
                         </div>
@@ -169,7 +192,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
                     />
                     <Button
                         onClick={handleSend}
-                        disabled={!newMessage.trim()}
+                        disabled={!newMessage.trim() || sending}
                         size="icon"
                         className="h-10 w-10 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0 rounded-lg shadow-lg shadow-primary/20 transition-all disabled:opacity-50 disabled:shadow-none"
                     >
@@ -178,7 +201,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar }: Cha
                 </div>
                 <div className="text-center mt-2">
                     <p className="text-[10px] text-muted-foreground">
-                        Entrée pour envoyer • Shift + Entrée pour nouvelle ligne
+                        Entrée pour envoyer · Shift + Entrée pour nouvelle ligne
                     </p>
                 </div>
             </div>

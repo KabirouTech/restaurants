@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { sendExternalMessage } from "@/lib/channels/index";
 
 export async function fetchMessagesAction(conversationId: string) {
     const supabase = await createClient();
@@ -65,10 +66,10 @@ export async function sendMessageAction(conversationId: string, content: string)
         { auth: { persistSession: false } }
     );
 
-    // Verify the conversation belongs to the user's org
+    // Fetch conversation with channel info for routing
     const { data: conv } = await supabaseAdmin
         .from("conversations")
-        .select("id")
+        .select("id, external_thread_id, channels(platform, credentials)")
         .eq("id", conversationId)
         .eq("organization_id", profile.organization_id)
         .single();
@@ -92,6 +93,32 @@ export async function sendMessageAction(conversationId: string, content: string)
         .from("conversations")
         .update({ last_message_at: new Date().toISOString() })
         .eq("id", conversationId);
+
+    // Route to external channel if applicable
+    const channel = (conv as any).channels;
+    if (channel && channel.platform !== "website" && conv.external_thread_id) {
+        try {
+            const result = await sendExternalMessage(
+                channel.platform,
+                channel.credentials,
+                conv.external_thread_id,
+                content
+            );
+
+            // Store external_message_id and api_response on the message
+            if (result.externalMessageId || result.error) {
+                await supabaseAdmin
+                    .from("messages")
+                    .update({
+                        external_message_id: result.externalMessageId || null,
+                        api_response: result as any,
+                    })
+                    .eq("id", message.id);
+            }
+        } catch (err: any) {
+            console.error("Failed to send external message:", err);
+        }
+    }
 
     revalidatePath("/dashboard/inbox");
     return { message };

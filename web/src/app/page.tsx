@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, LayoutDashboard, MessageSquare, ShoppingCart, CalendarDays, ChefHat } from "lucide-react";
+import { ArrowRight, CheckCircle2, LayoutDashboard, MessageSquare, ShoppingCart, CalendarDays } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -16,14 +17,7 @@ export default function LandingPage() {
             {/* Navbar - Glass + Culture */}
             <header className="fixed top-0 w-full border-b border-primary/10 bg-background/80 backdrop-blur-xl z-50">
                 <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                            <ChefHat className="h-6 w-6" />
-                        </div>
-                        <span className="text-xl font-bold tracking-tight font-serif text-secondary">
-                            Restaurant<span className="text-primary">OS</span>
-                        </span>
-                    </div>
+                    <Logo size="lg" href="/" className="text-secondary" />
 
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
                         <Link href="#features" className="hover:text-primary transition-colors">Fonctionnalités</Link>
@@ -141,7 +135,7 @@ export default function LandingPage() {
             </section>
 
             {/* Social Proof / Culture */}
-            <section className="py-24 bg-secondary text-white relative overflow-hidden">
+            <section id="testimonials" className="py-24 bg-secondary text-white relative overflow-hidden">
                 {/* African Pattern Overlay */}
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
 
@@ -174,10 +168,7 @@ export default function LandingPage() {
             <footer className="py-16 bg-muted/30 border-t border-border">
                 <div className="container mx-auto px-6 grid md:grid-cols-4 gap-12">
                     <div className="col-span-1 md:col-span-2 space-y-6">
-                        <div className="flex items-center gap-2 font-bold text-xl text-secondary font-serif">
-                            <ChefHat className="h-6 w-6 text-primary" />
-                            Restaurant OS
-                        </div>
+                        <Logo size="md" href="/" className="text-secondary" />
                         <p className="text-muted-foreground max-w-xs leading-relaxed">
                             La plateforme tout-en-un pour les traiteurs qui veulent allier tradition et technologie.
                         </p>

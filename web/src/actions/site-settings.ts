@@ -7,6 +7,9 @@ import { createClient } from "@/utils/supabase/server";
 interface SiteSettingsPayload {
     orgId: string;
     sections: any[];
+    primaryColor?: string;
+    metaTitle?: string;
+    metaDescription?: string;
     heroTitle?: string;
     heroSubtitle?: string;
     description?: string;
@@ -56,6 +59,9 @@ export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
         const newSettings: Record<string, any> = {
             ...current,
             sections: payload.sections,
+            primary_color: payload.primaryColor || "#f4af25",
+            meta_title: payload.metaTitle || null,
+            meta_description: payload.metaDescription || null,
             hero_title: payload.heroTitle || null,
             hero_subtitle: payload.heroSubtitle || null,
             description: payload.description || null,

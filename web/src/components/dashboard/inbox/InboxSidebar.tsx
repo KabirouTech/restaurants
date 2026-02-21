@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Search, Filter, Phone, Mail, Instagram, MessageCircle, Globe } from "lucide-react";
+import { Search, Filter, Phone, Mail, Instagram, MessageCircle, Globe, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -32,11 +33,23 @@ interface InboxSidebarProps {
     className?: string;
 }
 
+const platformFilters = [
+    { value: "all", label: "Tous", icon: MessageCircle },
+    { value: "whatsapp", label: "WhatsApp", icon: Phone },
+    { value: "instagram", label: "Instagram", icon: Instagram },
+    { value: "email", label: "Email", icon: Mail },
+    { value: "website", label: "Site Web", icon: Globe },
+];
+
 export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
     const selectedId = searchParams.get("conversationId");
+
+    const [platformFilter, setPlatformFilter] = useState("all");
+    const [showFilters, setShowFilters] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const handleSelect = (id: string) => {
         const params = new URLSearchParams(searchParams);
@@ -54,21 +67,68 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
         }
     };
 
+    const filteredConversations = conversations.filter((conv) => {
+        // Platform filter
+        if (platformFilter !== "all" && conv.channels?.platform !== platformFilter) {
+            return false;
+        }
+        // Search filter
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            const nameMatch = conv.customers?.full_name?.toLowerCase().includes(q);
+            const msgMatch = conv.messages?.[0]?.content?.toLowerCase().includes(q);
+            if (!nameMatch && !msgMatch) return false;
+        }
+        return true;
+    });
 
     return (
         <div className={cn("flex flex-col h-full border-r border-border bg-card/50", className)}>
             {/* Header */}
-            <div className="p-4 border-b border-border space-y-4">
+            <div className="p-4 border-b border-border space-y-3">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-serif font-bold text-foreground">Discussions</h2>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Filter className="h-4 w-4 text-muted-foreground" />
+                    <Button
+                        variant={showFilters ? "secondary" : "ghost"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setShowFilters(!showFilters)}
+                    >
+                        {showFilters ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4 text-muted-foreground" />}
                     </Button>
                 </div>
+
+                {/* Platform Filter Pills */}
+                {showFilters && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {platformFilters.map((f) => {
+                            const Icon = f.icon;
+                            const isActive = platformFilter === f.value;
+                            return (
+                                <button
+                                    key={f.value}
+                                    onClick={() => setPlatformFilter(f.value)}
+                                    className={cn(
+                                        "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition-colors border",
+                                        isActive
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-background text-muted-foreground border-border hover:bg-accent"
+                                    )}
+                                >
+                                    <Icon className="h-3 w-3" />
+                                    {f.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+
                 <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Rechercher..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9 bg-background/50 border-input/50 focus-visible:ring-primary/20"
                     />
                 </div>
@@ -76,12 +136,12 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
 
             {/* List */}
             <div className="flex-1 overflow-y-auto">
-                {conversations.length === 0 ? (
+                {filteredConversations.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground text-sm">
-                        Aucune conversation
+                        {platformFilter !== "all" ? "Aucune conversation pour ce canal" : "Aucune conversation"}
                     </div>
                 ) : (
-                    conversations.map((conv) => {
+                    filteredConversations.map((conv) => {
                         const lastMsg = conv.messages?.[0]?.content || "Nouvelle conversation";
                         const isSelected = selectedId === conv.id;
 
@@ -115,6 +175,7 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
                                             "flex items-center justify-center h-4 w-4 rounded-full bg-muted text-muted-foreground shrink-0",
                                             conv.channels?.platform === 'whatsapp' && "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
                                             conv.channels?.platform === 'instagram' && "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
+                                            conv.channels?.platform === 'email' && "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
                                             conv.channels?.platform === 'website' && "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
                                         )}>
 

@@ -1,4 +1,4 @@
-export type ChannelPlatform = 'whatsapp' | 'instagram' | 'email' | 'messenger';
+export type ChannelPlatform = 'whatsapp' | 'instagram' | 'email' | 'messenger' | 'website';
 
 export interface Customer {
     id: string;

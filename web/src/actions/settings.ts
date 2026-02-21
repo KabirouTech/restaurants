@@ -14,10 +14,6 @@ export async function updateSettingsAction(formData: FormData) {
         const name = formData.get("name") as string;
         const rawSlug = formData.get("slug") as string;
         const description = formData.get("description") as string;
-        const heroImage = formData.get("heroImage") as string;
-        const heroTitle = formData.get("heroTitle") as string;
-        const heroSubtitle = formData.get("heroSubtitle") as string;
-        const primaryColor = formData.get("primaryColor") as string;
         const logoUrl = formData.get("logoUrl") as string;
         const currency = formData.get("currency") as string;
 
@@ -30,10 +26,6 @@ export async function updateSettingsAction(formData: FormData) {
         const instagram = formData.get("instagram") as string;
         const facebook = formData.get("facebook") as string;
         const twitter = formData.get("twitter") as string;
-
-        // SEO
-        const metaTitle = formData.get("metaTitle") as string;
-        const metaDescription = formData.get("metaDescription") as string;
 
         // Slug validation
         const slug = rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
@@ -72,10 +64,6 @@ export async function updateSettingsAction(formData: FormData) {
         const newSettings: Record<string, any> = {
             ...currentSettings,
             description: description || null,
-            hero_image: heroImage || null,
-            hero_title: heroTitle || null,
-            hero_subtitle: heroSubtitle || null,
-            primary_color: primaryColor || "#f4af25",
             logo_url: logoUrl || null,
             currency: currency || "EUR",
             contact_phone: contactPhone || null,
@@ -84,8 +72,6 @@ export async function updateSettingsAction(formData: FormData) {
             social_instagram: instagram || null,
             social_facebook: facebook || null,
             social_twitter: twitter || null,
-            meta_title: metaTitle || null,
-            meta_description: metaDescription || null,
             updated_at: new Date().toISOString(),
         };
 

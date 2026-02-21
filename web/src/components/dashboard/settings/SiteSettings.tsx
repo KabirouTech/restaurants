@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     Save, Loader2, GripVertical, Plus, Trash2,
-    LayoutList, BookOpen, CalendarDays, Image as ImageIcon, Star, MessageCircle
+    LayoutList, BookOpen, CalendarDays, Image as ImageIcon, Star, MessageCircle, Palette, Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,7 @@ import { AboutSection } from "@/components/storefront/AboutSection";
 import { ServicesSection } from "@/components/storefront/ServicesSection";
 import { GallerySection } from "@/components/storefront/GallerySection";
 import { TestimonialsSection } from "@/components/storefront/TestimonialsSection";
+import { SettingsSavePortal } from "./SettingsSavePortal";
 import { ContactSection } from "@/components/storefront/ContactSection";
 import { CartProvider } from "@/context/CartContext";
 import { Smartphone } from "lucide-react";
@@ -38,6 +39,27 @@ const SECTION_ICONS: Record<string, any> = {
     menu: BookOpen, about: LayoutList, services: CalendarDays,
     gallery: ImageIcon, testimonials: Star, contact: MessageCircle,
 };
+
+function hexToHsl(hex: string): string | null {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return null;
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
 
 // ── Section toggle manager ────────────────────────────────────────────────────
 
@@ -248,7 +270,8 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
         settings?.sections || DEFAULT_SECTIONS
     );
 
-    // Hero
+    // Appearance & Hero
+    const [primaryColor, setPrimaryColor] = useState(settings?.primary_color || "#f4af25");
     const [heroTitle, setHeroTitle] = useState(settings?.hero_title || "Goûtez l'Essence de l'Épice Dorée");
     const [heroSubtitle, setHeroSubtitle] = useState(settings?.hero_subtitle || "Plat Signature");
     const [heroDescription, setHeroDescription] = useState(settings?.description || "Des saveurs authentiques créées avec passion.");
@@ -286,10 +309,15 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
     const [contactTitle, setContactTitle] = useState(settings?.contact_title || "");
     const [contactSubtitle, setContactSubtitle] = useState(settings?.contact_subtitle || "");
 
+    // SEO
+    const [metaTitle, setMetaTitle] = useState(settings?.meta_title || "");
+    const [metaDescription, setMetaDescription] = useState(settings?.meta_description || "");
+
     // ── Preview derivation ──
     const previewSettings = {
         ...settings,
         sections,
+        primary_color: primaryColor,
         hero_title: heroTitle, hero_subtitle: heroSubtitle, description: heroDescription, hero_image: heroImage,
         about_title: aboutTitle, about_subtitle: aboutSubtitle, about_text1: aboutText1, about_text2: aboutText2, about_image: aboutImage,
         stat1_value: stat1Value, stat1_label: stat1Label, stat2_value: stat2Value, stat2_label: stat2Label, stat3_value: stat3Value, stat3_label: stat3Label,
@@ -317,6 +345,7 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
             const payload = {
                 orgId: org.id,
                 sections,
+                primaryColor, metaTitle, metaDescription,
                 heroTitle, heroSubtitle, description: heroDescription, heroImage,
                 aboutTitle, aboutSubtitle, aboutText1, aboutText2, aboutImage,
                 stat1Value, stat1Label, stat2Value, stat2Label, stat3Value, stat3Label,
@@ -349,11 +378,32 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                     </CardContent>
                 </Card>
 
-                {/* Hero */}
-                <Block title="Haut de page (Hero)" icon={ImageIcon}>
-                    <div className="space-y-3">
+                {/* Hero / Apparence */}
+                <Block title="Apparence & Haut de page" icon={Palette}>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5 flex flex-col">
+                            <Label className="text-xs">Couleur principale</Label>
+                            <div className="flex gap-3 items-center">
+                                <div
+                                    className="w-10 h-10 rounded-lg border border-border shadow-sm shrink-0"
+                                    style={{ backgroundColor: primaryColor }}
+                                />
+                                <Input
+                                    type="color"
+                                    value={primaryColor}
+                                    onChange={(e) => setPrimaryColor(e.target.value)}
+                                    className="w-20 h-10 p-1 cursor-pointer bg-background"
+                                />
+                                <div className="text-xs text-muted-foreground font-mono">
+                                    {primaryColor}
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr className="border-border/50" />
+
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Image de fond</Label>
+                            <Label className="text-xs">Image de fond (Hero)</Label>
                             <ImageUpload name="heroImage" defaultValue={heroImage}
                                 folder={`organizations/${org.id}/hero`} onUpload={setHeroImage} />
                             <p className="text-[10px] text-muted-foreground">Format recommandé: Paysage, haute définition.</p>
@@ -481,9 +531,34 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                     <p className="text-xs text-muted-foreground">Les coordonnées (téléphone, email, adresse) se gèrent dans l'onglet <strong>Général</strong>.</p>
                 </Block>
 
-                {/* Save */}
-                <div className="flex justify-end sticky bottom-6 bg-background/80 backdrop-blur-sm p-4 border-t border-border rounded-xl shadow-lg z-10">
-                    <Button onClick={handleSubmit} disabled={loading} className="gap-2 rounded-full px-8">
+                {/* SEO */}
+                <Block title="SEO & Référencement" icon={Sparkles}>
+                    <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground mb-2">Optimisez comment votre site apparaît sur Google et les réseaux sociaux.</p>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Titre pour les moteurs de recherche (Meta Title)</Label>
+                            <Input value={metaTitle} onChange={e => setMetaTitle(e.target.value)} placeholder="Le site de mon entreprise" />
+                            <p className="text-[10px] text-muted-foreground">Apparaît dans l'onglet du navigateur et les résultats Google (recommandé: 50-60 caractères).</p>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Description courte (Meta Description)</Label>
+                            <Textarea value={metaDescription} onChange={e => setMetaDescription(e.target.value)} rows={2} placeholder="Nous vous proposons..." />
+                            <p className="text-[10px] text-muted-foreground">Apparaît sous le titre dans les résultats Google (recommandé: 150-160 caractères).</p>
+                        </div>
+                    </div>
+                </Block>
+
+                {/* Save Portal */}
+                <SettingsSavePortal>
+                    <Button onClick={handleSubmit} disabled={loading} size="lg" className="gap-2 shadow-sm rounded-lg bg-primary hover:bg-primary/90 hidden md:flex px-8">
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Enregistrer le site
+                    </Button>
+                </SettingsSavePortal>
+
+                {/* Mobile Fallback Save */}
+                <div className="flex md:hidden sticky bottom-6 bg-background/80 backdrop-blur-sm p-4 border-t border-border rounded-xl shadow-lg z-10 w-full">
+                    <Button onClick={handleSubmit} disabled={loading} size="lg" className="gap-2 rounded-lg w-full">
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         Enregistrer le site
                     </Button>
@@ -491,7 +566,7 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
             </div>
 
             {/* ── Right: Live Preview ── */}
-            <div className="hidden xl:flex w-full xl:w-1/2 sticky top-6 h-[calc(100vh-theme(spacing.12))] items-center justify-center">
+            <div className="hidden xl:flex w-full xl:w-1/2 sticky top-[160px] h-[calc(100vh-190px)] items-center justify-center z-40">
                 <div className="relative w-full max-w-[1000px] perspective-[2000px]">
                     {/* Monitor Stand */}
                     <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 w-32 h-20 bg-gradient-to-b from-zinc-700 to-zinc-800 rounded-lg shadow-xl z-0 transform -translate-y-4"></div>
@@ -518,7 +593,10 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                             <div className="w-full h-[calc(100%-24px)] overflow-hidden bg-background">
                                 <div className="w-[200%] h-[200%] origin-top-left transform scale-[0.5] overflow-y-auto no-scrollbar">
                                     <CartProvider>
-                                        <div className="min-h-full bg-background font-sans text-foreground pb-20">
+                                        <div
+                                            className="min-h-full bg-background font-sans text-foreground pb-20 selection:bg-primary/30"
+                                            style={primaryColor ? { "--primary": hexToHsl(primaryColor) } as React.CSSProperties : {}}
+                                        >
                                             {/* Scaling Wrapper for Font Sizing if needed, or just let it be natural desktop size */}
 
                                             {/* Navbar Desktop */}
