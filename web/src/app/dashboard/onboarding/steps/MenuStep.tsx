@@ -12,9 +12,19 @@ interface MenuItem {
 interface MenuStepProps {
     menuItems: MenuItem[];
     onChange: (items: MenuItem[]) => void;
+    currency: string;
 }
 
-export function MenuStep({ menuItems, onChange }: MenuStepProps) {
+function getCurrencySymbol(code: string) {
+    try {
+        return (0).toLocaleString("fr-FR", { style: "currency", currency: code, minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\d/g, "").trim();
+    } catch {
+        return code;
+    }
+}
+
+export function MenuStep({ menuItems, onChange, currency }: MenuStepProps) {
+    const symbol = getCurrencySymbol(currency);
     const addItem = () => {
         onChange([...menuItems, { name: "", description: "", price: "0", category: "Plat" }]);
     };
@@ -80,7 +90,7 @@ export function MenuStep({ menuItems, onChange }: MenuStepProps) {
                                     onChange={(e) => updateItem(idx, { price: e.target.value })}
                                     className="w-20 font-mono text-sm border rounded-lg px-2 py-1 bg-background"
                                 />
-                                <span className="text-sm text-muted-foreground">€</span>
+                                <span className="text-sm text-muted-foreground">{symbol}</span>
                             </div>
                         </div>
                     </div>

@@ -172,6 +172,7 @@ export default function OnboardingWizard() {
                         <MenuStep
                             menuItems={formData.menuItems}
                             onChange={(menuItems) => setFormData((f) => ({ ...f, menuItems }))}
+                            currency={formData.currency}
                         />
                     )}
 

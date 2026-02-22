@@ -13,6 +13,8 @@ import {
     Utensils,
     MessageSquare,
     Users,
+    Package,
+    Truck,
     Settings,
     LogOut,
     ChevronLeft,
@@ -29,6 +31,8 @@ const navItems = [
     { name: "Carte & Menu", href: "/dashboard/menu", icon: Utensils },
     { name: "Messages", href: "/dashboard/inbox", icon: MessageSquare },
     { name: "Clients", href: "/dashboard/customers", icon: Users },
+    { name: "Inventaire", href: "/dashboard/inventory", icon: Package },
+    { name: "Fournisseurs", href: "/dashboard/suppliers", icon: Truck },
 ];
 
 export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
