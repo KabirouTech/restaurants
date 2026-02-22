@@ -41,7 +41,11 @@ export default async function DashboardPage({
     .eq("id", user.id)
     .single();
 
-  const orgId = profile!.organization_id;
+  if (!profile || !profile.organization_id) {
+    redirect("/dashboard/onboarding");
+  }
+
+  const orgId = profile.organization_id;
   // @ts-ignore
   const orgName = profile.organizations?.name || "Votre Restaurant";
 

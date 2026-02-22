@@ -2,8 +2,6 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { AnnouncementBar } from "@/components/dashboard/AnnouncementBar";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
@@ -22,13 +20,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         hasOrganization = !!profile?.organization_id;
     }
 
-    // Redirect to onboarding if user has no organization
+    // No organization: render children only (no sidebar/announcement bar)
+    // page.tsx handles the redirect to onboarding
     if (user && !hasOrganization) {
-        const headersList = await headers();
-        const pathname = headersList.get("x-invoke-path") || "";
-        if (!pathname.includes("/onboarding")) {
-            redirect("/dashboard/onboarding");
-        }
         return <>{children}</>;
     }
 
