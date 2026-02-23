@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, MoreHorizontal, Edit, Trash, Trash2, FileSpreadsheet, AlertTriangle } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit, Trash, Trash2, FileSpreadsheet, AlertTriangle, ChevronLeft } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createIngredientAction, updateIngredientAction, deleteIngredientAction, bulkDeleteIngredientsAction } from "@/actions/ingredients";
+import { quickCreateSupplierAction } from "@/actions/suppliers";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -79,6 +81,11 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
     const [isBulkDeleting, startBulkDelete] = useTransition();
+    const [localSuppliers, setLocalSuppliers] = useState<Supplier[]>(suppliers);
+    const [selectedSupplierId, setSelectedSupplierId] = useState<string>("none");
+    const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
+    const [newSupplier, setNewSupplier] = useState({ name: "", contact_name: "", email: "", phone: "", address: "", notes: "" });
+    const [savingSupplier, setSavingSupplier] = useState(false);
 
     const filteredIngredients = ingredients.filter((i) =>
         i.name.toLowerCase().includes(filter.toLowerCase()) ||
@@ -104,12 +111,45 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
         });
     };
 
-    const handleOpenCreate = () => { setEditingIngredient(null); setIsDialogOpen(true); };
-    const handleOpenEdit = (ingredient: Ingredient) => { setEditingIngredient(ingredient); setIsDialogOpen(true); };
+    const resetSupplierForm = () => {
+        setIsCreatingSupplier(false);
+        setNewSupplier({ name: "", contact_name: "", email: "", phone: "", address: "", notes: "" });
+    };
+
+    const handleOpenCreate = () => {
+        setEditingIngredient(null);
+        setSelectedSupplierId("none");
+        resetSupplierForm();
+        setIsDialogOpen(true);
+    };
+    const handleOpenEdit = (ingredient: Ingredient) => {
+        setEditingIngredient(ingredient);
+        setSelectedSupplierId(ingredient.supplier_id || "none");
+        resetSupplierForm();
+        setIsDialogOpen(true);
+    };
 
     const supplierName = (id: string | null) => {
         if (!id) return "-";
-        return suppliers.find(s => s.id === id)?.name || "-";
+        return localSuppliers.find(s => s.id === id)?.name || "-";
+    };
+
+    const handleCreateSupplierInline = async () => {
+        if (!newSupplier.name.trim()) return;
+        setSavingSupplier(true);
+        try {
+            const result = await quickCreateSupplierAction(newSupplier);
+            if (result.error) {
+                toast.error(result.error);
+            } else if (result.supplier) {
+                setLocalSuppliers(prev => [...prev, result.supplier!]);
+                setSelectedSupplierId(result.supplier.id);
+                resetSupplierForm();
+                toast.success(`Fournisseur "${result.supplier.name}" créé !`);
+            }
+        } finally {
+            setSavingSupplier(false);
+        }
     };
 
     const handleSubmit = async (formData: FormData) => {
@@ -366,81 +406,175 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
             )}
 
             {/* Create/Edit Modal */}
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{editingIngredient ? "Modifier l'Ingrédient" : "Nouvel Ingrédient"}</DialogTitle>
-                    </DialogHeader>
-                    <form action={handleSubmit} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Nom</Label>
-                            <Input id="name" name="name" required defaultValue={editingIngredient?.name} placeholder="Ex: Tomates cerises, Filet de boeuf..." />
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetSupplierForm(); setIsDialogOpen(open); }}>
+                <DialogContent className={cn("transition-all duration-300", isCreatingSupplier ? "max-w-3xl" : "max-w-lg")}>
+                    <div className="flex gap-6 overflow-hidden">
+                        {/* Left: Ingredient form */}
+                        <div className={cn("shrink-0 transition-all duration-300", isCreatingSupplier ? "w-1/2" : "w-full")}>
+                            <DialogHeader>
+                                <DialogTitle>{editingIngredient ? "Modifier l'Ingrédient" : "Nouvel Ingrédient"}</DialogTitle>
+                            </DialogHeader>
+                            <form action={handleSubmit} className="space-y-4 mt-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="name">Nom</Label>
+                                    <Input id="name" name="name" required defaultValue={editingIngredient?.name} placeholder="Ex: Tomates cerises, Filet de boeuf..." />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="category">Catégorie</Label>
+                                        <Select name="category" defaultValue={editingIngredient?.category || ""}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Sélectionner" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {CATEGORIES.map(cat => (
+                                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="unit">Unité</Label>
+                                        <Select name="unit" defaultValue={editingIngredient?.unit || "kg"}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Unité" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {UNITS.map(u => (
+                                                    <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="current_stock">Stock actuel</Label>
+                                        <Input id="current_stock" name="current_stock" type="number" step="0.01" defaultValue={editingIngredient?.current_stock ?? 0} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="low_stock_threshold">Seuil d&apos;alerte</Label>
+                                        <Input id="low_stock_threshold" name="low_stock_threshold" type="number" step="0.01" defaultValue={editingIngredient?.low_stock_threshold ?? 0} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="cost_per_unit">Coût unitaire ({currency})</Label>
+                                        <Input id="cost_per_unit" name="cost_per_unit" type="number" step="0.01" defaultValue={editingIngredient ? (editingIngredient.cost_per_unit_cents / 100).toFixed(2) : "0"} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Fournisseur</Label>
+                                        <input type="hidden" name="supplier_id" value={selectedSupplierId} />
+                                        <div className="flex gap-2">
+                                            <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+                                                <SelectTrigger className="flex-1">
+                                                    <SelectValue placeholder="Aucun" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">Aucun</SelectItem>
+                                                    {localSuppliers.map(s => (
+                                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <Button type="button" size="icon" variant="outline" onClick={() => setIsCreatingSupplier(true)} title="Nouveau fournisseur" className={cn("shrink-0", isCreatingSupplier && "hidden")}>
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Annuler</Button>
+                                    <Button type="submit" disabled={loading}>
+                                        {loading ? "Enregistrement..." : "Enregistrer"}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="category">Catégorie</Label>
-                                <Select name="category" defaultValue={editingIngredient?.category || ""}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Sélectionner" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {CATEGORIES.map(cat => (
-                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+
+                        {/* Right: Supplier creation panel */}
+                        {isCreatingSupplier && (
+                            <div className="w-1/2 border-l border-border pl-6 animate-in slide-in-from-right-4 fade-in duration-300">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={resetSupplierForm}>
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <h3 className="font-semibold text-sm">Nouveau Fournisseur</h3>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="new_supplier_name" className="text-xs">Nom *</Label>
+                                        <Input
+                                            id="new_supplier_name"
+                                            autoFocus
+                                            value={newSupplier.name}
+                                            onChange={(e) => setNewSupplier(s => ({ ...s, name: e.target.value }))}
+                                            placeholder="Ex: Metro, Rungis Express..."
+                                        />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="new_supplier_contact" className="text-xs">Nom du contact</Label>
+                                        <Input
+                                            id="new_supplier_contact"
+                                            value={newSupplier.contact_name}
+                                            onChange={(e) => setNewSupplier(s => ({ ...s, contact_name: e.target.value }))}
+                                            placeholder="Jean Dupont"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="new_supplier_email" className="text-xs">Email</Label>
+                                            <Input
+                                                id="new_supplier_email"
+                                                type="email"
+                                                value={newSupplier.email}
+                                                onChange={(e) => setNewSupplier(s => ({ ...s, email: e.target.value }))}
+                                                placeholder="contact@fournisseur.com"
+                                            />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="new_supplier_phone" className="text-xs">Téléphone</Label>
+                                            <Input
+                                                id="new_supplier_phone"
+                                                type="tel"
+                                                value={newSupplier.phone}
+                                                onChange={(e) => setNewSupplier(s => ({ ...s, phone: e.target.value }))}
+                                                placeholder="01 23 45 67 89"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="new_supplier_address" className="text-xs">Adresse</Label>
+                                        <Textarea
+                                            id="new_supplier_address"
+                                            value={newSupplier.address}
+                                            onChange={(e) => setNewSupplier(s => ({ ...s, address: e.target.value }))}
+                                            placeholder="123 Rue du Commerce, Paris"
+                                            className="resize-none h-14"
+                                        />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="new_supplier_notes" className="text-xs">Notes</Label>
+                                        <Textarea
+                                            id="new_supplier_notes"
+                                            value={newSupplier.notes}
+                                            onChange={(e) => setNewSupplier(s => ({ ...s, notes: e.target.value }))}
+                                            placeholder="Conditions, délais..."
+                                            className="resize-none h-14"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 pt-2">
+                                        <Button type="button" className="flex-1" onClick={handleCreateSupplierInline} disabled={savingSupplier || !newSupplier.name.trim()}>
+                                            {savingSupplier ? "Création..." : "Créer le fournisseur"}
+                                        </Button>
+                                        <Button type="button" variant="outline" onClick={resetSupplierForm}>
+                                            Annuler
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="unit">Unité</Label>
-                                <Select name="unit" defaultValue={editingIngredient?.unit || "kg"}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Unité" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {UNITS.map(u => (
-                                            <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="current_stock">Stock actuel</Label>
-                                <Input id="current_stock" name="current_stock" type="number" step="0.01" defaultValue={editingIngredient?.current_stock ?? 0} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="low_stock_threshold">Seuil d&apos;alerte</Label>
-                                <Input id="low_stock_threshold" name="low_stock_threshold" type="number" step="0.01" defaultValue={editingIngredient?.low_stock_threshold ?? 0} />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="cost_per_unit">Coût unitaire ({currency})</Label>
-                                <Input id="cost_per_unit" name="cost_per_unit" type="number" step="0.01" defaultValue={editingIngredient ? (editingIngredient.cost_per_unit_cents / 100).toFixed(2) : "0"} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="supplier_id">Fournisseur</Label>
-                                <Select name="supplier_id" defaultValue={editingIngredient?.supplier_id || ""}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Aucun" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="">Aucun</SelectItem>
-                                        {suppliers.map(s => (
-                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Annuler</Button>
-                            <Button type="submit" disabled={loading}>
-                                {loading ? "Enregistrement..." : "Enregistrer"}
-                            </Button>
-                        </DialogFooter>
-                    </form>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
 

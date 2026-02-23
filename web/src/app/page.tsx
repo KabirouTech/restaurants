@@ -73,29 +73,20 @@ export default function LandingPage() {
 
                     {/* Hero Visual */}
                     <div className="pt-16 md:pt-24 relative w-full max-w-6xl mx-auto">
-                        <div className="relative rounded-2xl border bg-background shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] group transition-all hover:shadow-[0_20px_60px_-15px_rgba(234,88,12,0.15)]">
-                            {/* Visual Placeholder: Replace with generate_image later if needed */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-white dark:from-muted dark:to-background flex items-center justify-center">
-                                <div className="text-center opacity-40">
-                                    <LayoutDashboard className="h-24 w-24 mx-auto text-primary mb-4" />
-                                    <p className="font-serif italic text-2xl text-secondary">Tableau de Bord Intuitif</p>
-                                </div>
+                        <div className="relative rounded-2xl border bg-background shadow-2xl overflow-hidden group transition-all hover:shadow-[0_20px_60px_-15px_rgba(234,88,12,0.15)]">
+                            {/* ARCADE EMBED START */}
+                            <div style={{ position: "relative", paddingBottom: "calc(55.614% + 41px)", height: 0, width: "100%" }}>
+                                <iframe
+                                    src="https://demo.arcade.software/VkRNI4fK5nikm8iaDOtG?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
+                                    title="Créer votre espace RestaurantOS et lancer le dashboard"
+                                    frameBorder="0"
+                                    loading="lazy"
+                                    allowFullScreen
+                                    allow="clipboard-write"
+                                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", colorScheme: "light" }}
+                                ></iframe>
                             </div>
-                            {/* Overlay UI elements simulating dashboard */}
-                            <div className="absolute top-8 left-8 right-8 bottom-0 bg-card shadow-lg rounded-t-xl border border-border p-6 grid grid-cols-3 gap-6 opacity-90 translate-y-4 group-hover:translate-y-2 transition-transform duration-500">
-                                <div className="col-span-1 space-y-3">
-                                    <div className="h-4 w-32 bg-primary/10 rounded"></div>
-                                    <div className="h-24 w-full bg-primary/5 rounded-lg border border-primary/10"></div>
-                                    <div className="h-24 w-full bg-secondary/5 rounded-lg border border-secondary/10"></div>
-                                </div>
-                                <div className="col-span-2 space-y-3">
-                                    <div className="flex justify-between">
-                                        <div className="h-4 w-48 bg-muted rounded"></div>
-                                        <div className="h-8 w-24 bg-primary text-white rounded-full flex items-center justify-center text-xs">Nouveau Devis</div>
-                                    </div>
-                                    <div className="h-48 w-full bg-muted/50 rounded-lg border border-dashed border-muted-foreground/20"></div>
-                                </div>
-                            </div>
+                            {/* ARCADE EMBED END */}
                         </div>
                     </div>
                 </div>

@@ -48,6 +48,52 @@ export async function createSupplierAction(formData: FormData) {
     }
 }
 
+export async function quickCreateSupplierAction(input: {
+    name: string;
+    contact_name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    notes?: string;
+}) {
+    const supabase = await createServerClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Non authentifié" };
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+
+    if (!input.name?.trim()) return { error: "Le nom est requis." };
+
+    const { data, error } = await supabase
+        .from("suppliers")
+        .insert({
+            organization_id: profile.organization_id,
+            name: input.name.trim(),
+            contact_name: input.contact_name?.trim() || null,
+            email: input.email?.trim() || null,
+            phone: input.phone?.trim() || null,
+            address: input.address?.trim() || null,
+            notes: input.notes?.trim() || null,
+        })
+        .select("id, name")
+        .single();
+
+    if (error) {
+        console.error("Quick Create Supplier Error:", error);
+        return { error: "Erreur lors de la création du fournisseur: " + error.message };
+    }
+
+    revalidatePath("/dashboard/suppliers");
+    revalidatePath("/dashboard/inventory");
+    return { success: true, supplier: data };
+}
+
 export async function updateSupplierAction(formData: FormData) {
     const supabase = await createServerClient();
 

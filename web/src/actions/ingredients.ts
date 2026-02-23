@@ -22,7 +22,8 @@ export async function createIngredientAction(formData: FormData) {
     const current_stock = parseFloat(formData.get("current_stock") as string) || 0;
     const low_stock_threshold = parseFloat(formData.get("low_stock_threshold") as string) || 0;
     const cost_per_unit = parseFloat(formData.get("cost_per_unit") as string) || 0;
-    const supplier_id = formData.get("supplier_id") as string;
+    const rawSupplierId = formData.get("supplier_id") as string;
+    const supplier_id = rawSupplierId && rawSupplierId !== "none" ? rawSupplierId : null;
 
     try {
         const { error } = await supabase
@@ -35,7 +36,7 @@ export async function createIngredientAction(formData: FormData) {
                 current_stock,
                 low_stock_threshold,
                 cost_per_unit_cents: Math.round(cost_per_unit * 100),
-                supplier_id: supplier_id || null,
+                supplier_id,
             });
 
         if (error) {
@@ -63,7 +64,8 @@ export async function updateIngredientAction(formData: FormData) {
     const current_stock = parseFloat(formData.get("current_stock") as string) || 0;
     const low_stock_threshold = parseFloat(formData.get("low_stock_threshold") as string) || 0;
     const cost_per_unit = parseFloat(formData.get("cost_per_unit") as string) || 0;
-    const supplier_id = formData.get("supplier_id") as string;
+    const rawSupplierId = formData.get("supplier_id") as string;
+    const supplier_id = rawSupplierId && rawSupplierId !== "none" ? rawSupplierId : null;
 
     try {
         const { error } = await supabase
@@ -75,7 +77,7 @@ export async function updateIngredientAction(formData: FormData) {
                 current_stock,
                 low_stock_threshold,
                 cost_per_unit_cents: Math.round(cost_per_unit * 100),
-                supplier_id: supplier_id || null,
+                supplier_id,
                 updated_at: new Date().toISOString(),
             })
             .eq("id", id);
