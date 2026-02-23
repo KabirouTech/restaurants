@@ -10,6 +10,7 @@ import {
     Building2,
     Users,
     Image,
+    Play,
     Megaphone,
     Settings,
     LogOut,
@@ -25,6 +26,7 @@ const navItems = [
     { name: "Organisations", href: "/admin/organizations", icon: Building2 },
     { name: "Utilisateurs", href: "/admin/users", icon: Users },
     { name: "Bannières", href: "/admin/banners", icon: Image },
+    { name: "Tutoriels", href: "/admin/tutorials", icon: Play },
     { name: "Annonces", href: "/admin/announcements", icon: Megaphone },
 ];
 

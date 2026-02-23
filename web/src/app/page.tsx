@@ -4,13 +4,31 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, LayoutDashboard, MessageSquare, ShoppingCart, CalendarDays } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export const metadata: Metadata = {
     title: "Restaurant OS - Propulsez votre cuisine avec la Teranga Digitale",
     description: "Simplifiez la gestion de votre activité traiteur.",
 };
 
-export default function LandingPage() {
+const FALLBACK_EMBED = `<div style="position: relative; padding-bottom: calc(55.614% + 41px); height: 0; width: 100%"><iframe src="https://demo.arcade.software/VkRNI4fK5nikm8iaDOtG?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true" title="Créer votre espace RestaurantOS et lancer le dashboard" frameBorder="0" loading="lazy" allowFullScreen allow="clipboard-write" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color-scheme: light"></iframe></div>`;
+
+export default async function LandingPage() {
+    const supabase = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { persistSession: false } }
+    );
+
+    const { data: featured } = await supabase
+        .from("platform_tutorials")
+        .select("embed_code")
+        .eq("is_active", true)
+        .eq("is_featured", true)
+        .limit(1)
+        .single();
+
+    const heroEmbed = featured?.embed_code || FALLBACK_EMBED;
     return (
         <div className="flex flex-col min-h-screen">
 
@@ -21,6 +39,7 @@ export default function LandingPage() {
 
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
                         <Link href="#features" className="hover:text-primary transition-colors">Fonctionnalités</Link>
+                        <Link href="/tutoriels" className="hover:text-primary transition-colors">Tutoriels</Link>
                         <Link href="#testimonials" className="hover:text-primary transition-colors">Témoignages</Link>
                         <Link href="/auth/login" className="px-6 py-2 text-primary hover:text-primary/80 font-medium transition-colors">
                             Connexion
@@ -74,19 +93,12 @@ export default function LandingPage() {
                     {/* Hero Visual */}
                     <div className="pt-16 md:pt-24 relative w-full max-w-6xl mx-auto">
                         <div className="relative rounded-2xl border bg-background shadow-2xl overflow-hidden group transition-all hover:shadow-[0_20px_60px_-15px_rgba(234,88,12,0.15)]">
-                            {/* ARCADE EMBED START */}
-                            <div style={{ position: "relative", paddingBottom: "calc(55.614% + 41px)", height: 0, width: "100%" }}>
-                                <iframe
-                                    src="https://demo.arcade.software/VkRNI4fK5nikm8iaDOtG?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
-                                    title="Créer votre espace RestaurantOS et lancer le dashboard"
-                                    frameBorder="0"
-                                    loading="lazy"
-                                    allowFullScreen
-                                    allow="clipboard-write"
-                                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", colorScheme: "light" }}
-                                ></iframe>
-                            </div>
-                            {/* ARCADE EMBED END */}
+                            <div dangerouslySetInnerHTML={{ __html: heroEmbed }} />
+                        </div>
+                        <div className="mt-6 text-center">
+                            <Link href="/tutoriels" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                                Voir tous les tutoriels <ArrowRight className="h-4 w-4" />
+                            </Link>
                         </div>
                     </div>
                 </div>
