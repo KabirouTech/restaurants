@@ -23,8 +23,9 @@ import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 
 import { submitOrder } from "@/actions/order";
+import { ClosedDatesInfo, isDateClosed, isDateInPast, getTodayString } from "@/lib/closed-dates";
 
-export function CartDrawer({ orgId, currency }: { orgId: string, currency: string }) {
+export function CartDrawer({ orgId, currency, closedDatesInfo }: { orgId: string, currency: string, closedDatesInfo?: ClosedDatesInfo }) {
     const { items, removeItem, updateQuantity, totalCents, itemCount, isOpen, setIsOpen, clearCart } = useCart();
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -193,9 +194,17 @@ export function CartDrawer({ orgId, currency }: { orgId: string, currency: strin
                                     <label className="text-sm font-medium">Date de l'événement</label>
                                     <input
                                         required type="date"
+                                        min={getTodayString()}
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         value={customerDetails.date}
-                                        onChange={e => setCustomerDetails({ ...customerDetails, date: e.target.value })}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setCustomerDetails({ ...customerDetails, date: val });
+                                            if (closedDatesInfo && val && isDateClosed(val, closedDatesInfo)) {
+                                                toast.error("Cette date n'est pas disponible. Veuillez en choisir une autre.");
+                                                setCustomerDetails(prev => ({ ...prev, date: "" }));
+                                            }
+                                        }}
                                     />
                                 </div>
                                 <div className="space-y-2">

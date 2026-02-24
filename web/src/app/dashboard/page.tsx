@@ -6,7 +6,6 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { format, addDays, addWeeks, subWeeks, startOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  Ban,
   Plus,
   DollarSign,
   FileText,
@@ -20,6 +19,7 @@ import {
 import { formatPrice } from "@/lib/currencies";
 import { CapacityFilter } from "@/components/dashboard/CapacityFilter";
 import { RevenueFilter } from "@/components/dashboard/RevenueFilter";
+import { CloseDateButton } from "@/components/dashboard/CloseDateButton";
 
 export default async function DashboardPage({
   searchParams,
@@ -246,12 +246,9 @@ export default async function DashboardPage({
           <p className="text-sm text-muted-foreground font-light">Bonjour, voici le programme culinaire du jour.</p>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/calendar" className="hidden sm:block">
-            <Button variant="outline" className="flex items-center gap-2 rounded-full border-primary/30 text-primary hover:bg-primary/5 font-medium text-sm h-10 px-5">
-              <Ban className="h-4 w-4" />
-              Fermer une date
-            </Button>
-          </Link>
+          <div className="hidden sm:block">
+            <CloseDateButton />
+          </div>
           <Link href="/dashboard/orders/new">
             <Button className="flex items-center gap-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md shadow-primary/20 transition-all transform hover:scale-105 h-10 px-5">
               <Plus className="h-4 w-4" />

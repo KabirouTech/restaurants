@@ -1,5 +1,6 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
+import { format, addMonths } from "date-fns";
 import { Metadata } from "next";
 import { Hero } from "@/components/storefront/Hero";
 import { MenuSection } from "@/components/storefront/MenuSection";
@@ -43,6 +44,31 @@ async function getProducts(orgId: string) {
         .eq("organization_id", orgId)
         .eq("is_active", true);
     return data || [];
+}
+
+async function getClosedDatesInfo(orgId: string) {
+    const supabase = getAdminClient();
+    const today = format(new Date(), "yyyy-MM-dd");
+    const futureLimit = format(addMonths(new Date(), 6), "yyyy-MM-dd");
+
+    const [{ data: overrides }, { data: defaults }] = await Promise.all([
+        supabase
+            .from("calendar_overrides")
+            .select("date")
+            .eq("organization_id", orgId)
+            .eq("is_blocked", true)
+            .gte("date", today)
+            .lte("date", futureLimit),
+        supabase
+            .from("defaults_calendar")
+            .select("day_of_week, is_open")
+            .eq("organization_id", orgId),
+    ]);
+
+    return {
+        blockedDates: (overrides || []).map(o => o.date),
+        closedDaysOfWeek: (defaults || []).filter(d => !d.is_open).map(d => d.day_of_week),
+    };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -104,7 +130,10 @@ export default async function StorefrontPage({ params }: Props) {
     const org = await getOrganization(slug);
     if (!org) notFound();
 
-    const products = await getProducts(org.id);
+    const [products, closedDatesInfo] = await Promise.all([
+        getProducts(org.id),
+        getClosedDatesInfo(org.id),
+    ]);
     const s = (org.settings || {}) as Record<string, any>;
     const primaryHsl = s.primary_color ? hexToHsl(s.primary_color) : null;
     const currency = s.currency || "EUR";
@@ -118,8 +147,8 @@ export default async function StorefrontPage({ params }: Props) {
 
     const enabledSections = sections.filter((sec) => sec.enabled);
 
-    // Enrich settings with org_id so client components (e.g. ContactSection) can use it
-    const settingsWithOrgId = { ...(org.settings || {}), org_id: org.id };
+    // Enrich settings with org_id and closed dates so client components can use them
+    const settingsWithOrgId = { ...(org.settings || {}), org_id: org.id, closedDatesInfo };
 
 
     return (
@@ -160,7 +189,7 @@ export default async function StorefrontPage({ params }: Props) {
                 </main>
 
                 <StorefrontFooter orgName={org.name} settings={org.settings} />
-                <CartDrawer orgId={org.id} currency={currency} />
+                <CartDrawer orgId={org.id} currency={currency} closedDatesInfo={closedDatesInfo} />
                 <CartFloatingButton />
             </div>
         </CartProvider>

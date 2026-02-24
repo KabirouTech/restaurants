@@ -2,11 +2,11 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { format, startOfMonth, endOfMonth, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday, isSameDay, addDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfDay, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday, isSameDay, isBefore, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Ban, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban, Plus, LockOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CalendarEvent } from "@/components/dashboard/calendar/CalendarEvent";
 import { CalendarShell } from "@/components/dashboard/calendar/CalendarShell";
@@ -64,8 +64,8 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
         .select("*")
         .eq("organization_id", orgId);
 
-    // 4. Fetch Customers, Capacity Types & Products for the quick order dialog
-    const [{ data: customers }, { data: capacityTypes }, { data: products }] = await Promise.all([
+    // 4. Fetch Customers, Capacity Types, Products & Calendar Overrides
+    const [{ data: customers }, { data: capacityTypes }, { data: products }, { data: calendarOverrides }] = await Promise.all([
         supabase
             .from("customers")
             .select("id, full_name, email, phone")
@@ -82,6 +82,12 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
             .eq("organization_id", orgId)
             .eq("is_active", true)
             .order("name"),
+        supabaseAdmin
+            .from("calendar_overrides")
+            .select("date, is_blocked, reason")
+            .eq("organization_id", orgId)
+            .gte("date", format(calendarStart, "yyyy-MM-dd"))
+            .lte("date", format(calendarEnd, "yyyy-MM-dd")),
     ]);
 
     // 5. Build Days Array
@@ -147,48 +153,91 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                             const dow = day.getDay();
                             const defaultSettings = defaults?.find((d: any) => d.day_of_week === dow);
                             const isOpen = defaultSettings?.is_open !== false;
+                            const override = calendarOverrides?.find(o => o.date === dayString);
+                            const isBlocked = override?.is_blocked || false;
+                            const isClosed = !isOpen || isBlocked;
 
                             const isCurrentMonth = isSameMonth(day, monthStart);
                             const isTodayDate = isToday(day);
+                            const isPast = isBefore(day, startOfDay(new Date())) && !isTodayDate;
 
                             return (
                                 <div
                                     key={dayString}
                                     className={cn(
-                                        "min-h-[120px] border-b border-r border-border relative flex flex-col transition-colors group bg-card hover:bg-muted/5",
+                                        "min-h-[120px] border-b border-r border-border relative flex flex-col transition-colors bg-card",
+                                        !isPast && "group hover:bg-muted/5",
                                         !isCurrentMonth && "bg-muted/10 text-muted-foreground/40",
-                                        isTodayDate && "bg-blue-50/10"
+                                        isPast && "opacity-50 cursor-default",
+                                        isClosed && !isPast && "bg-red-100/80 dark:bg-red-950/40 border-r-red-200 dark:border-r-red-900/50",
+                                        isTodayDate && !isClosed && "bg-blue-50/10"
                                     )}
                                 >
                                     {/* Day Number Header */}
-                                    <div className="flex justify-between items-start p-2 border-b border-border/50 bg-muted/20">
+                                    <div className={cn(
+                                        "flex justify-between items-start p-2 border-b border-border/50",
+                                        isClosed && !isPast ? "bg-red-200/70 dark:bg-red-900/40" : "bg-muted/20"
+                                    )}>
                                         <span className={cn(
                                             "h-6 w-6 flex items-center justify-center rounded-full text-sm font-medium",
                                             isTodayDate ? "bg-primary text-white shadow-sm" : "text-muted-foreground"
                                         )}>
                                             {format(day, "d")}
                                         </span>
-                                        {!isOpen && (
-                                            <span className="text-[10px] px-1.5 rounded-full border border-border bg-muted text-muted-foreground flex items-center gap-1">
-                                                <Ban className="h-3 w-3" /> Fermé
-                                            </span>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            {isClosed && !isPast && (
+                                                <span className="text-[10px] px-1.5 rounded-full border border-red-300 dark:border-red-700 bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300 font-semibold flex items-center gap-1">
+                                                    <Ban className="h-3 w-3" /> Fermé
+                                                </span>
+                                            )}
+                                            {isBlocked && !isPast && (
+                                                <button
+                                                    data-calendar-reopen-date={dayString}
+                                                    className="text-[10px] px-1.5 py-0.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                                                    title="Rouvrir cette date"
+                                                >
+                                                    <LockOpen className="h-3 w-3" /> Rouvrir
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* Override reason */}
+                                    {isBlocked && !isPast && override?.reason && (
+                                        <div className="px-2 py-1 text-[10px] text-muted-foreground italic truncate">
+                                            {override.reason}
+                                        </div>
+                                    )}
 
                                     {/* Events area */}
                                     <div className="flex-1 relative">
-                                        {/* + button: centered, z-0 */}
-                                        <button
-                                            data-calendar-new-order={dayString}
-                                            className="absolute z-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 text-primary/50 hover:text-primary"
-                                            title="Ajouter un événement"
-                                        >
-                                            <span className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-colors">
-                                                <Plus className="h-4 w-4" />
-                                            </span>
-                                        </button>
+                                        {/* + button for new order (hidden on past dates) */}
+                                        {!isPast && (
+                                            <button
+                                                data-calendar-new-order={dayString}
+                                                className="absolute z-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 text-primary/50 hover:text-primary"
+                                                title="Ajouter un événement"
+                                            >
+                                                <span className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-colors">
+                                                    <Plus className="h-4 w-4" />
+                                                </span>
+                                            </button>
+                                        )}
 
-                                        {/* Dots: z-10 so they stay clickable above the + */}
+                                        {/* Close date button (hidden on past & closed dates) */}
+                                        {!isClosed && !isPast && (
+                                            <button
+                                                data-calendar-close-date={dayString}
+                                                className="absolute z-20 bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-200 text-muted-foreground/50 hover:text-destructive"
+                                                title="Fermer cette date"
+                                            >
+                                                <span className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-destructive/10 transition-colors">
+                                                    <Ban className="h-3.5 w-3.5" />
+                                                </span>
+                                            </button>
+                                        )}
+
+                                        {/* Existing orders (still visible on past dates, read-only) */}
                                         {dayOrders.length > 0 && (
                                             <div className="relative z-10 flex flex-wrap gap-1.5 p-1.5 pt-2">
                                                 {dayOrders.map((order: any, idx: number) => (

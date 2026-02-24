@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { submitContactFormAction } from "@/actions/contact-form";
+import { ClosedDatesInfo, isDateClosed, getTodayString } from "@/lib/closed-dates";
 
 
 interface ContactSectionProps {
@@ -22,8 +23,10 @@ export function ContactSection({ settings }: ContactSectionProps) {
     const address = settings?.contact_address;
 
     const orgId = settings?.org_id;
+    const closedDatesInfo = settings?.closedDatesInfo as ClosedDatesInfo | undefined;
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
+    const [dateError, setDateError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -157,7 +160,22 @@ export function ContactSection({ settings }: ContactSectionProps) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="c-date">Date de l'événement</Label>
-                                    <Input id="c-date" name="date" type="date" />
+                                    <Input
+                                        id="c-date"
+                                        name="date"
+                                        type="date"
+                                        min={getTodayString()}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (closedDatesInfo && val && isDateClosed(val, closedDatesInfo)) {
+                                                setDateError("Cette date n'est pas disponible.");
+                                                e.target.value = "";
+                                            } else {
+                                                setDateError("");
+                                            }
+                                        }}
+                                    />
+                                    {dateError && <p className="text-xs text-destructive">{dateError}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="c-guests">Nombre d'invités</Label>

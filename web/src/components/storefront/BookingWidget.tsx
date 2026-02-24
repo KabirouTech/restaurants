@@ -8,9 +8,12 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useState } from "react";
+import { toast } from "sonner";
+import { ClosedDatesInfo, isDateClosed, getTodayString } from "@/lib/closed-dates";
 
-export function BookingWidget() {
+export function BookingWidget({ closedDatesInfo }: { closedDatesInfo?: ClosedDatesInfo } = {}) {
     const [mode, setMode] = useState<"book" | "order">("book");
+    const [selectedDate, setSelectedDate] = useState("");
 
     return (
         <div className="bg-white dark:bg-card rounded-2xl shadow-xl p-6 border border-border">
@@ -41,7 +44,21 @@ export function BookingWidget() {
                 <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Sélectionnez une date</label>
                     <div className="relative">
-                        <Input type="date" className="w-full bg-background border-input" />
+                        <Input
+                            type="date"
+                            className="w-full bg-background border-input"
+                            min={getTodayString()}
+                            value={selectedDate}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (closedDatesInfo && val && isDateClosed(val, closedDatesInfo)) {
+                                    toast.error("Cette date n'est pas disponible.");
+                                    setSelectedDate("");
+                                } else {
+                                    setSelectedDate(val);
+                                }
+                            }}
+                        />
                     </div>
                 </div>
 
