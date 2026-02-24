@@ -97,12 +97,47 @@ module.exports = {
     				'100%': {
     					transform: 'translateX(100%)'
     				}
+    			},
+    			'banner-shimmer': {
+    				'0%': { backgroundPosition: '-200% 0' },
+    				'100%': { backgroundPosition: '200% 0' }
+    			},
+    			'banner-pulse': {
+    				'0%, 100%': { opacity: '1' },
+    				'50%': { opacity: '0.85' }
+    			},
+    			'banner-slide': {
+    				'0%': { transform: 'translateY(-100%)' },
+    				'100%': { transform: 'translateY(0)' }
+    			},
+    			'banner-glow': {
+    				'0%, 100%': { boxShadow: '0 0 5px rgba(255,255,255,0.1)' },
+    				'50%': { boxShadow: '0 0 20px rgba(255,255,255,0.3)' }
+    			},
+    			'banner-rainbow': {
+    				'0%': { borderColor: '#ef4444' },
+    				'17%': { borderColor: '#f97316' },
+    				'33%': { borderColor: '#eab308' },
+    				'50%': { borderColor: '#22c55e' },
+    				'67%': { borderColor: '#3b82f6' },
+    				'83%': { borderColor: '#a855f7' },
+    				'100%': { borderColor: '#ef4444' }
+    			},
+    			'banner-slide-up': {
+    				'0%': { transform: 'translateY(100%)' },
+    				'100%': { transform: 'translateY(0)' }
     			}
     		},
     		animation: {
     			'accordion-down': 'accordion-down 0.2s ease-out',
     			'accordion-up': 'accordion-up 0.2s ease-out',
-    			shimmer: 'shimmer 2s infinite'
+    			shimmer: 'shimmer 2s infinite',
+    			'banner-shimmer': 'banner-shimmer 3s ease-in-out infinite',
+    			'banner-pulse': 'banner-pulse 2s ease-in-out infinite',
+    			'banner-slide': 'banner-slide 0.5s ease-out',
+    			'banner-glow': 'banner-glow 2s ease-in-out infinite',
+    			'banner-rainbow': 'banner-rainbow 4s linear infinite',
+    			'banner-slide-up': 'banner-slide-up 0.5s ease-out'
     		}
     	}
     },

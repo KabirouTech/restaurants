@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { BannerDialog } from "@/components/admin/BannerDialog";
-import { deleteBannerAction } from "@/actions/admin/banners";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { deleteBannerAction, bulkDeleteBannersAction } from "@/actions/admin/banners";
 import { toast } from "sonner";
 import { Image, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -26,6 +27,27 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
     const [editBanner, setEditBanner] = useState<Banner | undefined>();
     const [isPending, startTransition] = useTransition();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+
+    const allSelected = banners.length > 0 && banners.every(b => selected.has(b.id));
+
+    const toggleSelect = (id: string) => {
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+
+    const toggleAll = () => {
+        if (allSelected) {
+            setSelected(new Set());
+        } else {
+            setSelected(new Set(banners.map(b => b.id)));
+        }
+    };
 
     const handleEdit = (banner: Banner) => {
         setEditBanner(banner);
@@ -51,6 +73,21 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
         });
     };
 
+    const handleBulkDelete = () => {
+        setBulkDeleting(true);
+        startTransition(async () => {
+            const result = await bulkDeleteBannersAction(Array.from(selected));
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success(`${selected.size} bannière${selected.size > 1 ? "s" : ""} supprimée${selected.size > 1 ? "s" : ""}`);
+                setSelected(new Set());
+            }
+            setBulkDeleting(false);
+            setBulkConfirmOpen(false);
+        });
+    };
+
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans">
             <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
@@ -61,17 +98,67 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
                     </h1>
                     <p className="text-sm text-muted-foreground font-light">{banners.length} bannière{banners.length > 1 ? "s" : ""}</p>
                 </div>
-                <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-5">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nouvelle bannière
-                </Button>
+                <div className="flex items-center gap-3">
+                    {banners.length > 0 && (
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={allSelected}
+                                onChange={toggleAll}
+                                className="h-4 w-4 rounded border-border accent-orange-500"
+                            />
+                            Tout
+                        </label>
+                    )}
+                    <Button onClick={handleCreate} className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-5">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nouvelle bannière
+                    </Button>
+                </div>
             </header>
 
             <div className="flex-1 overflow-y-auto p-6 md:p-8">
+                {/* Bulk action bar */}
+                {selected.size > 0 && (
+                    <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                        <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                            {selected.size} sélectionnée{selected.size > 1 ? "s" : ""}
+                        </span>
+                        <div className="flex-1" />
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelected(new Set())}
+                            className="text-muted-foreground"
+                        >
+                            Désélectionner
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                            onClick={() => setBulkConfirmOpen(true)}
+                            disabled={bulkDeleting}
+                        >
+                            {bulkDeleting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
+                            Supprimer ({selected.size})
+                        </Button>
+                    </div>
+                )}
+
                 {banners.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {banners.map((banner) => (
-                            <div key={banner.id} className="bg-card rounded-xl border border-border shadow-sm overflow-hidden group">
+                            <div key={banner.id} className={`bg-card rounded-xl border shadow-sm overflow-hidden group relative ${selected.has(banner.id) ? "border-orange-500 ring-2 ring-orange-500/20" : "border-border"}`}>
+                                {/* Checkbox */}
+                                <div className="absolute top-3 left-3 z-10">
+                                    <input
+                                        type="checkbox"
+                                        checked={selected.has(banner.id)}
+                                        onChange={() => toggleSelect(banner.id)}
+                                        className="h-4 w-4 rounded border-border accent-orange-500 bg-white shadow-sm"
+                                    />
+                                </div>
+
                                 {/* Image */}
                                 <div className="relative h-40 bg-muted">
                                     {banner.image_url ? (
@@ -155,6 +242,16 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 banner={editBanner}
+            />
+
+            <ConfirmDialog
+                open={bulkConfirmOpen}
+                onOpenChange={setBulkConfirmOpen}
+                title={`Supprimer ${selected.size} bannière${selected.size > 1 ? "s" : ""} ?`}
+                description="Cette action est irréversible. Les bannières sélectionnées seront définitivement supprimées."
+                confirmLabel={`Supprimer (${selected.size})`}
+                variant="destructive"
+                onConfirm={handleBulkDelete}
             />
         </div>
     );

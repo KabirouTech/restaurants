@@ -119,3 +119,17 @@ export async function deleteTutorialAction(id: string) {
     revalidateTutorialPaths();
     return { success: true };
 }
+
+export async function bulkDeleteTutorialsAction(ids: string[]) {
+    const admin = await verifySuperAdmin();
+
+    const { error } = await admin
+        .from("platform_tutorials")
+        .delete()
+        .in("id", ids);
+
+    if (error) return { error: error.message };
+
+    revalidateTutorialPaths();
+    return { success: true };
+}

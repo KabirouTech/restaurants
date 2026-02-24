@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { UserDialog } from "@/components/admin/UserDialog";
-import { deleteUserAction } from "@/actions/admin/users";
+import { deleteUserAction, bulkDeleteUsersAction } from "@/actions/admin/users";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -49,6 +49,9 @@ export function UsersClient({
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
 
     const [search, setSearch] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
@@ -60,6 +63,24 @@ export function UsersClient({
         const matchesRole = roleFilter === "all" || u.role === roleFilter;
         return matchesSearch && matchesRole;
     });
+
+    const allFilteredSelected = filtered.length > 0 && filtered.every(u => selected.has(u.id));
+
+    const toggleSelect = (id: string) => {
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+
+    const toggleAll = () => {
+        if (allFilteredSelected) {
+            setSelected(new Set());
+        } else {
+            setSelected(new Set(filtered.map(u => u.id)));
+        }
+    };
 
     const handleEdit = (user: User) => {
         setEditUser(user);
@@ -84,6 +105,21 @@ export function UsersClient({
             }
             setDeletingId(null);
             setDeleteTarget(null);
+        });
+    };
+
+    const handleBulkDelete = () => {
+        setBulkDeleting(true);
+        startTransition(async () => {
+            const result = await bulkDeleteUsersAction(Array.from(selected));
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success(`${selected.size} utilisateur${selected.size > 1 ? "s" : ""} supprimé${selected.size > 1 ? "s" : ""}`);
+                setSelected(new Set());
+            }
+            setBulkDeleting(false);
+            setBulkConfirmOpen(false);
         });
     };
 
@@ -126,12 +162,47 @@ export function UsersClient({
                     </select>
                 </div>
 
+                {/* Bulk action bar */}
+                {selected.size > 0 && (
+                    <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                        <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                            {selected.size} sélectionné{selected.size > 1 ? "s" : ""}
+                        </span>
+                        <div className="flex-1" />
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelected(new Set())}
+                            className="text-muted-foreground"
+                        >
+                            Désélectionner
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                            onClick={() => setBulkConfirmOpen(true)}
+                            disabled={bulkDeleting}
+                        >
+                            {bulkDeleting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
+                            Supprimer ({selected.size})
+                        </Button>
+                    </div>
+                )}
+
                 {/* Table */}
                 <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="text-xs text-muted-foreground border-b border-border bg-muted/50">
+                                    <th className="px-4 py-4 w-10">
+                                        <input
+                                            type="checkbox"
+                                            checked={allFilteredSelected}
+                                            onChange={toggleAll}
+                                            className="h-4 w-4 rounded border-border accent-orange-500"
+                                        />
+                                    </th>
                                     <th className="px-6 py-4 font-semibold uppercase tracking-wider">Nom</th>
                                     <th className="px-6 py-4 font-semibold uppercase tracking-wider">Rôle</th>
                                     <th className="px-6 py-4 font-semibold uppercase tracking-wider">Organisation</th>
@@ -142,7 +213,15 @@ export function UsersClient({
                             </thead>
                             <tbody className="text-sm">
                                 {filtered.length > 0 ? filtered.map((user) => (
-                                    <tr key={user.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                                    <tr key={user.id} className={`border-b border-border hover:bg-muted/30 transition-colors ${selected.has(user.id) ? "bg-orange-50/50 dark:bg-orange-950/10" : ""}`}>
+                                        <td className="px-4 py-4">
+                                            <input
+                                                type="checkbox"
+                                                checked={selected.has(user.id)}
+                                                onChange={() => toggleSelect(user.id)}
+                                                className="h-4 w-4 rounded border-border accent-orange-500"
+                                            />
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 {user.avatar_url ? (
@@ -211,7 +290,7 @@ export function UsersClient({
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                                        <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
                                             Aucun utilisateur trouvé.
                                         </td>
                                     </tr>
@@ -237,6 +316,16 @@ export function UsersClient({
                 confirmLabel="Supprimer"
                 variant="destructive"
                 onConfirm={handleDeleteConfirm}
+            />
+
+            <ConfirmDialog
+                open={bulkConfirmOpen}
+                onOpenChange={setBulkConfirmOpen}
+                title={`Supprimer ${selected.size} utilisateur${selected.size > 1 ? "s" : ""} ?`}
+                description="Cette action supprimera définitivement les profils et comptes d'authentification sélectionnés. Cette action est irréversible."
+                confirmLabel={`Supprimer (${selected.size})`}
+                variant="destructive"
+                onConfirm={handleBulkDelete}
             />
         </div>
     );

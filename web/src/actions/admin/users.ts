@@ -67,3 +67,23 @@ export async function deleteUserAction(id: string) {
     revalidatePath("/admin/users");
     return { success: true };
 }
+
+export async function bulkDeleteUsersAction(ids: string[]) {
+    const admin = await verifySuperAdmin();
+
+    const errors: string[] = [];
+    for (const id of ids) {
+        const { error: profileError } = await admin
+            .from("profiles")
+            .delete()
+            .eq("id", id);
+        if (profileError) { errors.push(profileError.message); continue; }
+
+        const { error: authError } = await admin.auth.admin.deleteUser(id);
+        if (authError) errors.push(authError.message);
+    }
+
+    revalidatePath("/admin/users");
+    if (errors.length > 0) return { error: `${ids.length - errors.length}/${ids.length} supprimés. Erreurs: ${errors[0]}` };
+    return { success: true };
+}

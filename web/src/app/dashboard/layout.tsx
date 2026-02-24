@@ -33,17 +33,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
         { auth: { persistSession: false } }
     );
 
+    const now = new Date().toISOString();
     const { data: announcements } = await supabaseAdmin
         .from("platform_announcements")
-        .select("id, message, type, dismissible")
-        .eq("is_active", true);
+        .select("id, message, type, dismissible, link_url, link_label, emoji, animation, position, display_format")
+        .eq("is_active", true)
+        .or(`starts_at.is.null,starts_at.lte.${now}`)
+        .or(`expires_at.is.null,expires_at.gte.${now}`);
+
+    const activeAnnouncements = announcements || [];
+    const hasBottomAnnouncements = activeAnnouncements.some(
+        (a: { position?: string | null; display_format?: string | null }) =>
+            a.position === "bottom" && a.display_format !== "popup"
+    );
 
     return (
         <div className="flex flex-col h-[100dvh] overflow-hidden bg-muted/10 print:h-auto print:overflow-visible print:bg-white">
-            <AnnouncementBar announcements={announcements || []} />
+            <AnnouncementBar announcements={activeAnnouncements} />
             <div className="flex flex-1 overflow-hidden">
                 <Sidebar isSuperAdmin={isSuperAdmin} />
-                <main className="flex-1 overflow-y-auto h-full w-full print:h-auto print:w-full print:overflow-visible">
+                <main className={`flex-1 overflow-y-auto h-full w-full print:h-auto print:w-full print:overflow-visible ${hasBottomAnnouncements ? "pb-12" : ""}`}>
                     {children}
                 </main>
             </div>

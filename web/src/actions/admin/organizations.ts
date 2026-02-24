@@ -53,3 +53,17 @@ export async function changeOrgPlanAction(orgId: string, plan: string) {
     revalidatePath(`/admin/organizations/${orgId}`);
     return { success: true };
 }
+
+export async function bulkToggleOrgsActiveAction(ids: string[], isActive: boolean) {
+    const admin = await verifySuperAdmin();
+
+    const { error } = await admin
+        .from("organizations")
+        .update({ is_active: isActive })
+        .in("id", ids);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/organizations");
+    return { success: true };
+}

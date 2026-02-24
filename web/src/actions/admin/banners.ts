@@ -102,3 +102,18 @@ export async function deleteBannerAction(id: string) {
     revalidatePath("/dashboard");
     return { success: true };
 }
+
+export async function bulkDeleteBannersAction(ids: string[]) {
+    const admin = await verifySuperAdmin();
+
+    const { error } = await admin
+        .from("platform_banners")
+        .delete()
+        .in("id", ids);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/banners");
+    revalidatePath("/dashboard");
+    return { success: true };
+}
