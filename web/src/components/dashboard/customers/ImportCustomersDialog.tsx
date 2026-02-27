@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ColumnMapper, ExpectedColumn } from "@/components/ui/column-mapper";
 
 type ParsedRow = {
     full_name: string;
@@ -22,49 +23,6 @@ type ParsedRow = {
     _valid: boolean;
 };
 
-// Flexible column name mapping (case-insensitive)
-const COL_MAP: Record<string, keyof ParsedRow> = {
-    nom: "full_name", name: "full_name", "nom complet": "full_name", "full name": "full_name", prenom: "full_name",
-    email: "email", "e-mail": "email", mail: "email", courriel: "email",
-    phone: "phone", telephone: "phone", "téléphone": "phone", tel: "phone", mobile: "phone",
-    notes: "notes", note: "notes", commentaires: "notes", commentaire: "notes", remarques: "notes",
-    source: "source", canal: "source", origine: "source",
-};
-
-function normalizeKey(key: string): keyof ParsedRow | null {
-    return COL_MAP[key.toLowerCase().trim()] ?? null;
-}
-
-function parseSheet(file: File): Promise<ParsedRow[]> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target!.result as ArrayBuffer);
-                const workbook = XLSX.read(data, { type: "array" });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonRows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
-
-                const parsed: ParsedRow[] = jsonRows.map((row) => {
-                    const out: Partial<ParsedRow> = {};
-                    for (const key of Object.keys(row)) {
-                        const mapped = normalizeKey(key);
-                        if (mapped && mapped !== "_valid") {
-                            out[mapped] = String(row[key] ?? "").trim() || undefined;
-                        }
-                    }
-                    return { ...out, _valid: !!out.full_name?.trim() } as ParsedRow;
-                });
-
-                resolve(parsed.filter(r => Object.values(r).some(v => v)));
-            } catch (err) {
-                reject(err);
-            }
-        };
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-    });
-}
 
 export function ImportCustomersDialog({ open, onOpenChange }: {
     open: boolean;
@@ -72,12 +30,23 @@ export function ImportCustomersDialog({ open, onOpenChange }: {
 }) {
     const router = useRouter();
     const fileRef = useRef<HTMLInputElement>(null);
+    const [status, setStatus] = useState<"upload" | "mapping" | "preview">("upload");
+    const [rawRows, setRawRows] = useState<any[]>([]);
+    const [fileHeaders, setFileHeaders] = useState<string[]>([]);
     const [rows, setRows] = useState<ParsedRow[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
     const [isPending, startTransition] = useTransition();
 
-    const reset = () => { setRows([]); setFileName(null); };
+    const EXPECTED_COLUMNS: ExpectedColumn[] = [
+        { key: "full_name", label: "Nom complet", required: true, aliases: ["nom", "name", "prenom", "client"] },
+        { key: "email", label: "Email", aliases: ["email", "e-mail", "mail", "courriel"] },
+        { key: "phone", label: "Téléphone", aliases: ["téléphone", "telephone", "phone", "tel", "mobile"] },
+        { key: "notes", label: "Notes", aliases: ["notes", "note", "commentaires", "commentaire", "remarques"] },
+        { key: "source", label: "Source", aliases: ["source", "canal", "origine", "provenance"] },
+    ];
+
+    const reset = () => { setRows([]); setFileName(null); setStatus("upload"); setRawRows([]); setFileHeaders([]); };
     const close = () => { reset(); onOpenChange(false); };
 
     const handleFile = async (file: File) => {
@@ -86,13 +55,45 @@ export function ImportCustomersDialog({ open, onOpenChange }: {
             toast.error("Format non supporté. Utilisez .xlsx, .xls ou .csv");
             return;
         }
-        try {
-            const parsed = await parseSheet(file);
-            setRows(parsed);
-            setFileName(file.name);
-        } catch {
-            toast.error("Impossible de lire le fichier. Vérifiez le format.");
-        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target!.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: "array" });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonRows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+
+                if (jsonRows.length === 0) {
+                    toast.error("Le fichier semble vide.");
+                    return;
+                }
+
+                const headers = Object.keys(jsonRows[0] as object);
+                setFileHeaders(headers);
+                setRawRows(jsonRows);
+                setFileName(file.name);
+                setStatus("mapping");
+            } catch {
+                toast.error("Impossible de lire le fichier. Vérifiez le format.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    const handleMappingConfirm = (mapping: Record<string, string>) => {
+        const parsed: ParsedRow[] = rawRows.map(row => {
+            const out: Partial<ParsedRow> = {};
+            EXPECTED_COLUMNS.forEach(col => {
+                const fileHeader = mapping[col.key];
+                if (fileHeader) {
+                    out[col.key as keyof ParsedRow] = String(row[fileHeader] ?? "").trim() as any;
+                }
+            });
+            return { ...out, _valid: !!out.full_name?.trim() } as ParsedRow;
+        });
+
+        setRows(parsed.filter(r => Object.values(r).some(v => v)));
+        setStatus("preview");
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -143,8 +144,17 @@ export function ImportCustomersDialog({ open, onOpenChange }: {
                     </DialogDescription>
                 </DialogHeader>
 
+                {status === "mapping" && (
+                    <ColumnMapper
+                        fileHeaders={fileHeaders}
+                        expectedColumns={EXPECTED_COLUMNS}
+                        onConfirm={handleMappingConfirm}
+                        onCancel={reset}
+                    />
+                )}
+
                 {/* Drop zone */}
-                {!rows.length && (
+                {status === "upload" && !rows.length && (
                     <div
                         className={cn(
                             "relative border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer",
@@ -171,7 +181,7 @@ export function ImportCustomersDialog({ open, onOpenChange }: {
                 )}
 
                 {/* Preview */}
-                {rows.length > 0 && (
+                {status === "preview" && rows.length > 0 && (
                     <div className="space-y-3">
                         {/* File info bar */}
                         <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
@@ -231,19 +241,21 @@ export function ImportCustomersDialog({ open, onOpenChange }: {
                     </div>
                 )}
 
-                <DialogFooter className="gap-2 sm:gap-0">
-                    <Button variant="ghost" size="sm" onClick={downloadTemplate} className="mr-auto gap-1.5 text-muted-foreground">
-                        <Download className="h-3.5 w-3.5" /> Télécharger le modèle
-                    </Button>
-                    <Button variant="outline" onClick={close}>Annuler</Button>
-                    <Button
-                        onClick={handleImport}
-                        disabled={validCount === 0 || isPending}
-                        className="gap-2"
-                    >
-                        {isPending ? "Import en cours..." : `Importer ${validCount} client(s)`}
-                    </Button>
-                </DialogFooter>
+                {status !== "mapping" && (
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="ghost" size="sm" onClick={downloadTemplate} className="mr-auto gap-1.5 text-muted-foreground">
+                            <Download className="h-3.5 w-3.5" /> Télécharger le modèle
+                        </Button>
+                        <Button variant="outline" onClick={close}>Annuler</Button>
+                        <Button
+                            onClick={handleImport}
+                            disabled={status !== "preview" || validCount === 0 || isPending}
+                            className="gap-2"
+                        >
+                            {isPending ? "Import en cours..." : `Importer ${validCount} client(s)`}
+                        </Button>
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     );

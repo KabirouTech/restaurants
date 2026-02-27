@@ -12,6 +12,14 @@ export async function submitOrder(orgId: string, customerData: any, items: any[]
         process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    // Fetch Organization Currency
+    const { data: orgData } = await supabase
+        .from('organizations')
+        .select('settings')
+        .eq('id', orgId)
+        .single();
+    const currency = (orgData?.settings as any)?.currency || "EUR";
+
     // 1. Create or Find Customer
     const { data: existingCustomer } = await supabase
         .from('customers')
@@ -109,7 +117,7 @@ export async function submitOrder(orgId: string, customerData: any, items: any[]
             customerData.phone ? `📞 ${customerData.phone}` : null,
             customerData.date ? `📅 Date souhaitée: ${customerData.date}` : null,
             `\n📦 Articles:\n${itemLines}`,
-            `\n💰 Total: ${formatPrice(totalCents, "EUR")}`,
+            `\n💰 Total: ${formatPrice(totalCents, currency)}`,
             customerData.notes ? `\n📝 Notes: ${customerData.notes}` : null,
         ].filter(Boolean).join("\n");
 
@@ -146,7 +154,7 @@ export async function submitOrder(orgId: string, customerData: any, items: any[]
             .not("fcm_token", "is", null);
 
         if (profiles && profiles.length > 0) {
-            const preview = `Commande de ${customerData.name} — ${formatPrice(totalCents, "EUR")}`;
+            const preview = `Commande de ${customerData.name} — ${formatPrice(totalCents, currency)}`;
             await Promise.allSettled(
                 profiles.map((p) =>
                     sendPushNotification(

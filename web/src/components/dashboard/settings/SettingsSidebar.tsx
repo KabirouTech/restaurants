@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Store, Globe, Utensils, CalendarDays, Kanban, MessageCircle, ChevronLeft } from "lucide-react";
+import { Store, Globe, Utensils, CalendarDays, Kanban, MessageCircle, ChevronLeft, Users, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -80,6 +80,22 @@ export function SettingsSidebar() {
                 <TabsTrigger value="channels" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Canaux Messagerie" : undefined}>
                     <MessageCircle className="h-4 w-4 shrink-0" />
                     <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Canaux Messagerie</span>
+                </TabsTrigger>
+
+                {/* Équipe & Abonnement */}
+                <h3 className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-6 hidden md:block px-3 transition-opacity", collapsed ? "opacity-0 h-0 overflow-hidden mb-0 mt-2" : "opacity-100")}>
+                    Équipe & Plan
+                </h3>
+                {collapsed && <div className="hidden md:block h-6" />}
+
+                <TabsTrigger value="members" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Membres" : undefined}>
+                    <Users className="h-4 w-4 shrink-0" />
+                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Membres</span>
+                </TabsTrigger>
+
+                <TabsTrigger value="billing" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Abonnement" : undefined}>
+                    <CreditCard className="h-4 w-4 shrink-0" />
+                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Abonnement</span>
                 </TabsTrigger>
             </TabsList>
         </div>

@@ -51,7 +51,7 @@ export default async function MenuPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <ImportMenuDialog />
+                    <ImportMenuDialog currency={currency} />
                     <ProductDialog currency={currency} />
                 </div>
             </div>

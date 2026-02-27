@@ -6,18 +6,28 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { UploadCloud, CheckCircle, AlertCircle, FileSpreadsheet, Loader2 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { importMenuAction } from "@/actions/import";
+import { ColumnMapper, ExpectedColumn } from "@/components/ui/column-mapper";
 
-export function ImportMenuDialog() {
+export function ImportMenuDialog({ currency }: { currency: string }) {
     const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+    const [status, setStatus] = useState<"idle" | "mapping" | "importing" | "success" | "error">("idle");
     const [message, setMessage] = useState<string | null>(null);
+    const [fileHeaders, setFileHeaders] = useState<string[]>([]);
+    const [parsedData, setParsedData] = useState<any[]>([]);
+
+    const EXPECTED_COLUMNS: ExpectedColumn[] = [
+        { key: "Nom du Plat", label: "Nom du plat", required: true, aliases: ["nom", "name", "titre", "plat"] },
+        { key: "Prix", label: `Prix (${currency})`, required: true, aliases: ["prix", "price", "tarif", "montant"] },
+        { key: "Catégorie", label: "Catégorie", aliases: ["catégorie", "category", "type", "famille"] },
+        { key: "Description", label: "Description", aliases: ["description", "details", "info", "ingredients"] },
+        { key: "Image URL", label: "Image (URL)", aliases: ["image", "photo", "url", "illustration", "img"] },
+    ];
 
     const handleDownloadTemplate = () => {
         const ws = XLSX.utils.json_to_sheet([
-            { "Nom du Plat": "Thiéboudienne", "Prix": 15.00, "Catégorie": "Plat", "Description": "Riz, poisson, légumes", "Image URL": "" },
-            { "Nom du Plat": "Yassa Poulet", "Prix": 12.50, "Catégorie": "Plat", "Description": "Poulet aux oignons", "Image URL": "" },
-            { "Nom du Plat": "Bissap", "Prix": 3.00, "Catégorie": "Boisson", "Description": "Jus d'hibiscus", "Image URL": "" }
+            { "Nom du Plat": "Thiéboudienne", [`Prix (${currency})`]: 15.00, "Catégorie": "Plat", "Description": "Riz, poisson, légumes", "Image URL": "" },
+            { "Nom du Plat": "Yassa Poulet", [`Prix (${currency})`]: 12.50, "Catégorie": "Plat", "Description": "Poulet aux oignons", "Image URL": "" },
+            { "Nom du Plat": "Bissap", [`Prix (${currency})`]: 3.00, "Catégorie": "Boisson", "Description": "Jus d'hibiscus", "Image URL": "" }
         ]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Menu");
@@ -28,7 +38,6 @@ export function ImportMenuDialog() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setLoading(true);
         setStatus("idle");
         setMessage(null);
 
@@ -47,32 +56,55 @@ export function ImportMenuDialog() {
                 if (data.length === 0) {
                     setStatus("error");
                     setMessage("Le fichier semble vide.");
-                    setLoading(false);
                     return;
                 }
 
-                // Ensure data is plain JSON (remove any potential non-serializable stuff)
-                const plainData = JSON.parse(JSON.stringify(data));
-
-                const result = await importMenuAction(plainData);
-
-                if (result.error) {
-                    setStatus("error");
-                    setMessage(result.error);
-                } else {
-                    setStatus("success");
-                    setMessage(result.message ?? `${result.count} plats importés avec succès !`);
-                    // Delay close slightly
-                    setTimeout(() => setOpen(false), 2500);
-                }
+                // Extract headers from the first row
+                const headers = Object.keys(data[0] as object);
+                setFileHeaders(headers);
+                setParsedData(data);
+                setStatus("mapping");
             } catch (err: any) {
                 setStatus("error");
                 setMessage("Erreur de lecture du fichier: " + err.message);
-            } finally {
-                setLoading(false);
             }
         };
         reader.readAsBinaryString(file);
+    };
+
+    const handleMappingConfirm = async (mapping: Record<string, string>) => {
+        setStatus("importing");
+        try {
+            // Remap data using the user's choices
+            const mappedData = parsedData.map(row => {
+                const out: any = {};
+                EXPECTED_COLUMNS.forEach(col => {
+                    const headerInFile = mapping[col.key];
+                    if (headerInFile) {
+                        out[col.key] = row[headerInFile];
+                    }
+                });
+                return out;
+            });
+
+            // Ensure data is plain JSON (remove any potential non-serializable stuff)
+            const plainData = JSON.parse(JSON.stringify(mappedData));
+
+            const result = await importMenuAction(plainData);
+
+            if (result.error) {
+                setStatus("error");
+                setMessage(result.error);
+            } else {
+                setStatus("success");
+                setMessage(result.message ?? `${result.count} plats importés avec succès !`);
+                // Delay close slightly
+                setTimeout(() => { setOpen(false); setStatus("idle"); }, 2500);
+            }
+        } catch (e: any) {
+            setStatus("error");
+            setMessage("Erreur lors de l'import: " + e.message);
+        }
     };
 
     return (
@@ -85,61 +117,72 @@ export function ImportMenuDialog() {
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="font-serif text-xl">Importer votre Menu</DialogTitle>
-                    <DialogDescription>
-                        Gagnez du temps en important votre carte depuis un fichier Excel.
-                    </DialogDescription>
+                    {status !== "mapping" && (
+                        <DialogDescription>
+                            Gagnez du temps en important votre carte depuis un fichier Excel.
+                        </DialogDescription>
+                    )}
                 </DialogHeader>
 
-                <div className="space-y-6 pt-4">
-                    {/* Step 1: Download Template */}
-                    <div className="bg-muted/30 p-4 rounded-lg border border-border flex items-start gap-4">
-                        <div className="h-10 w-10 bg-green-100 text-green-700 rounded-full flex items-center justify-center shrink-0">
-                            <FileSpreadsheet className="h-5 w-5" />
+                {status === "mapping" ? (
+                    <ColumnMapper
+                        fileHeaders={fileHeaders}
+                        expectedColumns={EXPECTED_COLUMNS}
+                        onConfirm={handleMappingConfirm}
+                        onCancel={() => { setStatus("idle"); setFileHeaders([]); setParsedData([]); }}
+                    />
+                ) : (
+                    <div className="space-y-6 pt-4">
+                        {/* Step 1: Download Template */}
+                        <div className="bg-muted/30 p-4 rounded-lg border border-border flex items-start gap-4">
+                            <div className="h-10 w-10 bg-green-100 text-green-700 rounded-full flex items-center justify-center shrink-0">
+                                <FileSpreadsheet className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h4 className="font-medium text-sm">1. Télécharger le modèle</h4>
+                                <p className="text-xs text-muted-foreground mb-2">Utilisez notre fichier Excel pré-formaté.</p>
+                                <Button variant="link" onClick={handleDownloadTemplate} className="h-auto p-0 text-primary text-xs font-semibold">
+                                    Télécharger le modèle (.xlsx)
+                                </Button>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className="font-medium text-sm">1. Télécharger le modèle</h4>
-                            <p className="text-xs text-muted-foreground mb-2">Utilisez notre fichier Excel pré-formaté.</p>
-                            <Button variant="link" onClick={handleDownloadTemplate} className="h-auto p-0 text-primary text-xs font-semibold">
-                                Télécharger le modèle (.xlsx)
-                            </Button>
+
+                        {/* Step 2: Upload */}
+                        <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-muted/10 transition-colors relative">
+                            <input
+                                type="file"
+                                accept=".xlsx, .xls, .csv"
+                                onChange={handleFileUpload}
+                                disabled={status === "importing"}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                            />
+
+                            {status === "importing" ? (
+                                <div className="flex flex-col items-center gap-2 text-primary">
+                                    <Loader2 className="h-8 w-8 animate-spin" />
+                                    <span className="text-sm font-medium">Importation en cours...</span>
+                                </div>
+                            ) : status === "success" ? (
+                                <div className="flex flex-col items-center gap-2 text-green-600">
+                                    <CheckCircle className="h-8 w-8" />
+                                    <span className="text-sm font-medium">{message}</span>
+                                </div>
+                            ) : status === "error" ? (
+                                <div className="flex flex-col items-center gap-2 text-destructive">
+                                    <AlertCircle className="h-8 w-8" />
+                                    <span className="text-sm font-medium">{message}</span>
+                                    <span className="text-xs text-muted-foreground">Cliquez pour réessayer</span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                    <UploadCloud className="h-8 w-8" />
+                                    <span className="text-sm font-medium">Glissez votre fichier ici</span>
+                                    <span className="text-xs">ou cliquez pour parcourir (.xlsx)</span>
+                                </div>
+                            )}
                         </div>
                     </div>
-
-                    {/* Step 2: Upload */}
-                    <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-muted/10 transition-colors relative">
-                        <input
-                            type="file"
-                            accept=".xlsx, .xls, .csv"
-                            onChange={handleFileUpload}
-                            disabled={loading}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                        />
-
-                        {loading ? (
-                            <div className="flex flex-col items-center gap-2 text-primary">
-                                <Loader2 className="h-8 w-8 animate-spin" />
-                                <span className="text-sm font-medium">Importation en cours...</span>
-                            </div>
-                        ) : status === "success" ? (
-                            <div className="flex flex-col items-center gap-2 text-green-600">
-                                <CheckCircle className="h-8 w-8" />
-                                <span className="text-sm font-medium">{message}</span>
-                            </div>
-                        ) : status === "error" ? (
-                            <div className="flex flex-col items-center gap-2 text-destructive">
-                                <AlertCircle className="h-8 w-8" />
-                                <span className="text-sm font-medium">{message}</span>
-                                <span className="text-xs text-muted-foreground">Cliquez pour réessayer</span>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                <UploadCloud className="h-8 w-8" />
-                                <span className="text-sm font-medium">Glissez votre fichier ici</span>
-                                <span className="text-xs">ou cliquez pour parcourir (.xlsx)</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                )}
             </DialogContent>
         </Dialog>
     );

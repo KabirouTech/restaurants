@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/currencies";
 
 type Customer = { id: string; full_name: string; email: string; phone: string };
 type CapacityType = { id: string; name: string };
@@ -34,11 +35,12 @@ interface CalendarQuickOrderDialogProps {
     customers: Customer[];
     capacityTypes: CapacityType[];
     products: Product[];
+    currency: string;
 }
 
 export function CalendarQuickOrderDialog({
     open, onOpenChange, defaultDate,
-    customers = [], capacityTypes = [], products = [],
+    customers = [], capacityTypes = [], products = [], currency,
 }: CalendarQuickOrderDialogProps) {
 
     const router = useRouter();
@@ -248,7 +250,7 @@ export function CalendarQuickOrderDialog({
                                                         <Plus className="h-3 w-3" />
                                                     </button>
                                                 </div>
-                                                <span className="font-mono text-xs w-14 text-right">{((item.product.price_cents * item.quantity) / 100).toFixed(2)}€</span>
+                                                <span className="font-mono text-xs w-14 text-right">{formatPrice(item.product.price_cents * item.quantity, currency)}</span>
                                                 <button onClick={() => removeFromCart(item.product.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive">
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </button>
@@ -262,7 +264,7 @@ export function CalendarQuickOrderDialog({
                         {/* Total */}
                         <div className="mx-5 mb-3 pt-3 border-t border-border flex justify-between items-center">
                             <span className="text-sm font-semibold text-muted-foreground">Total</span>
-                            <span className="font-mono font-bold text-xl text-primary">{(totalCents / 100).toFixed(2)} €</span>
+                            <span className="font-mono font-bold text-xl text-primary">{formatPrice(totalCents, currency)}</span>
                         </div>
                     </div>
 
@@ -314,7 +316,7 @@ export function CalendarQuickOrderDialog({
                                             <p className="text-xs text-muted-foreground">{product.category}</p>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
-                                            <span className="font-mono text-sm font-semibold">{(product.price_cents / 100).toFixed(2)}€</span>
+                                            <span className="font-mono text-sm font-semibold">{formatPrice(product.price_cents, currency)}</span>
                                             {inCart ? (
                                                 <span className="h-6 w-6 rounded-full bg-primary text-white text-xs flex items-center justify-center font-bold">
                                                     {inCart.quantity}

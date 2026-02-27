@@ -24,7 +24,12 @@ export async function importMenuAction(items: any[]) {
     try {
         // Map Excel columns to DB columns — accept any category value
         const productsToInsert = items.map(item => {
-            const rawPrice = item['Prix'] ?? item['Price'] ?? item['price'] ?? item['Prix (€)'] ?? 0;
+            // Flexibly find the price column regardless of the exact currency in parentheses
+            const priceKey = Object.keys(item).find(k => {
+                const lower = k.toLowerCase().trim();
+                return lower.startsWith('prix') || lower.startsWith('price');
+            });
+            const rawPrice = priceKey ? item[priceKey] : 0;
             const price = parseFloat(String(rawPrice).replace(',', '.')) || 0;
             const category = normalizeCategory(
                 item['Catégorie'] ?? item['Categorie'] ?? item['Category'] ?? item['category'] ?? item['Cat'] ?? null

@@ -4,6 +4,59 @@ import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
+export async function updateMenuInfoAction(input: {
+    orgId: string
+    clientMessage: string
+    legalMentions: string
+    allergenDisclaimer: string
+    labels: string[]
+    allergensPresent: string[]
+}) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Non authentifié" };
+
+    try {
+        const { data: existingOrg } = await supabase
+            .from("organizations")
+            .select("settings, slug")
+            .eq("id", input.orgId)
+            .single();
+
+        const currentSettings = (existingOrg?.settings || {}) as Record<string, any>;
+
+        const newSettings: Record<string, any> = {
+            ...currentSettings,
+            menu_client_message:      input.clientMessage || null,
+            menu_legal_mentions:      input.legalMentions || null,
+            menu_allergen_disclaimer: input.allergenDisclaimer || null,
+            menu_labels:              input.labels,
+            menu_allergens_present:   input.allergensPresent,
+            updated_at: new Date().toISOString(),
+        };
+
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { persistSession: false } }
+        );
+
+        const { error } = await supabaseAdmin
+            .from("organizations")
+            .update({ settings: newSettings })
+            .eq("id", input.orgId);
+
+        if (error) return { error: "Erreur: " + error.message };
+
+        revalidatePath("/dashboard/settings");
+        if (existingOrg?.slug) revalidatePath(`/${existingOrg.slug}`);
+
+        return { success: true };
+    } catch (e: any) {
+        return { error: e.message || "Erreur inattendue" };
+    }
+}
+
 export async function updateSettingsAction(formData: FormData) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

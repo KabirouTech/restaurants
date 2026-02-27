@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { InboxSidebar } from "@/components/dashboard/inbox/InboxSidebar";
 import { ChatWindow } from "@/components/dashboard/inbox/ChatWindow";
+import { PlanGate } from "@/components/dashboard/PlanGate";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import Image from "next/image";
@@ -28,6 +29,19 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
     }
 
     const orgId = profile.organization_id;
+
+    // ── Plan gate ────────────────────────────────────────────────
+    const { data: org } = await supabase
+        .from("organizations")
+        .select("subscription_plan")
+        .eq("id", orgId)
+        .single();
+
+    const plan = org?.subscription_plan || "free";
+
+    if (plan === "free") {
+        return <PlanGate feature="unified_inbox" />;
+    }
 
     // Use admin client to bypass RLS (consistent with all dashboard pages)
     const supabaseAdmin = createAdminClient(

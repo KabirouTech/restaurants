@@ -603,7 +603,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
             />
 
             {/* Import Dialog */}
-            <ImportIngredientsDialog open={isImportOpen} onOpenChange={setIsImportOpen} suppliers={suppliers} />
+            <ImportIngredientsDialog open={isImportOpen} onOpenChange={setIsImportOpen} suppliers={suppliers} currency={currency} />
         </div>
     );
 }

@@ -2,14 +2,16 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { AnnouncementBar } from "@/components/dashboard/AnnouncementBar";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import type { PlanKey } from "@/lib/plans/plan-limits";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Check super admin status and onboarding
+    // Check super admin status, onboarding and plan
     let isSuperAdmin = false;
     let hasOrganization = true;
+    let plan: PlanKey = "free";
     if (user) {
         const { data: profile } = await supabase
             .from("profiles")
@@ -18,6 +20,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
             .single();
         isSuperAdmin = profile?.is_super_admin === true;
         hasOrganization = !!profile?.organization_id;
+
+        if (profile?.organization_id) {
+            const { data: org } = await supabase
+                .from("organizations")
+                .select("subscription_plan")
+                .eq("id", profile.organization_id)
+                .single();
+            plan = (org?.subscription_plan as PlanKey) || "free";
+        }
     }
 
     // No organization: render children only (no sidebar/announcement bar)
@@ -51,7 +62,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="flex flex-col h-[100dvh] overflow-hidden bg-muted/10 print:h-auto print:overflow-visible print:bg-white">
             <AnnouncementBar announcements={activeAnnouncements} />
             <div className="flex flex-1 overflow-hidden">
-                <Sidebar isSuperAdmin={isSuperAdmin} />
+                <Sidebar isSuperAdmin={isSuperAdmin} plan={plan} />
                 <main className={`flex-1 overflow-y-auto h-full w-full print:h-auto print:w-full print:overflow-visible ${hasBottomAnnouncements ? "pb-12" : ""}`}>
                     {children}
                 </main>

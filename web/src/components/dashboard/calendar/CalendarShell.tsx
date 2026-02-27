@@ -16,6 +16,7 @@ interface CalendarShellProps {
     customers: Customer[];
     capacityTypes: CapacityType[];
     products: Product[];
+    currency: string;
 }
 
 
@@ -24,7 +25,7 @@ interface CalendarShellProps {
  * Manages the quick order dialog state globally so any cell's "+" button
  * can trigger it by dispatching a custom event.
  */
-export function CalendarShell({ children, customers, capacityTypes, products }: CalendarShellProps) {
+export function CalendarShell({ children, customers, capacityTypes, products, currency }: CalendarShellProps) {
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
@@ -100,6 +101,7 @@ export function CalendarShell({ children, customers, capacityTypes, products }: 
                 customers={customers}
                 capacityTypes={capacityTypes}
                 products={products}
+                currency={currency}
             />
 
             <CloseDateDialog

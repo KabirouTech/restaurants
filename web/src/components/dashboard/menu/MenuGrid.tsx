@@ -130,18 +130,12 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
                                 )}
                             >
                                 <div className="aspect-video bg-muted relative">
-                                    {product.image_url ? (
-                                        <img
-                                            src={product.image_url}
-                                            alt={product.name}
-                                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40 gap-1">
-                                            <ImageOff className="h-8 w-8" />
-                                            <span className="text-xs">Pas d'image</span>
-                                        </div>
-                                    )}
+                                    <img
+                                        src={product.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop"}
+                                        alt={product.name}
+                                        onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop"; }}
+                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                                    />
 
                                     {/* Checkbox top-left */}
                                     <div className="absolute top-2 left-2 z-10">
@@ -229,13 +223,12 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
                                 />
                                 {/* Thumbnail */}
                                 <div className="h-12 w-16 rounded-md overflow-hidden bg-muted shrink-0">
-                                    {product.image_url ? (
-                                        <img src={product.image_url} alt={product.name} className="object-cover w-full h-full" />
-                                    ) : (
-                                        <div className="flex items-center justify-center h-full text-muted-foreground/40">
-                                            <ImageOff className="h-4 w-4" />
-                                        </div>
-                                    )}
+                                    <img
+                                        src={product.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop"}
+                                        alt={product.name}
+                                        onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop"; }}
+                                        className="object-cover w-full h-full"
+                                    />
                                 </div>
 
                                 {/* Info */}

@@ -15,27 +15,45 @@ import {
     Users,
     Package,
     Truck,
+    BookOpen,
     Settings,
     LogOut,
     ChevronLeft,
     Bell,
     Shield,
+    Lock,
 } from "lucide-react";
-import { Logo, LogoMark } from "@/components/Logo";
+import { Logo } from "@/components/Logo";
 import { ModeToggle } from "@/components/mode-toggle";
+import type { PlanKey } from "@/lib/plans/plan-limits";
 
-const navItems = [
+type RequiredPlan = "premium" | "enterprise";
+
+const navItems: {
+    name: string;
+    href: string;
+    icon: React.ElementType;
+    requiresPlan?: RequiredPlan;
+}[] = [
     { name: "Tableau de Bord", href: "/dashboard", icon: LayoutDashboard },
     { name: "Devis & Commandes", href: "/dashboard/orders", icon: FileText },
     { name: "Calendrier", href: "/dashboard/calendar", icon: CalendarDays },
     { name: "Carte & Menu", href: "/dashboard/menu", icon: Utensils },
-    { name: "Messages", href: "/dashboard/inbox", icon: MessageSquare },
+    { name: "Messages", href: "/dashboard/inbox", icon: MessageSquare, requiresPlan: "premium" },
     { name: "Clients", href: "/dashboard/customers", icon: Users },
     { name: "Inventaire", href: "/dashboard/inventory", icon: Package },
     { name: "Fournisseurs", href: "/dashboard/suppliers", icon: Truck },
+    { name: "Recettes", href: "/dashboard/recipes", icon: BookOpen },
 ];
 
-export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
+function isLocked(requiresPlan: RequiredPlan | undefined, currentPlan: PlanKey): boolean {
+    if (!requiresPlan) return false;
+    if (requiresPlan === "premium") return currentPlan === "free";
+    if (requiresPlan === "enterprise") return currentPlan === "free" || currentPlan === "premium";
+    return false;
+}
+
+export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolean; plan?: PlanKey }) {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
     const { requestPermission, permissionStatus } = useFCM();
@@ -76,6 +94,8 @@ export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                    const locked = isLocked(item.requiresPlan, plan);
+
                     return (
                         <Link key={item.href} href={item.href}>
                             <div
@@ -83,23 +103,42 @@ export function Sidebar({ isSuperAdmin }: { isSuperAdmin?: boolean }) {
                                     "flex items-center rounded-lg text-sm font-medium transition-all mb-1 h-10 group/item relative",
                                     isActive
                                         ? "bg-primary/10 text-primary"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                        : locked
+                                            ? "text-muted-foreground/60 hover:bg-muted/60 hover:text-muted-foreground"
+                                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
                                     collapsed ? "justify-center px-0" : "px-3 gap-3"
                                 )}
                                 title={collapsed ? item.name : undefined}
                             >
-                                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
-                                <span className={cn(
-                                    "whitespace-nowrap transition-all duration-300",
-                                    collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
-                                )}>
-                                    {item.name}
-                                </span>
+                                <item.icon className={cn(
+                                    "h-4 w-4 shrink-0",
+                                    isActive ? "text-primary" : locked ? "text-muted-foreground/50" : "text-muted-foreground"
+                                )} />
+
+                                {!collapsed && (
+                                    <span className="whitespace-nowrap flex-1 transition-all duration-300 opacity-100">
+                                        {item.name}
+                                    </span>
+                                )}
+
+                                {/* PRO badge (expanded) or lock icon (collapsed) */}
+                                {locked && !collapsed && (
+                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wide border border-amber-200 dark:border-amber-800 flex-shrink-0">
+                                        <Lock className="h-2.5 w-2.5" />
+                                        Pro
+                                    </span>
+                                )}
+                                {locked && collapsed && (
+                                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 border border-background flex items-center justify-center">
+                                        <Lock className="h-2 w-2 text-white" />
+                                    </div>
+                                )}
 
                                 {/* Tooltip for collapsed state */}
                                 {collapsed && (
                                     <div className="absolute left-full ml-2 px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded opacity-0 group-hover/item:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
                                         {item.name}
+                                        {locked && " 🔒"}
                                     </div>
                                 )}
                             </div>

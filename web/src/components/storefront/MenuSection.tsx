@@ -41,11 +41,12 @@ function ProductRow({
         )}>
             {/* Thumbnail */}
             <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden bg-muted relative">
-                {product.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
-                ) : (
-                    <div className="h-full w-full flex items-center justify-center text-xl">🍽️</div>
-                )}
+                <img
+                    src={product.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop"}
+                    alt={product.name}
+                    onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop"; }}
+                    className="h-full w-full object-cover"
+                />
                 {qty > 0 && (
                     <div className="absolute inset-0 bg-primary/10 flex items-center justify-center backdrop-blur-[1px]">
                         <span className="font-bold text-white drop-shadow-md text-sm">x{qty}</span>

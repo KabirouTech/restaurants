@@ -23,6 +23,10 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
     if (!profile?.organization_id) return <div>Aucune organisation</div>;
     const orgId = profile.organization_id;
 
+    // Get Org Currency
+    const { data: orgData } = await supabase.from("organizations").select("settings").eq("id", orgId).single();
+    const currency = (orgData?.settings as any)?.currency || "EUR";
+
     // 1. Determine Current View Date
     const viewDate = searchParams.date ? parseISO(searchParams.date) : new Date();
     const monthStart = startOfMonth(viewDate);
@@ -95,7 +99,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
     const weekDays = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
     return (
-        <CalendarShell customers={customers || []} capacityTypes={capacityTypes || []} products={products || []}>
+        <CalendarShell customers={customers || []} capacityTypes={capacityTypes || []} products={products || []} currency={currency}>
 
             <div className="flex flex-col h-screen bg-background text-foreground animate-in fade-in duration-500 overflow-hidden">
 

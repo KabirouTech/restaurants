@@ -7,6 +7,9 @@ import { CapacitySettings } from "@/components/settings/CapacitySettings";
 import { KanbanSettings } from "@/components/dashboard/orders/KanbanSettings";
 import { DEFAULT_KANBAN_COLUMNS } from "@/components/dashboard/orders/KanbanBoard";
 import { ChannelSettings } from "@/components/dashboard/settings/ChannelSettings";
+import { BillingSettings } from "@/components/dashboard/settings/BillingSettings";
+import { MembersSettings } from "@/components/dashboard/settings/MembersSettings";
+import { MenuInfoSettings } from "@/components/dashboard/settings/MenuInfoSettings";
 import { SettingsSidebar } from "@/components/dashboard/settings/SettingsSidebar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,22 +107,7 @@ export default async function SettingsPage() {
                                     Mentions légales, allergènes, et labels de qualité affichés sur votre carte.
                                 </p>
                             </div>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Info className="h-5 w-5 text-primary" />
-                                        Informations Menu
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Cette section est en cours de développement.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground">
-                                        Bientôt, vous pourrez ajouter ici des mentions légales concernant vos produits, des labels de qualité (Fait Maison, Bio...), ou des messages personnalisés pour vos clients.
-                                    </p>
-                                </CardContent>
-                            </Card>
+                            <MenuInfoSettings orgId={org.id} settings={settings} />
                         </TabsContent>
 
                         {/* ── Capacity ─────────────────────────────────── */}
@@ -160,6 +148,28 @@ export default async function SettingsPage() {
                                 </p>
                             </div>
                             <ChannelSettings orgId={org.id} />
+                        </TabsContent>
+
+                        {/* ── Membres ──────────────────────────────────── */}
+                        <TabsContent value="members" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
+                            <div className="flex flex-col gap-1 pb-4">
+                                <h2 className="text-xl font-bold text-foreground">Membres de l'équipe</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Invitez votre équipe, gérez les rôles et les accès.
+                                </p>
+                            </div>
+                            <MembersSettings orgId={org.id} currentUserProfileId={profile.id} />
+                        </TabsContent>
+
+                        {/* ── Abonnement ───────────────────────────────── */}
+                        <TabsContent value="billing" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
+                            <div className="flex flex-col gap-1 pb-4">
+                                <h2 className="text-xl font-bold text-foreground">Abonnement & Facturation</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Suivez votre utilisation et gérez votre plan RestaurantsOS.
+                                </p>
+                            </div>
+                            <BillingSettings orgId={org.id} currentPlan={org.subscription_plan || 'free'} />
                         </TabsContent>
                     </div>
                 </Tabs>

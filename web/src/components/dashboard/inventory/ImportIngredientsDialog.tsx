@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ColumnMapper, ExpectedColumn } from "@/components/ui/column-mapper";
 
 type Supplier = {
     id: string;
@@ -30,80 +31,33 @@ type ParsedRow = {
     _valid: boolean;
 };
 
-const COL_MAP: Record<string, string> = {
-    nom: "name", name: "name", "ingrédient": "name", ingredient: "name",
-    "catégorie": "category", category: "category", type: "category",
-    "unité": "unit", unit: "unit", mesure: "unit",
-    stock: "current_stock", "quantité": "current_stock", quantity: "current_stock", "stock actuel": "current_stock",
-    seuil: "low_stock_threshold", threshold: "low_stock_threshold", "seuil bas": "low_stock_threshold", alerte: "low_stock_threshold",
-    "coût": "cost_per_unit", cost: "cost_per_unit", prix: "cost_per_unit", "prix unitaire": "cost_per_unit", cost_per_unit: "cost_per_unit",
-    fournisseur: "supplier_name", supplier: "supplier_name",
-};
-
-function normalizeKey(key: string): string | null {
-    return COL_MAP[key.toLowerCase().trim()] ?? null;
-}
-
-function parseSheet(file: File, suppliers: Supplier[]): Promise<ParsedRow[]> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target!.result as ArrayBuffer);
-                const workbook = XLSX.read(data, { type: "array" });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonRows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
-
-                const supplierMap = new Map(suppliers.map(s => [s.name.toLowerCase(), s.id]));
-
-                const parsed: ParsedRow[] = jsonRows.map((row) => {
-                    const out: Record<string, any> = {};
-                    for (const key of Object.keys(row)) {
-                        const mapped = normalizeKey(key);
-                        if (mapped && mapped !== "_valid") {
-                            const val = String(row[key] ?? "").trim();
-                            if (["current_stock", "low_stock_threshold", "cost_per_unit"].includes(mapped)) {
-                                out[mapped] = parseFloat(val) || 0;
-                            } else {
-                                out[mapped] = val || undefined;
-                            }
-                        }
-                    }
-
-                    // Match supplier by name
-                    if (out.supplier_name) {
-                        const matchedId = supplierMap.get(out.supplier_name.toLowerCase());
-                        if (matchedId) {
-                            out.supplier_id = matchedId;
-                        }
-                    }
-
-                    return { ...out, _valid: !!out.name?.trim() } as ParsedRow;
-                });
-
-                resolve(parsed.filter(r => Object.values(r).some(v => v)));
-            } catch (err) {
-                reject(err);
-            }
-        };
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-    });
-}
-
-export function ImportIngredientsDialog({ open, onOpenChange, suppliers }: {
+export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currency }: {
     open: boolean;
     onOpenChange: (v: boolean) => void;
     suppliers: Supplier[];
+    currency: string;
 }) {
     const router = useRouter();
     const fileRef = useRef<HTMLInputElement>(null);
+    const [status, setStatus] = useState<"upload" | "mapping" | "preview">("upload");
+    const [rawRows, setRawRows] = useState<any[]>([]);
+    const [fileHeaders, setFileHeaders] = useState<string[]>([]);
     const [rows, setRows] = useState<ParsedRow[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
     const [isPending, startTransition] = useTransition();
 
-    const reset = () => { setRows([]); setFileName(null); };
+    const EXPECTED_COLUMNS: ExpectedColumn[] = [
+        { key: "name", label: "Nom de l'ingrédient", required: true, aliases: ["nom", "name", "ingrédient", "ingredient", "produit"] },
+        { key: "category", label: "Catégorie", aliases: ["catégorie", "category", "type", "famille"] },
+        { key: "unit", label: "Unité", aliases: ["unité", "unit", "mesure"] },
+        { key: "current_stock", label: "Stock actuel", aliases: ["stock", "quantité", "quantity"] },
+        { key: "low_stock_threshold", label: "Seuil d'alerte", aliases: ["seuil", "alerte", "threshold"] },
+        { key: "cost_per_unit", label: `Coût unitaire (${currency})`, aliases: ["coût", "cout", "prix", "cost"] },
+        { key: "supplier_name", label: "Fournisseur", aliases: ["fournisseur", "supplier"] },
+    ];
+
+    const reset = () => { setRows([]); setFileName(null); setStatus("upload"); setRawRows([]); setFileHeaders([]); };
     const close = () => { reset(); onOpenChange(false); };
 
     const handleFile = async (file: File) => {
@@ -112,13 +66,58 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers }: {
             toast.error("Format non supporté. Utilisez .xlsx, .xls ou .csv");
             return;
         }
-        try {
-            const parsed = await parseSheet(file, suppliers);
-            setRows(parsed);
-            setFileName(file.name);
-        } catch {
-            toast.error("Impossible de lire le fichier. Vérifiez le format.");
-        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target!.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: "array" });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonRows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+
+                if (jsonRows.length === 0) {
+                    toast.error("Le fichier semble vide.");
+                    return;
+                }
+
+                const headers = Object.keys(jsonRows[0] as object);
+                setFileHeaders(headers);
+                setRawRows(jsonRows);
+                setFileName(file.name);
+                setStatus("mapping");
+            } catch {
+                toast.error("Impossible de lire le fichier. Vérifiez le format.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    const handleMappingConfirm = (mapping: Record<string, string>) => {
+        const supplierMap = new Map(suppliers.map(s => [s.name.toLowerCase(), s.id]));
+
+        const parsed: ParsedRow[] = rawRows.map(row => {
+            const out: Record<string, any> = {};
+            EXPECTED_COLUMNS.forEach(col => {
+                const fileHeader = mapping[col.key];
+                if (fileHeader) {
+                    const val = String(row[fileHeader] ?? "").trim();
+                    if (["current_stock", "low_stock_threshold", "cost_per_unit"].includes(col.key)) {
+                        out[col.key] = parseFloat(val) || 0;
+                    } else {
+                        out[col.key] = val || undefined;
+                    }
+                }
+            });
+
+            if (out.supplier_name) {
+                const matchedId = supplierMap.get((out.supplier_name as string).toLowerCase());
+                if (matchedId) out.supplier_id = matchedId;
+            }
+
+            return { ...out, _valid: !!out.name?.trim() } as ParsedRow;
+        });
+
+        setRows(parsed.filter(r => Object.values(r).some(v => v)));
+        setStatus("preview");
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -145,7 +144,7 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers }: {
 
     const downloadTemplate = () => {
         const ws = XLSX.utils.aoa_to_sheet([
-            ["Nom", "Catégorie", "Unité", "Stock", "Seuil", "Coût unitaire", "Fournisseur"],
+            ["Nom", "Catégorie", "Unité", "Stock", "Seuil", `Coût unitaire (${currency})`, "Fournisseur"],
             ["Tomates cerises", "Légumes", "kg", "15", "5", "3.50", "Metro"],
             ["Filet de boeuf", "Viandes", "kg", "8", "3", "25.00", "Rungis Express"],
             ["Huile d'olive", "Épices", "L", "20", "5", "8.90", ""],
@@ -171,7 +170,16 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers }: {
                     </DialogDescription>
                 </DialogHeader>
 
-                {!rows.length && (
+                {status === "mapping" && (
+                    <ColumnMapper
+                        fileHeaders={fileHeaders}
+                        expectedColumns={EXPECTED_COLUMNS}
+                        onConfirm={handleMappingConfirm}
+                        onCancel={reset}
+                    />
+                )}
+
+                {status === "upload" && !rows.length && (
                     <div
                         className={cn(
                             "relative border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer",
@@ -197,7 +205,7 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers }: {
                     </div>
                 )}
 
-                {rows.length > 0 && (
+                {status === "preview" && rows.length > 0 && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2">
                             <div className="flex items-center gap-2 text-sm">
@@ -255,19 +263,21 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers }: {
                     </div>
                 )}
 
-                <DialogFooter className="gap-2 sm:gap-0">
-                    <Button variant="ghost" size="sm" onClick={downloadTemplate} className="mr-auto gap-1.5 text-muted-foreground">
-                        <Download className="h-3.5 w-3.5" /> Télécharger le modèle
-                    </Button>
-                    <Button variant="outline" onClick={close}>Annuler</Button>
-                    <Button
-                        onClick={handleImport}
-                        disabled={validCount === 0 || isPending}
-                        className="gap-2"
-                    >
-                        {isPending ? "Import en cours..." : `Importer ${validCount} ingrédient(s)`}
-                    </Button>
-                </DialogFooter>
+                {status !== "mapping" && (
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="ghost" size="sm" onClick={downloadTemplate} className="mr-auto gap-1.5 text-muted-foreground">
+                            <Download className="h-3.5 w-3.5" /> Télécharger le modèle
+                        </Button>
+                        <Button variant="outline" onClick={close}>Annuler</Button>
+                        <Button
+                            onClick={handleImport}
+                            disabled={status !== "preview" || validCount === 0 || isPending}
+                            className="gap-2"
+                        >
+                            {isPending ? "Import en cours..." : `Importer ${validCount} ingrédient(s)`}
+                        </Button>
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     );
