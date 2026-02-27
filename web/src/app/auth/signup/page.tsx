@@ -2,16 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Mail, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, Check, RefreshCw } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { Logo } from "@/components/Logo";
+import { cn } from "@/lib/utils";
+
+const PERKS = [
+    "Gratuit jusqu'à 30 commandes/mois",
+    "Mise en route en 5 minutes",
+    "Aucune carte bancaire requise",
+    "Support en français inclus",
+];
 
 export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [email, setEmail] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
     const router = useRouter();
     const supabase = createClient();
@@ -20,7 +29,6 @@ export default function SignupPage() {
         e.preventDefault();
         setLoading(true);
         setError(null);
-
         const formData = new FormData(e.currentTarget);
         const emailVal = formData.get("email") as string;
         const password = formData.get("password") as string;
@@ -29,9 +37,7 @@ export default function SignupPage() {
         const { data, error: signUpError } = await supabase.auth.signUp({
             email: emailVal,
             password,
-            options: {
-                emailRedirectTo: `${location.origin}/auth/callback`,
-            },
+            options: { emailRedirectTo: `${location.origin}/auth/callback` },
         });
 
         if (signUpError) {
@@ -50,160 +56,288 @@ export default function SignupPage() {
     const handleGoogleLogin = async () => {
         setLoading(true);
         const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${location.origin}/auth/callback`,
-            }
+            provider: "google",
+            options: { redirectTo: `${location.origin}/auth/callback` },
         });
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-        }
+        if (error) { setError(error.message); setLoading(false); }
     };
 
     const handleResend = async () => {
         setResendCooldown(60);
-        const { error } = await supabase.auth.resend({
-            type: 'signup',
-            email: email,
-            options: {
-                emailRedirectTo: `${location.origin}/auth/callback`,
-            }
+        await supabase.auth.resend({
+            type: "signup",
+            email,
+            options: { emailRedirectTo: `${location.origin}/auth/callback` },
         });
-        if (error) setError("Erreur d'envoi: " + error.message);
-
-        // Countdown
         const interval = setInterval(() => {
             setResendCooldown(prev => {
-                if (prev <= 1) clearInterval(interval);
+                if (prev <= 1) { clearInterval(interval); return 0; }
                 return prev - 1;
             });
         }, 1000);
     };
 
+    /* ── Email confirmation screen ─────────────────── */
     if (success) {
         return (
-            <div className="min-h-screen flex flex-col justify-center items-center bg-background text-foreground p-8 animate-in fade-in zoom-in-95 duration-500">
-                <div className="max-w-md w-full text-center space-y-6">
-                    <div className="h-20 w-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto text-primary animate-bounce">
-                        <Mail className="h-10 w-10" />
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white p-8 animate-in fade-in duration-500">
+                <div className="max-w-sm w-full text-center space-y-6">
+                    {/* Animated mail icon */}
+                    <div className="relative mx-auto h-24 w-24">
+                        <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Mail className="h-10 w-10 text-primary" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-emerald-500 border-4 border-white flex items-center justify-center">
+                            <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                        </div>
                     </div>
-                    <h1 className="text-3xl font-bold font-serif text-secondary">Vérifiez vos emails !</h1>
-                    <p className="text-muted-foreground text-lg">
-                        Un lien de confirmation a été envoyé à <strong>{email}</strong>. Cliquez dessus pour activer votre compte.
-                    </p>
 
-                    <div className="space-y-3 pt-6">
-                        <Button
-                            variant="outline"
+                    <div className="space-y-2">
+                        <h1 className="text-2xl font-bold font-serif text-gray-900">Vérifiez vos emails</h1>
+                        <p className="text-gray-500 text-sm leading-relaxed">
+                            Un lien de confirmation a été envoyé à{" "}
+                            <strong className="text-gray-800">{email}</strong>.
+                            Cliquez dessus pour activer votre compte.
+                        </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 text-left space-y-2">
+                        <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Vous ne le trouvez pas ?</p>
+                        <p className="text-xs text-amber-700">Vérifiez votre dossier spam ou courrier indésirable.</p>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                        <button
                             onClick={handleResend}
                             disabled={resendCooldown > 0}
-                            className="w-full gap-2"
+                            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border-2 border-gray-200 text-gray-700 text-sm font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-50"
                         >
-                            {resendCooldown > 0 ? (
-                                `Ruvoyer dans ${resendCooldown}s`
-                            ) : (
-                                <>
-                                    <RefreshCw className="h-4 w-4" /> Renvoyer l'email
-                                </>
-                            )}
-                        </Button>
-                        <Link href="/auth/login" className="block w-full">
-                            <Button variant="ghost" className="w-full">Retour à la connexion</Button>
+                            <RefreshCw className={cn("h-4 w-4", resendCooldown === 0 && "")} />
+                            {resendCooldown > 0 ? `Renvoyer dans ${resendCooldown}s` : "Renvoyer l'email"}
+                        </button>
+                        <Link href="/auth/login">
+                            <button className="w-full h-11 rounded-xl text-gray-400 text-sm hover:text-gray-600 transition-colors">
+                                Retour à la connexion
+                            </button>
                         </Link>
                     </div>
                 </div>
             </div>
-        )
+        );
     }
 
     return (
-        <div className="min-h-screen grid lg:grid-cols-2 bg-background text-foreground">
-            {/* Visual Side */}
-            <div className="hidden lg:block relative bg-primary/5 border-r border-border overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-multiply"></div>
-                <div className="absolute bottom-10 left-10 p-8 max-w-md z-10 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 text-white">
-                    <blockquote className="text-xl font-medium font-serif italic mb-4">
-                        "La cuisine, c'est de l'art. L'organisation, c'est Restaurant OS."
-                    </blockquote>
-                    <cite className="not-italic text-sm text-white/70 font-medium">— Cheikh N., Traiteur à Dakar</cite>
+        <div className="min-h-screen flex bg-white">
+
+            {/* ── Left Brand Panel ───────────────────────── */}
+            <div className="hidden lg:flex lg:w-[52%] xl:w-[55%] flex-col relative overflow-hidden bg-gradient-to-br from-[#1a2e1a] via-[#1e3a1e] to-[#2d1a0e]">
+
+                {/* Dot pattern */}
+                <div
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                        backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)`,
+                        backgroundSize: "28px 28px",
+                    }}
+                />
+
+                {/* Glow blobs */}
+                <div className="absolute top-[-80px] right-[-80px] w-[380px] h-[380px] rounded-full bg-primary/30 blur-[120px]" />
+                <div className="absolute bottom-[-60px] left-[-60px] w-[300px] h-[300px] rounded-full bg-amber-600/20 blur-[100px]" />
+
+                {/* Logo */}
+                <div className="relative z-10 p-10">
+                    <Logo size="md" showText href="/" className="text-white [&_*]:text-white [&_*]:fill-white" />
+                </div>
+
+                {/* Center content */}
+                <div className="relative z-10 flex-1 flex flex-col justify-center px-12 pb-8">
+                    <div className="space-y-8 max-w-md">
+                        <div className="space-y-3">
+                            <p className="text-primary text-sm font-bold uppercase tracking-widest">Gratuit pour commencer</p>
+                            <h2 className="text-4xl xl:text-5xl font-bold font-serif text-white leading-tight">
+                                Gérez mieux,<br />cuisinez plus.
+                            </h2>
+                            <p className="text-white/60 text-lg leading-relaxed">
+                                Rejoignez les traiteurs qui ont digitalisé leur activité avec RestaurantsOS.
+                            </p>
+                        </div>
+
+                        {/* Perks */}
+                        <div className="space-y-3">
+                            {PERKS.map(perk => (
+                                <div key={perk} className="flex items-center gap-3">
+                                    <div className="h-5 w-5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center flex-shrink-0">
+                                        <Check className="h-3 w-3 text-primary" strokeWidth={3} />
+                                    </div>
+                                    <span className="text-white/75 text-sm">{perk}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-3 gap-4 pt-4">
+                            {[
+                                { value: "10+", label: "modules" },
+                                { value: "5 min", label: "installation" },
+                                { value: "0 FCFA", label: "pour démarrer" },
+                            ].map(({ value, label }) => (
+                                <div key={label} className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+                                    <p className="text-xl font-bold text-white font-serif">{value}</p>
+                                    <p className="text-white/50 text-xs mt-0.5">{label}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Testimonial */}
+                <div className="relative z-10 mx-10 mb-10 p-5 rounded-2xl bg-white/8 backdrop-blur-sm border border-white/10">
+                    <p className="text-white/80 text-sm italic font-serif leading-relaxed">
+                        "La cuisine, c'est de l'art. L'organisation, c'est RestaurantsOS."
+                    </p>
+                    <div className="mt-3 flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-amber-500/40 flex items-center justify-center text-white font-bold text-xs">C</div>
+                        <div>
+                            <p className="text-white text-xs font-semibold">Cheikh N.</p>
+                            <p className="text-white/50 text-xs">Traiteur · Dakar</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Form Side */}
-            <div className="flex flex-col justify-center items-center p-8 lg:p-16 relative">
-                <Link href="/" className="absolute top-8 left-8 text-sm text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors font-medium">
-                    <ArrowLeft className="h-4 w-4" /> Retour au site
-                </Link>
+            {/* ── Right Form Panel ───────────────────────── */}
+            <div className="flex-1 flex flex-col">
 
-                <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-bold tracking-tight font-serif text-secondary">Rejoignez la Tribu</h1>
-                        <p className="text-muted-foreground">Créez votre compte pour commencer.</p>
-                    </div>
-
-                    <div className="space-y-4">
-                        <Button variant="outline" type="button" onClick={handleGoogleLogin} className="w-full h-12 gap-2 text-foreground font-medium" disabled={loading}>
-                            <svg className="h-5 w-5" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-                            </svg>
-                            S'inscrire avec Google
-                        </Button>
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-border" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-background px-2 text-muted-foreground">Ou avec email</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm font-medium leading-none">Email professionnel</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                required
-                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                placeholder="chef@restaurant.com"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <label htmlFor="password" className="text-sm font-medium leading-none">Mot de passe</label>
-                            </div>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                placeholder="••••••••"
-                            />
-                        </div>
-
-                        {error && (
-                            <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md font-medium flex items-start gap-2">
-                                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        <Button className="w-full h-12 text-lg bg-primary hover:bg-primary/90 text-white font-medium shadow-md transition-all active:scale-[0.98]" disabled={loading}>
-                            {loading ? "Création du compte..." : "S'inscrire"}
-                        </Button>
-                    </form>
-
-                    <p className="px-8 text-center text-sm text-muted-foreground">
+                {/* Top bar */}
+                <div className="flex items-center justify-between px-8 py-6">
+                    <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors font-medium">
+                        <ArrowLeft className="h-4 w-4" /> Retour
+                    </Link>
+                    <p className="text-sm text-gray-400">
                         Déjà un compte ?{" "}
-                        <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary font-medium text-foreground">
+                        <Link href="/auth/login" className="text-gray-900 font-semibold hover:text-primary transition-colors">
                             Se connecter
                         </Link>
                     </p>
+                </div>
+
+                {/* Form */}
+                <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 md:px-16 lg:px-12 xl:px-20 pb-12 max-w-md mx-auto w-full lg:max-w-none lg:mx-0">
+                    <div className="max-w-sm mx-auto w-full space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                        {/* Header */}
+                        <div className="space-y-2">
+                            <h1 className="text-3xl font-bold tracking-tight font-serif text-gray-900">
+                                Créer un compte
+                            </h1>
+                            <p className="text-gray-400">
+                                Commencez gratuitement, sans carte bancaire.
+                            </p>
+                        </div>
+
+                        {/* Google */}
+                        <button
+                            type="button"
+                            onClick={handleGoogleLogin}
+                            disabled={loading}
+                            className="w-full flex items-center justify-center gap-3 h-12 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-[0.99] disabled:opacity-50"
+                        >
+                            <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 488 512">
+                                <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
+                            </svg>
+                            S'inscrire avec Google
+                        </button>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-4">
+                            <div className="flex-1 h-px bg-gray-100" />
+                            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">ou</span>
+                            <div className="flex-1 h-px bg-gray-100" />
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="space-y-4">
+
+                            {/* Email */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-gray-700">Email professionnel</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <input
+                                        name="email"
+                                        type="email"
+                                        required
+                                        autoComplete="email"
+                                        placeholder="chef@restaurant.com"
+                                        className="w-full h-12 pl-10 pr-4 rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-300 focus:outline-none focus:border-primary transition-colors"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Password */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-gray-700">Mot de passe</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <input
+                                        name="password"
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        minLength={8}
+                                        autoComplete="new-password"
+                                        placeholder="8 caractères minimum"
+                                        className="w-full h-12 pl-10 pr-11 rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-300 focus:outline-none focus:border-primary transition-colors"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Error */}
+                            {error && (
+                                <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                                    {error}
+                                </div>
+                            )}
+
+                            {/* Submit */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={cn(
+                                    "w-full h-12 rounded-xl font-bold text-white text-sm transition-all",
+                                    "bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90",
+                                    "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
+                                    "active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                                )}
+                            >
+                                {loading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                        </svg>
+                                        Création du compte...
+                                    </span>
+                                ) : "Créer mon compte →"}
+                            </button>
+                        </form>
+
+                        {/* Legal */}
+                        <p className="text-center text-xs text-gray-300 leading-relaxed">
+                            En créant un compte, vous acceptez nos{" "}
+                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">conditions d'utilisation</Link>{" "}
+                            et notre{" "}
+                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">politique de confidentialité</Link>.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
