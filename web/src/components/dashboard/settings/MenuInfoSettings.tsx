@@ -147,12 +147,15 @@ export function MenuInfoSettings({ orgId, settings }: MenuInfoSettingsProps) {
             {QUALITY_LABELS.map(ql => {
               const active = activeLabels.includes(ql.key)
               return (
-                <button
+                <div
                   key={ql.key}
-                  type="button"
+                  role="checkbox"
+                  aria-checked={active}
+                  tabIndex={0}
                   onClick={() => toggleLabel(ql.key)}
+                  onKeyDown={e => (e.key === ' ' || e.key === 'Enter') && toggleLabel(ql.key)}
                   className={cn(
-                    'flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all',
+                    'flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all cursor-pointer select-none',
                     active
                       ? ql.color + ' ring-2 ring-current/30'
                       : 'border-border bg-card hover:bg-muted/40'
@@ -162,12 +165,13 @@ export function MenuInfoSettings({ orgId, settings }: MenuInfoSettingsProps) {
                     checked={active}
                     className="mt-0.5 shrink-0 pointer-events-none"
                     aria-hidden
+                    tabIndex={-1}
                   />
                   <div>
                     <p className={cn('text-sm font-semibold', active ? '' : 'text-foreground')}>{ql.label}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{ql.desc}</p>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
