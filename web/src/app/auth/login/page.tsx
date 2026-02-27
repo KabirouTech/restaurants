@@ -8,6 +8,8 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
@@ -15,6 +17,8 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
     const supabase = createClient();
+    const t = useTranslations("auth.login");
+    const tAuth = useTranslations("auth");
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -25,7 +29,7 @@ export default function LoginPage() {
         const password = formData.get("password") as string;
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
-            setError("Email ou mot de passe incorrect.");
+            setError(t("error"));
             setLoading(false);
         } else {
             router.push("/dashboard");
@@ -69,12 +73,14 @@ export default function LoginPage() {
                 <div className="relative z-10 flex-1 flex flex-col justify-center px-12 pb-8">
                     <div className="space-y-6 max-w-md">
                         <div className="space-y-3">
-                            <p className="text-primary text-sm font-bold uppercase tracking-widest">Bienvenue</p>
+                            <p className="text-primary text-sm font-bold uppercase tracking-widest">{t("welcomeLabel")}</p>
                             <h2 className="text-4xl xl:text-5xl font-bold font-serif text-white leading-tight">
-                                Content de vous<br />revoir.
+                                {t("welcomeTitle").split("\n").map((line, i) => (
+                                    <span key={i}>{line}{i === 0 && <br />}</span>
+                                ))}
                             </h2>
                             <p className="text-white/60 text-lg leading-relaxed">
-                                Votre cuisine vous attend. Connectez-vous pour continuer.
+                                {t("welcomeSubtitle")}
                             </p>
                         </div>
 
@@ -100,7 +106,7 @@ export default function LoginPage() {
                 {/* Testimonial */}
                 <div className="relative z-10 mx-10 mb-10 p-5 rounded-2xl bg-white/8 backdrop-blur-sm border border-white/10">
                     <p className="text-white/80 text-sm italic font-serif leading-relaxed">
-                        "Avant RestaurantsOS, je jonglais entre 4 applis différentes. Maintenant tout est là."
+                        &quot;Avant RestaurantsOS, je jonglais entre 4 applis différentes. Maintenant tout est là.&quot;
                     </p>
                     <div className="mt-3 flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-primary/40 flex items-center justify-center text-white font-bold text-xs">A</div>
@@ -118,14 +124,17 @@ export default function LoginPage() {
                 {/* Top bar */}
                 <div className="flex items-center justify-between px-8 py-6">
                     <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors font-medium">
-                        <ArrowLeft className="h-4 w-4" /> Retour
+                        <ArrowLeft className="h-4 w-4" /> {tAuth("back")}
                     </Link>
-                    <p className="text-sm text-gray-400">
-                        Pas de compte ?{" "}
-                        <Link href="/auth/signup" className="text-gray-900 font-semibold hover:text-primary transition-colors">
-                            S'inscrire
-                        </Link>
-                    </p>
+                    <div className="flex items-center gap-4">
+                        <LanguageSwitcher className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors" />
+                        <p className="text-sm text-gray-400">
+                            {t("noAccount")}{" "}
+                            <Link href="/auth/signup" className="text-gray-900 font-semibold hover:text-primary transition-colors">
+                                {t("signup")}
+                            </Link>
+                        </p>
+                    </div>
                 </div>
 
                 {/* Form */}
@@ -135,10 +144,10 @@ export default function LoginPage() {
                         {/* Header */}
                         <div className="space-y-2">
                             <h1 className="text-3xl font-bold tracking-tight font-serif text-gray-900">
-                                Connexion
+                                {t("title")}
                             </h1>
                             <p className="text-gray-400">
-                                Entrez vos identifiants pour accéder à votre espace.
+                                {t("subtitle")}
                             </p>
                         </div>
 
@@ -152,7 +161,7 @@ export default function LoginPage() {
                             <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 488 512">
                                 <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
                             </svg>
-                            Continuer avec Google
+                            {t("google")}
                         </button>
 
                         {/* Divider */}
@@ -166,7 +175,7 @@ export default function LoginPage() {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {/* Email */}
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-gray-700">Email</label>
+                                <label className="text-sm font-semibold text-gray-700">{t("email")}</label>
                                 <div className="relative">
                                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input
@@ -183,9 +192,9 @@ export default function LoginPage() {
                             {/* Password */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-sm font-semibold text-gray-700">Mot de passe</label>
+                                    <label className="text-sm font-semibold text-gray-700">{t("password")}</label>
                                     <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors">
-                                        Oublié ?
+                                        {t("forgotPassword")}
                                     </Link>
                                 </div>
                                 <div className="relative">
@@ -233,16 +242,16 @@ export default function LoginPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                                         </svg>
-                                        Connexion...
+                                        {t("loading")}
                                     </span>
-                                ) : "Se connecter →"}
+                                ) : t("submit")}
                             </button>
                         </form>
 
                         {/* Footer note */}
                         <p className="text-center text-xs text-gray-300">
-                            En vous connectant, vous acceptez nos{" "}
-                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">conditions d'utilisation</Link>
+                            {t("terms")}{" "}
+                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">{t("termsLink")}</Link>
                         </p>
                     </div>
                 </div>

@@ -3,6 +3,8 @@ import { Inter, Outfit, Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToaster } from "@/components/ThemeToaster";
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-dm" });
@@ -10,31 +12,36 @@ const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
-  title: "Restaurant OS - La Teranga Digitale",
-  description: "La plateforme pour les traiteurs qui veulent voir grand.",
+    title: "Restaurant OS - La Teranga Digitale",
+    description: "La plateforme pour les traiteurs qui veulent voir grand.",
 };
 
-export default function RootLayout({
-  children,
+export default async function RootLayout({
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html lang="fr" className={`${inter.variable} ${dmSans.variable} ${outfit.variable} ${playfair.variable}`} suppressHydrationWarning>
-      <body className="font-outfit antialiased bg-background text-foreground min-h-screen">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {/* Subtle Warm Pattern */}
-          <div className="fixed inset-0 pattern-grid opacity-[0.3] pointer-events-none -z-10 mix-blend-multiply dark:opacity-[0.05] dark:mix-blend-normal"></div>
+    const locale = await getLocale();
+    const messages = await getMessages();
 
-          {children}
-          <ThemeToaster />
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang={locale} className={`${inter.variable} ${dmSans.variable} ${outfit.variable} ${playfair.variable}`} suppressHydrationWarning>
+            <body className="font-outfit antialiased bg-background text-foreground min-h-screen">
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="light"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <NextIntlClientProvider messages={messages}>
+                        {/* Subtle Warm Pattern */}
+                        <div className="fixed inset-0 pattern-grid opacity-[0.3] pointer-events-none -z-10 mix-blend-multiply dark:opacity-[0.05] dark:mix-blend-normal"></div>
+
+                        {children}
+                        <ThemeToaster />
+                    </NextIntlClientProvider>
+                </ThemeProvider>
+            </body>
+        </html>
+    );
 }

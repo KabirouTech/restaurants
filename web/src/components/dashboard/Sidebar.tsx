@@ -25,26 +25,11 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { ModeToggle } from "@/components/mode-toggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 import type { PlanKey } from "@/lib/plans/plan-limits";
 
 type RequiredPlan = "premium" | "enterprise";
-
-const navItems: {
-    name: string;
-    href: string;
-    icon: React.ElementType;
-    requiresPlan?: RequiredPlan;
-}[] = [
-    { name: "Tableau de Bord", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Devis & Commandes", href: "/dashboard/orders", icon: FileText },
-    { name: "Calendrier", href: "/dashboard/calendar", icon: CalendarDays },
-    { name: "Carte & Menu", href: "/dashboard/menu", icon: Utensils },
-    { name: "Messages", href: "/dashboard/inbox", icon: MessageSquare, requiresPlan: "premium" },
-    { name: "Clients", href: "/dashboard/customers", icon: Users },
-    { name: "Inventaire", href: "/dashboard/inventory", icon: Package },
-    { name: "Fournisseurs", href: "/dashboard/suppliers", icon: Truck },
-    { name: "Recettes", href: "/dashboard/recipes", icon: BookOpen },
-];
 
 function isLocked(requiresPlan: RequiredPlan | undefined, currentPlan: PlanKey): boolean {
     if (!requiresPlan) return false;
@@ -57,6 +42,24 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
     const { requestPermission, permissionStatus } = useFCM();
+    const t = useTranslations("dashboard.sidebar");
+
+    const navItems: {
+        name: string;
+        href: string;
+        icon: React.ElementType;
+        requiresPlan?: RequiredPlan;
+    }[] = [
+        { name: t("home"), href: "/dashboard", icon: LayoutDashboard },
+        { name: t("orders"), href: "/dashboard/orders", icon: FileText },
+        { name: t("calendar"), href: "/dashboard/calendar", icon: CalendarDays },
+        { name: t("menu"), href: "/dashboard/menu", icon: Utensils },
+        { name: t("messages"), href: "/dashboard/inbox", icon: MessageSquare, requiresPlan: "premium" },
+        { name: t("customers"), href: "/dashboard/customers", icon: Users },
+        { name: t("inventory"), href: "/dashboard/inventory", icon: Package },
+        { name: t("suppliers"), href: "/dashboard/suppliers", icon: Truck },
+        { name: t("recipes"), href: "/dashboard/recipes", icon: BookOpen },
+    ];
 
     return (
         <div
@@ -157,14 +160,14 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
                             "flex items-center rounded-lg text-sm font-medium transition-colors text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 h-10 w-full mb-2",
                             collapsed ? "justify-center px-0" : "px-3 gap-3"
                         )}
-                        title="Activer les notifications"
+                        title={t("notifications")}
                     >
                         <Bell className="h-4 w-4 shrink-0 animate-pulse" />
                         <span className={cn(
                             "whitespace-nowrap transition-all duration-300",
                             collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
                         )}>
-                            Activer Notifs
+                            {t("notifications")}
                         </span>
                     </button>
                 )}
@@ -174,17 +177,17 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
                         <div className={cn(
                             "flex items-center rounded-lg text-sm font-medium transition-colors text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/30 h-10 group/item relative",
                             collapsed ? "justify-center px-0" : "px-3 gap-3"
-                        )} title={collapsed ? "Super Admin" : undefined}>
+                        )} title={collapsed ? t("superAdmin") : undefined}>
                             <Shield className="h-4 w-4 shrink-0" />
                             <span className={cn(
                                 "whitespace-nowrap transition-all duration-300",
                                 collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
                             )}>
-                                Super Admin
+                                {t("superAdmin")}
                             </span>
                             {collapsed && (
                                 <div className="absolute left-full ml-2 px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded opacity-0 group-hover/item:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
-                                    Super Admin
+                                    {t("superAdmin")}
                                 </div>
                             )}
                         </div>
@@ -196,13 +199,13 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
                         "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground h-10",
                         pathname === "/dashboard/settings" && "bg-muted text-foreground",
                         collapsed ? "justify-center px-0" : "px-3 gap-3"
-                    )} title={collapsed ? "Paramètres" : undefined}>
+                    )} title={collapsed ? t("settings") : undefined}>
                         <Settings className="h-4 w-4 shrink-0" />
                         <span className={cn(
                             "whitespace-nowrap transition-all duration-300",
                             collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
                         )}>
-                            Paramètres
+                            {t("settings")}
                         </span>
                     </div>
                 </Link>
@@ -210,31 +213,35 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
                 <div className={cn(
                     "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground h-10 cursor-pointer",
                     collapsed ? "justify-center px-0" : "px-3 gap-3"
-                )} title={collapsed ? "Apparence" : undefined}>
+                )} title={collapsed ? t("appearance") : undefined}>
                     <div className="flex items-center w-full" onClick={(e) => e.stopPropagation()}>
                         <div className={cn("flex items-center w-full", collapsed ? "justify-center" : "gap-3")}>
                             <ModeToggle />
-                            <span className={cn(
-                                "whitespace-nowrap transition-all duration-300",
-                                "opacity-100" // ModeToggle usually handles its own visibility or we can wrap it better. Keeping simplified logic.
-                            )}>
-                                {!collapsed && "Apparence"}
-                            </span>
+                            {!collapsed && <span className="whitespace-nowrap">{t("appearance")}</span>}
                         </div>
                     </div>
+                </div>
+
+                {/* Language Switcher */}
+                <div className={cn(
+                    "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground h-10",
+                    collapsed ? "justify-center px-0" : "px-3 gap-3"
+                )}>
+                    <LanguageSwitcher />
+                    {!collapsed && <span className="whitespace-nowrap">{t("language")}</span>}
                 </div>
 
                 <form action="/auth/signout" method="post">
                     <button className={cn(
                         "flex items-center rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors h-10 w-full",
                         collapsed ? "justify-center px-0" : "px-3 gap-3"
-                    )} title={collapsed ? "Déconnexion" : undefined}>
+                    )} title={collapsed ? t("logout") : undefined}>
                         <LogOut className="h-4 w-4 shrink-0" />
                         <span className={cn(
                             "whitespace-nowrap transition-all duration-300",
                             collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
                         )}>
-                            Déconnexion
+                            {t("logout")}
                         </span>
                     </button>
                 </form>

@@ -7,13 +7,8 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
-
-const PERKS = [
-    "Gratuit jusqu'à 30 commandes/mois",
-    "Mise en route en 5 minutes",
-    "Aucune carte bancaire requise",
-    "Support en français inclus",
-];
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function SignupPage() {
     const [loading, setLoading] = useState(false);
@@ -24,6 +19,8 @@ export default function SignupPage() {
     const [resendCooldown, setResendCooldown] = useState(0);
     const router = useRouter();
     const supabase = createClient();
+    const t = useTranslations("auth.signup");
+    const tAuth = useTranslations("auth");
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -93,17 +90,17 @@ export default function SignupPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <h1 className="text-2xl font-bold font-serif text-gray-900">Vérifiez vos emails</h1>
+                        <h1 className="text-2xl font-bold font-serif text-gray-900">{t("confirmEmail.title")}</h1>
                         <p className="text-gray-500 text-sm leading-relaxed">
-                            Un lien de confirmation a été envoyé à{" "}
-                            <strong className="text-gray-800">{email}</strong>.
-                            Cliquez dessus pour activer votre compte.
+                            {t("confirmEmail.subtitle1")}{" "}
+                            <strong className="text-gray-800">{email}</strong>.{" "}
+                            {t("confirmEmail.subtitle2")}
                         </p>
                     </div>
 
                     <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 text-left space-y-2">
-                        <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Vous ne le trouvez pas ?</p>
-                        <p className="text-xs text-amber-700">Vérifiez votre dossier spam ou courrier indésirable.</p>
+                        <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">{t("confirmEmail.notFound")}</p>
+                        <p className="text-xs text-amber-700">{t("confirmEmail.checkSpam")}</p>
                     </div>
 
                     <div className="space-y-3 pt-2">
@@ -113,11 +110,13 @@ export default function SignupPage() {
                             className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border-2 border-gray-200 text-gray-700 text-sm font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-50"
                         >
                             <RefreshCw className={cn("h-4 w-4", resendCooldown === 0 && "")} />
-                            {resendCooldown > 0 ? `Renvoyer dans ${resendCooldown}s` : "Renvoyer l'email"}
+                            {resendCooldown > 0
+                                ? t("confirmEmail.resendIn", { seconds: resendCooldown })
+                                : t("confirmEmail.resend")}
                         </button>
                         <Link href="/auth/login">
                             <button className="w-full h-11 rounded-xl text-gray-400 text-sm hover:text-gray-600 transition-colors">
-                                Retour à la connexion
+                                {t("confirmEmail.backToLogin")}
                             </button>
                         </Link>
                     </div>
@@ -154,18 +153,20 @@ export default function SignupPage() {
                 <div className="relative z-10 flex-1 flex flex-col justify-center px-12 pb-8">
                     <div className="space-y-8 max-w-md">
                         <div className="space-y-3">
-                            <p className="text-primary text-sm font-bold uppercase tracking-widest">Gratuit pour commencer</p>
+                            <p className="text-primary text-sm font-bold uppercase tracking-widest">{t("brandLabel")}</p>
                             <h2 className="text-4xl xl:text-5xl font-bold font-serif text-white leading-tight">
-                                Gérez mieux,<br />cuisinez plus.
+                                {t("brandTitle").split("\n").map((line, i) => (
+                                    <span key={i}>{line}{i === 0 && <br />}</span>
+                                ))}
                             </h2>
                             <p className="text-white/60 text-lg leading-relaxed">
-                                Rejoignez les traiteurs qui ont digitalisé leur activité avec RestaurantsOS.
+                                {t("brandSubtitle")}
                             </p>
                         </div>
 
                         {/* Perks */}
                         <div className="space-y-3">
-                            {PERKS.map(perk => (
+                            {(t.raw("perks") as string[]).map((perk: string) => (
                                 <div key={perk} className="flex items-center gap-3">
                                     <div className="h-5 w-5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center flex-shrink-0">
                                         <Check className="h-3 w-3 text-primary" strokeWidth={3} />
@@ -194,7 +195,7 @@ export default function SignupPage() {
                 {/* Testimonial */}
                 <div className="relative z-10 mx-10 mb-10 p-5 rounded-2xl bg-white/8 backdrop-blur-sm border border-white/10">
                     <p className="text-white/80 text-sm italic font-serif leading-relaxed">
-                        "La cuisine, c'est de l'art. L'organisation, c'est RestaurantsOS."
+                        &quot;La cuisine, c&apos;est de l&apos;art. L&apos;organisation, c&apos;est RestaurantsOS.&quot;
                     </p>
                     <div className="mt-3 flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-amber-500/40 flex items-center justify-center text-white font-bold text-xs">C</div>
@@ -212,14 +213,17 @@ export default function SignupPage() {
                 {/* Top bar */}
                 <div className="flex items-center justify-between px-8 py-6">
                     <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors font-medium">
-                        <ArrowLeft className="h-4 w-4" /> Retour
+                        <ArrowLeft className="h-4 w-4" /> {tAuth("back")}
                     </Link>
-                    <p className="text-sm text-gray-400">
-                        Déjà un compte ?{" "}
-                        <Link href="/auth/login" className="text-gray-900 font-semibold hover:text-primary transition-colors">
-                            Se connecter
-                        </Link>
-                    </p>
+                    <div className="flex items-center gap-4">
+                        <LanguageSwitcher className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors" />
+                        <p className="text-sm text-gray-400">
+                            {t("alreadyAccount")}{" "}
+                            <Link href="/auth/login" className="text-gray-900 font-semibold hover:text-primary transition-colors">
+                                {t("login")}
+                            </Link>
+                        </p>
+                    </div>
                 </div>
 
                 {/* Form */}
@@ -229,10 +233,10 @@ export default function SignupPage() {
                         {/* Header */}
                         <div className="space-y-2">
                             <h1 className="text-3xl font-bold tracking-tight font-serif text-gray-900">
-                                Créer un compte
+                                {t("title")}
                             </h1>
                             <p className="text-gray-400">
-                                Commencez gratuitement, sans carte bancaire.
+                                {t("subtitle")}
                             </p>
                         </div>
 
@@ -246,7 +250,7 @@ export default function SignupPage() {
                             <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 488 512">
                                 <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
                             </svg>
-                            S'inscrire avec Google
+                            {t("google")}
                         </button>
 
                         {/* Divider */}
@@ -261,7 +265,7 @@ export default function SignupPage() {
 
                             {/* Email */}
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-gray-700">Email professionnel</label>
+                                <label className="text-sm font-semibold text-gray-700">{t("email")}</label>
                                 <div className="relative">
                                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input
@@ -277,7 +281,7 @@ export default function SignupPage() {
 
                             {/* Password */}
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-gray-700">Mot de passe</label>
+                                <label className="text-sm font-semibold text-gray-700">{t("password")}</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input
@@ -286,7 +290,7 @@ export default function SignupPage() {
                                         required
                                         minLength={8}
                                         autoComplete="new-password"
-                                        placeholder="8 caractères minimum"
+                                        placeholder={t("passwordPlaceholder")}
                                         className="w-full h-12 pl-10 pr-11 rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-300 focus:outline-none focus:border-primary transition-colors"
                                     />
                                     <button
@@ -324,18 +328,18 @@ export default function SignupPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                                         </svg>
-                                        Création du compte...
+                                        {t("loading")}
                                     </span>
-                                ) : "Créer mon compte →"}
+                                ) : t("submit")}
                             </button>
                         </form>
 
                         {/* Legal */}
                         <p className="text-center text-xs text-gray-300 leading-relaxed">
-                            En créant un compte, vous acceptez nos{" "}
-                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">conditions d'utilisation</Link>{" "}
-                            et notre{" "}
-                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">politique de confidentialité</Link>.
+                            {t("terms")}{" "}
+                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">{t("termsLink")}</Link>{" "}
+                            {t("privacyAnd")}{" "}
+                            <Link href="#" className="text-gray-400 hover:text-gray-600 underline underline-offset-2">{t("privacyLink")}</Link>.
                         </p>
                     </div>
                 </div>

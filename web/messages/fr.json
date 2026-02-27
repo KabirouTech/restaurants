@@ -1,0 +1,331 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "confirm": "Confirmer",
+    "search": "Rechercher",
+    "import": "Importer",
+    "export": "Exporter",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer",
+    "back": "Retour",
+    "add": "Ajouter",
+    "remove": "Supprimer",
+    "update": "Mettre à jour",
+    "noResults": "Aucun résultat",
+    "optional": "optionnel",
+    "actions": "Actions",
+    "name": "Nom",
+    "description": "Description",
+    "category": "Catégorie",
+    "price": "Prix",
+    "status": "Statut",
+    "date": "Date",
+    "createdAt": "Créé le",
+    "updatedAt": "Modifié le",
+    "or": "ou"
+  },
+  "nav": {
+    "why": "Pourquoi nous ?",
+    "features": "Fonctionnalités",
+    "pricing": "Tarifs",
+    "tutorials": "Tutoriels",
+    "login": "Connexion",
+    "freeTrial": "Essai Gratuit"
+  },
+  "homepage": {
+    "hero": {
+      "badge": "Conçu pour les Traiteurs d'Afrique de l'Ouest",
+      "title1": "Arrêtez de gérer",
+      "title2": "votre business sur WhatsApp.",
+      "subtitle": "RestaurantsOS centralise vos devis, votre calendrier, vos messages, vos recettes et votre stock dans une seule application. Vos clients sont sereins. Vous aussi.",
+      "cta": "Commencer gratuitement",
+      "demo": "Voir la démo live",
+      "free": "Gratuit jusqu'à 30 commandes/mois · Aucune carte bancaire requise",
+      "demoNote": "Démo interactive · aucune inscription nécessaire ·",
+      "demoLink": "voir tous les tutoriels →"
+    },
+    "trust": {
+      "label": "Ils cuisinent avec nous"
+    },
+    "problem": {
+      "title": "Vous vous reconnaissez ?",
+      "subtitle": "Chaque traiteur qu'on a rencontré avait les mêmes problèmes.",
+      "lostOrders": {
+        "title": "Les commandes se perdent",
+        "body": "Un client écrit sur WhatsApp, un autre sur Instagram, un autre par email. Résultat : vous oubliez quelqu'un et perdez une commande."
+      },
+      "doubleBooking": {
+        "title": "Les doubles réservations",
+        "body": "Vous avez dit oui à deux mariages le même weekend. Vous ne saviez pas que votre équipe était déjà à pleine capacité."
+      },
+      "slowQuotes": {
+        "title": "Les devis prennent des heures",
+        "body": "Word, Excel, calculatrice, WhatsApp... Faire un devis correct vous prend une après-midi entière."
+      },
+      "solution": "RestaurantsOS résout les trois en même temps — et bien plus encore."
+    },
+    "features": {
+      "moreTitle": "Et bien plus encore.",
+      "moreSubtitle": "Tout ce dont un traiteur moderne a besoin, dans un seul outil.",
+      "orders": {
+        "pill": "Devis & Commandes",
+        "title": "Un devis élégant en 2 clics.",
+        "body": "Créez un devis, ajoutez vos plats depuis votre menu, envoyez-le en PDF. Suivez les acomptes et les confirmations dans un tableau Kanban clair.",
+        "items": ["Devis PDF prêt à envoyer", "Suivi : brouillon → confirmé → livré", "Historique complet par client", "Gestion des acomptes"]
+      },
+      "calendar": {
+        "pill": "Calendrier & Capacité",
+        "title": "Finis les doubles réservations.",
+        "body": "Visualisez votre planning en temps réel. Chaque type d'événement a un poids : 1 mariage compte autant que 5 cocktails. Vous savez toujours si vous pouvez dire oui.",
+        "items": ["Vue mensuelle avec charge par jour", "Système de capacité pondérée", "Bloquer des dates en un clic", "Commande rapide depuis le calendrier"]
+      },
+      "inbox": {
+        "pill": "Messagerie Unifiée",
+        "title": "Tous vos clients au même endroit.",
+        "body": "WhatsApp, Instagram, Email et Messenger dans une seule boîte de réception. Ne ratez plus jamais une commande à cause d'un message manqué."
+      },
+      "recipes": { "title": "Recettes", "desc": "Créez vos fiches recettes en texte, photo ou dictée vocale. Exportez en PDF élégant, organisez en dossiers." },
+      "inventory": { "title": "Inventaire", "desc": "Suivez vos stocks avec alertes de seuil. Reliez chaque ingrédient à un fournisseur." },
+      "suppliers": { "title": "Fournisseurs", "desc": "Centralisez tous vos contacts fournisseurs et leurs conditions. Import Excel disponible." },
+      "menu": { "title": "Menu Digital", "desc": "Publiez votre carte en ligne avec photos, prix et allergènes. Partageable avec vos clients." },
+      "crm": { "title": "CRM Clients", "desc": "Historique de commandes, notes, tags. Retrouvez n'importe quel client en 2 secondes." },
+      "team": { "title": "Gestion d'Équipe", "desc": "Invitez vos collaborateurs avec des rôles précis : admin, manager, agent." }
+    },
+    "howItWorks": {
+      "title": "Lancez-vous en 5 minutes.",
+      "subtitle": "Pas de formation, pas de technicien. Vous, votre téléphone, c'est parti.",
+      "step1": { "title": "Créez votre compte", "desc": "Nom de votre structure, devise, couleur. Votre espace est prêt." },
+      "step2": { "title": "Configurez votre activité", "desc": "Ajoutez vos plats, définissez votre capacité, connectez WhatsApp." },
+      "step3": { "title": "Recevez vos commandes", "desc": "Vos clients vous contactent, vous répondez et gérez tout depuis l'app." }
+    },
+    "import": {
+      "badge": "Import universel",
+      "title": "Vous avez déjà des données ? Importez-les.",
+      "body": "Recettes, clients, fournisseurs, ingrédients, produits — tout s'importe depuis Excel ou CSV. Téléchargez le modèle, remplissez, importez.",
+      "items": ["Recettes", "Clients", "Fournisseurs", "Ingrédients", "Menu"]
+    },
+    "pricing": {
+      "title": "Un prix juste. Pas de surprise.",
+      "subtitle": "Commencez gratuitement. Passez au premium quand votre business décolle.",
+      "free": {
+        "name": "Gratuit",
+        "price": "0 FCFA",
+        "period": "pour toujours",
+        "description": "Pour tester la plateforme et démarrer doucement.",
+        "cta": "Commencer gratuitement",
+        "features": ["30 commandes/mois", "1 utilisateur", "10 produits au menu", "Calendrier basique", "Recettes & inventaire"],
+        "missing": ["Messagerie unifiée", "WhatsApp / Instagram", "Rapports"]
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "15 000 FCFA",
+        "period": "par mois",
+        "description": "Pour les traiteurs établis qui veulent tout centraliser.",
+        "cta": "Démarrer en Premium",
+        "badge": "Le plus populaire",
+        "features": ["Commandes illimitées", "5 utilisateurs inclus", "Menu illimité", "Messagerie unifiée complète", "WhatsApp + Instagram + Email", "Calendrier & capacité avancés", "CRM clients illimité", "Support 24h"],
+        "missing": []
+      },
+      "enterprise": {
+        "name": "Entreprise",
+        "price": "Sur devis",
+        "period": "à partir de 50 000 FCFA/mois",
+        "description": "Pour les groupes et structures multi-sites.",
+        "cta": "Nous contacter",
+        "features": ["Tout en Premium", "Utilisateurs illimités", "Accès API complet", "Webhooks & intégrations", "Marque blanche", "Account manager dédié", "Support 24h/7j téléphone"],
+        "missing": []
+      }
+    },
+    "mocks": {
+      "orderCard": {
+        "label": "Devis #0042",
+        "status": "Confirmé",
+        "event": "Mariage Diallo",
+        "date": "Samedi 15 mars 2025 · 200 personnes",
+        "total": "Total",
+        "deposit": "Acompte versé",
+        "items": [
+          { "name": "Thiéboudienne", "qty": "×20", "price": "80 000 FCFA" },
+          { "name": "Poulet Yassa", "qty": "×15", "price": "60 000 FCFA" },
+          { "name": "Jus Bissap", "qty": "×40", "price": "20 000 FCFA" }
+        ],
+        "totalAmount": "160 000 FCFA",
+        "depositAmount": "50 000 FCFA"
+      },
+      "calendar": {
+        "month": "Mars 2025",
+        "eventsCount": "3 événements",
+        "full": "COMPLET",
+        "days": ["L", "M", "M", "J", "V", "S", "D"],
+        "events": [
+          { "name": "Mariage Konaté", "date": "Sam 6 · 200 pers." },
+          { "name": "Cocktail Entreprise", "date": "Sam 13 · 80 pers." }
+        ]
+      },
+      "inbox": {
+        "title": "Messages",
+        "conversations": [
+          { "name": "Marème Ndiaye", "msg": "Bonjour, je voudrais un devis pour 150 personnes...", "time": "11:42" },
+          { "name": "Kofi Atta", "msg": "Vous faites le thiéboudienne ?", "time": "10:15" },
+          { "name": "Aminata Sy", "msg": "Suite à notre échange téléphonique...", "time": "09:30" },
+          { "name": "Oumar Touré", "msg": "Merci pour le devis, on confirme !", "time": "Hier" }
+        ]
+      }
+    },
+    "testimonials": {
+      "title": "Ce qu'ils disent de nous",
+      "quote": "Avant, je passais mes nuits sur WhatsApp pour gérer les commandes. Avec RestaurantsOS, j'ai retrouvé le temps de créer de nouvelles recettes — et mon chiffre d'affaires a augmenté de 30%.",
+      "author": "Aminata Diallo",
+      "role": "Fondatrice, Saveurs d'Afrik · Dakar"
+    },
+    "cta": {
+      "title": "Votre prochaine commande vous attend déjà.",
+      "subtitle": "Rejoignez les traiteurs qui ont choisi la sérénité. Démarrez gratuitement aujourd'hui — sans carte bancaire.",
+      "button": "Commencer gratuitement",
+      "note": "Gratuit jusqu'à 30 commandes · Installation en 5 minutes · Support en français"
+    },
+    "footer": {
+      "tagline": "La plateforme tout-en-un pour les traiteurs qui veulent allier tradition et technologie. Sénégal, Côte d'Ivoire et toute l'Afrique de l'Ouest.",
+      "product": "Produit",
+      "company": "Entreprise",
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "tutorials": "Tutoriels",
+      "freeTrial": "Essai gratuit",
+      "about": "À propos",
+      "contact": "Contact",
+      "legal": "Mentions légales",
+      "copyright": "Fait avec passion pour l'Afrique de l'Ouest"
+    }
+  },
+  "auth": {
+    "back": "Retour",
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Entrez vos identifiants pour accéder à votre espace.",
+      "email": "Email",
+      "password": "Mot de passe",
+      "forgotPassword": "Oublié ?",
+      "submit": "Se connecter →",
+      "loading": "Connexion...",
+      "google": "Continuer avec Google",
+      "noAccount": "Pas de compte ?",
+      "signup": "S'inscrire",
+      "error": "Email ou mot de passe incorrect.",
+      "terms": "En vous connectant, vous acceptez nos",
+      "termsLink": "conditions d'utilisation",
+      "welcomeLabel": "Bienvenue",
+      "welcomeTitle": "Content de vous\nrevoir.",
+      "welcomeSubtitle": "Votre cuisine vous attend. Connectez-vous pour continuer."
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Commencez gratuitement, sans carte bancaire.",
+      "email": "Email professionnel",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "8 caractères minimum",
+      "submit": "Créer mon compte →",
+      "loading": "Création du compte...",
+      "google": "S'inscrire avec Google",
+      "alreadyAccount": "Déjà un compte ?",
+      "login": "Se connecter",
+      "terms": "En créant un compte, vous acceptez nos",
+      "termsLink": "conditions d'utilisation",
+      "privacyAnd": "et notre",
+      "privacyLink": "politique de confidentialité",
+      "confirmEmail": {
+        "title": "Vérifiez vos emails",
+        "subtitle1": "Un lien de confirmation a été envoyé à",
+        "subtitle2": "Cliquez dessus pour activer votre compte.",
+        "notFound": "Vous ne le trouvez pas ?",
+        "checkSpam": "Vérifiez votre dossier spam ou courrier indésirable.",
+        "resend": "Renvoyer l'email",
+        "resendIn": "Renvoyer dans {seconds}s",
+        "backToLogin": "Retour à la connexion"
+      },
+      "brandLabel": "Gratuit pour commencer",
+      "brandTitle": "Gérez mieux,\ncuisinez plus.",
+      "brandSubtitle": "Rejoignez les traiteurs qui ont digitalisé leur activité avec RestaurantsOS.",
+      "perks": [
+        "Gratuit jusqu'à 30 commandes/mois",
+        "Mise en route en 5 minutes",
+        "Aucune carte bancaire requise",
+        "Support en français inclus"
+      ]
+    }
+  },
+  "dashboard": {
+    "sidebar": {
+      "home": "Tableau de Bord",
+      "orders": "Devis & Commandes",
+      "calendar": "Calendrier",
+      "menu": "Carte & Menu",
+      "messages": "Messages",
+      "customers": "Clients",
+      "inventory": "Inventaire",
+      "suppliers": "Fournisseurs",
+      "recipes": "Recettes",
+      "settings": "Paramètres",
+      "logout": "Déconnexion",
+      "notifications": "Activer Notifs",
+      "appearance": "Apparence",
+      "superAdmin": "Super Admin",
+      "language": "Langue"
+    },
+    "orders": {
+      "title": "Devis & Commandes",
+      "new": "Nouvelle commande"
+    },
+    "calendar": {
+      "title": "Calendrier"
+    },
+    "menu": {
+      "title": "Carte & Menu",
+      "newProduct": "Nouveau plat"
+    },
+    "inbox": {
+      "title": "Messages"
+    },
+    "customers": {
+      "title": "Clients",
+      "newCustomer": "Nouveau client"
+    },
+    "inventory": {
+      "title": "Inventaire",
+      "newIngredient": "Nouvel ingrédient"
+    },
+    "suppliers": {
+      "title": "Fournisseurs",
+      "newSupplier": "Nouveau fournisseur"
+    },
+    "recipes": {
+      "title": "Recettes",
+      "newRecipe": "Nouvelle recette"
+    },
+    "settings": {
+      "title": "Paramètres"
+    }
+  },
+  "planGate": {
+    "unified_inbox": {
+      "title": "Messagerie Unifiée",
+      "description": "Répondez aux messages WhatsApp, Instagram, Email et Messenger depuis une seule boîte de réception.",
+      "badge": "Fonctionnalité Premium",
+      "cta": "Passer au Premium"
+    },
+    "default": {
+      "title": "Fonctionnalité Premium",
+      "description": "Cette fonctionnalité est disponible avec un abonnement Premium ou Entreprise.",
+      "badge": "Fonctionnalité Premium",
+      "cta": "Passer au Premium"
+    }
+  }
+}

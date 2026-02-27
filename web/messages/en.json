@@ -1,0 +1,331 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "confirm": "Confirm",
+    "search": "Search",
+    "import": "Import",
+    "export": "Export",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "back": "Back",
+    "add": "Add",
+    "remove": "Remove",
+    "update": "Update",
+    "noResults": "No results",
+    "optional": "optional",
+    "actions": "Actions",
+    "name": "Name",
+    "description": "Description",
+    "category": "Category",
+    "price": "Price",
+    "status": "Status",
+    "date": "Date",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at",
+    "or": "or"
+  },
+  "nav": {
+    "why": "Why us?",
+    "features": "Features",
+    "pricing": "Pricing",
+    "tutorials": "Tutorials",
+    "login": "Sign in",
+    "freeTrial": "Free Trial"
+  },
+  "homepage": {
+    "hero": {
+      "badge": "Built for West African Caterers",
+      "title1": "Stop managing",
+      "title2": "your business on WhatsApp.",
+      "subtitle": "RestaurantsOS centralizes your quotes, calendar, messages, recipes and inventory in one app. Your clients stay calm. So do you.",
+      "cta": "Start for free",
+      "demo": "See live demo",
+      "free": "Free up to 30 orders/month · No credit card required",
+      "demoNote": "Interactive demo · no sign-up needed ·",
+      "demoLink": "see all tutorials →"
+    },
+    "trust": {
+      "label": "They cook with us"
+    },
+    "problem": {
+      "title": "Sound familiar?",
+      "subtitle": "Every caterer we met had the same problems.",
+      "lostOrders": {
+        "title": "Orders get lost",
+        "body": "One client writes on WhatsApp, another on Instagram, another by email. Result: you forget someone and lose an order."
+      },
+      "doubleBooking": {
+        "title": "Double bookings",
+        "body": "You said yes to two weddings the same weekend. You didn't know your team was already at full capacity."
+      },
+      "slowQuotes": {
+        "title": "Quotes take hours",
+        "body": "Word, Excel, calculator, WhatsApp... Writing a proper quote takes you an entire afternoon."
+      },
+      "solution": "RestaurantsOS solves all three at once — and much more."
+    },
+    "features": {
+      "moreTitle": "And much more.",
+      "moreSubtitle": "Everything a modern caterer needs, in one tool.",
+      "orders": {
+        "pill": "Quotes & Orders",
+        "title": "An elegant quote in 2 clicks.",
+        "body": "Create a quote, add dishes from your menu, send it as PDF. Track deposits and confirmations in a clear Kanban board.",
+        "items": ["PDF quote ready to send", "Tracking: draft → confirmed → delivered", "Full history per client", "Deposit management"]
+      },
+      "calendar": {
+        "pill": "Calendar & Capacity",
+        "title": "No more double bookings.",
+        "body": "Visualize your schedule in real time. Each event type has a weight: 1 wedding counts as much as 5 cocktail parties. You always know if you can say yes.",
+        "items": ["Monthly view with daily load", "Weighted capacity system", "Block dates in one click", "Quick order from calendar"]
+      },
+      "inbox": {
+        "pill": "Unified Inbox",
+        "title": "All your clients in one place.",
+        "body": "WhatsApp, Instagram, Email and Messenger in one inbox. Never miss an order because of a missed message again."
+      },
+      "recipes": { "title": "Recipes", "desc": "Create recipe cards in text, photo or voice. Export as elegant PDF, organize in folders." },
+      "inventory": { "title": "Inventory", "desc": "Track your stock with threshold alerts. Link each ingredient to a supplier." },
+      "suppliers": { "title": "Suppliers", "desc": "Centralize all your supplier contacts and their terms. Excel import available." },
+      "menu": { "title": "Digital Menu", "desc": "Publish your menu online with photos, prices and allergens. Shareable with your clients." },
+      "crm": { "title": "Client CRM", "desc": "Order history, notes, tags. Find any client in 2 seconds." },
+      "team": { "title": "Team Management", "desc": "Invite collaborators with specific roles: admin, manager, agent." }
+    },
+    "howItWorks": {
+      "title": "Up and running in 5 minutes.",
+      "subtitle": "No training, no technician. You, your phone, let's go.",
+      "step1": { "title": "Create your account", "desc": "Business name, currency, color. Your workspace is ready." },
+      "step2": { "title": "Configure your activity", "desc": "Add your dishes, set your capacity, connect WhatsApp." },
+      "step3": { "title": "Receive your orders", "desc": "Your clients contact you, you reply and manage everything from the app." }
+    },
+    "import": {
+      "badge": "Universal import",
+      "title": "Already have data? Import it.",
+      "body": "Recipes, clients, suppliers, ingredients, products — all importable from Excel or CSV. Download the template, fill it in, import.",
+      "items": ["Recipes", "Clients", "Suppliers", "Ingredients", "Menu"]
+    },
+    "pricing": {
+      "title": "Fair pricing. No surprises.",
+      "subtitle": "Start for free. Upgrade to premium when your business takes off.",
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "period": "forever",
+        "description": "To test the platform and start slowly.",
+        "cta": "Start for free",
+        "features": ["30 orders/month", "1 user", "10 menu items", "Basic calendar", "Recipes & inventory"],
+        "missing": ["Unified inbox", "WhatsApp / Instagram", "Reports"]
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "$25",
+        "period": "per month",
+        "description": "For established caterers who want to centralize everything.",
+        "cta": "Start Premium",
+        "badge": "Most popular",
+        "features": ["Unlimited orders", "5 users included", "Unlimited menu", "Full unified inbox", "WhatsApp + Instagram + Email", "Advanced calendar & capacity", "Unlimited client CRM", "24h support"],
+        "missing": []
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "period": "from $83/month",
+        "description": "For groups and multi-location structures.",
+        "cta": "Contact us",
+        "features": ["Everything in Premium", "Unlimited users", "Full API access", "Webhooks & integrations", "White label", "Dedicated account manager", "24/7 phone support"],
+        "missing": []
+      }
+    },
+    "mocks": {
+      "orderCard": {
+        "label": "Quote #0042",
+        "status": "Confirmed",
+        "event": "Diallo Wedding",
+        "date": "Saturday Mar 15, 2025 · 200 guests",
+        "total": "Total",
+        "deposit": "Deposit paid",
+        "items": [
+          { "name": "Thiéboudienne", "qty": "×20", "price": "$133" },
+          { "name": "Poulet Yassa", "qty": "×15", "price": "$100" },
+          { "name": "Jus Bissap", "qty": "×40", "price": "$33" }
+        ],
+        "totalAmount": "$267",
+        "depositAmount": "$83"
+      },
+      "calendar": {
+        "month": "March 2025",
+        "eventsCount": "3 events",
+        "full": "FULL",
+        "days": ["M", "T", "W", "T", "F", "S", "S"],
+        "events": [
+          { "name": "Konaté Wedding", "date": "Sat 6 · 200 guests" },
+          { "name": "Corporate Cocktail", "date": "Sat 13 · 80 guests" }
+        ]
+      },
+      "inbox": {
+        "title": "Messages",
+        "conversations": [
+          { "name": "Marème Ndiaye", "msg": "Hello, I'd like a quote for 150 people...", "time": "11:42" },
+          { "name": "Kofi Atta", "msg": "Do you make thiéboudienne?", "time": "10:15" },
+          { "name": "Aminata Sy", "msg": "Following our phone call...", "time": "09:30" },
+          { "name": "Oumar Touré", "msg": "Thanks for the quote, confirmed!", "time": "Yesterday" }
+        ]
+      }
+    },
+    "testimonials": {
+      "title": "What they say about us",
+      "quote": "Before, I spent my nights on WhatsApp managing orders. With RestaurantsOS, I found time to create new recipes — and my revenue grew by 30%.",
+      "author": "Aminata Diallo",
+      "role": "Founder, Saveurs d'Afrik · Dakar"
+    },
+    "cta": {
+      "title": "Your next order is already waiting.",
+      "subtitle": "Join caterers who chose peace of mind. Start for free today — no credit card.",
+      "button": "Start for free",
+      "note": "Free up to 30 orders · 5-minute setup · French & English support"
+    },
+    "footer": {
+      "tagline": "The all-in-one platform for caterers who want to blend tradition and technology. Senegal, Côte d'Ivoire and all of West Africa.",
+      "product": "Product",
+      "company": "Company",
+      "features": "Features",
+      "pricing": "Pricing",
+      "tutorials": "Tutorials",
+      "freeTrial": "Free trial",
+      "about": "About",
+      "contact": "Contact",
+      "legal": "Legal",
+      "copyright": "Made with passion for West Africa"
+    }
+  },
+  "auth": {
+    "back": "Back",
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Enter your credentials to access your workspace.",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot?",
+      "submit": "Sign in →",
+      "loading": "Signing in...",
+      "google": "Continue with Google",
+      "noAccount": "No account?",
+      "signup": "Sign up",
+      "error": "Incorrect email or password.",
+      "terms": "By signing in, you agree to our",
+      "termsLink": "terms of use",
+      "welcomeLabel": "Welcome back",
+      "welcomeTitle": "Good to see\nyou again.",
+      "welcomeSubtitle": "Your kitchen awaits. Sign in to continue."
+    },
+    "signup": {
+      "title": "Create an account",
+      "subtitle": "Start for free, no credit card needed.",
+      "email": "Professional email",
+      "password": "Password",
+      "passwordPlaceholder": "8 characters minimum",
+      "submit": "Create my account →",
+      "loading": "Creating account...",
+      "google": "Sign up with Google",
+      "alreadyAccount": "Already have an account?",
+      "login": "Sign in",
+      "terms": "By creating an account, you agree to our",
+      "termsLink": "terms of use",
+      "privacyAnd": "and our",
+      "privacyLink": "privacy policy",
+      "confirmEmail": {
+        "title": "Check your emails",
+        "subtitle1": "A confirmation link was sent to",
+        "subtitle2": "Click it to activate your account.",
+        "notFound": "Can't find it?",
+        "checkSpam": "Check your spam or junk mail folder.",
+        "resend": "Resend email",
+        "resendIn": "Resend in {seconds}s",
+        "backToLogin": "Back to sign in"
+      },
+      "brandLabel": "Free to start",
+      "brandTitle": "Manage better,\ncook more.",
+      "brandSubtitle": "Join caterers who have digitized their business with RestaurantsOS.",
+      "perks": [
+        "Free up to 30 orders/month",
+        "Up and running in 5 minutes",
+        "No credit card required",
+        "French & English support included"
+      ]
+    }
+  },
+  "dashboard": {
+    "sidebar": {
+      "home": "Dashboard",
+      "orders": "Quotes & Orders",
+      "calendar": "Calendar",
+      "menu": "Menu & Dishes",
+      "messages": "Messages",
+      "customers": "Clients",
+      "inventory": "Inventory",
+      "suppliers": "Suppliers",
+      "recipes": "Recipes",
+      "settings": "Settings",
+      "logout": "Sign out",
+      "notifications": "Enable Notifs",
+      "appearance": "Appearance",
+      "superAdmin": "Super Admin",
+      "language": "Language"
+    },
+    "orders": {
+      "title": "Quotes & Orders",
+      "new": "New order"
+    },
+    "calendar": {
+      "title": "Calendar"
+    },
+    "menu": {
+      "title": "Menu & Dishes",
+      "newProduct": "New dish"
+    },
+    "inbox": {
+      "title": "Messages"
+    },
+    "customers": {
+      "title": "Clients",
+      "newCustomer": "New client"
+    },
+    "inventory": {
+      "title": "Inventory",
+      "newIngredient": "New ingredient"
+    },
+    "suppliers": {
+      "title": "Suppliers",
+      "newSupplier": "New supplier"
+    },
+    "recipes": {
+      "title": "Recipes",
+      "newRecipe": "New recipe"
+    },
+    "settings": {
+      "title": "Settings"
+    }
+  },
+  "planGate": {
+    "unified_inbox": {
+      "title": "Unified Inbox",
+      "description": "Reply to WhatsApp, Instagram, Email and Messenger messages from a single inbox.",
+      "badge": "Premium Feature",
+      "cta": "Upgrade to Premium"
+    },
+    "default": {
+      "title": "Premium Feature",
+      "description": "This feature is available with a Premium or Enterprise subscription.",
+      "badge": "Premium Feature",
+      "cta": "Upgrade to Premium"
+    }
+  }
+}
