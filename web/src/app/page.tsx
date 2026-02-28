@@ -583,28 +583,50 @@ function FeaturePill({ icon, label }: { icon: React.ReactNode; label: string }) 
 function PhoneMockup({ render }: { render: (compact: boolean) => React.ReactNode }) {
     return (
         <>
-            {/* Mobile: phone chrome */}
-            <div className="md:hidden mx-auto w-full max-w-[290px]">
-                <div className="relative rounded-[2.4rem] border-[3px] border-foreground/10 dark:border-foreground/15 overflow-hidden shadow-2xl shadow-black/15 bg-background">
-                    {/* iOS status bar simulation */}
-                    <div className="flex items-center justify-between px-5 pt-3 pb-1 bg-background">
-                        <span className="text-[9px] font-semibold text-foreground/40">9:41</span>
-                        <div className="w-16 h-1.5 rounded-full bg-foreground/10" />
-                        <div className="flex items-center gap-1">
-                            <div className="flex gap-0.5 items-end h-3">
-                                <div className="w-0.5 h-1 bg-foreground/35 rounded-full" />
-                                <div className="w-0.5 h-1.5 bg-foreground/35 rounded-full" />
-                                <div className="w-0.5 h-2 bg-foreground/35 rounded-full" />
-                                <div className="w-0.5 h-3 bg-foreground/35 rounded-full" />
-                            </div>
-                            <div className="w-3.5 h-2 border border-foreground/30 rounded-[2px] ml-1 relative">
-                                <div className="absolute right-[-2.5px] top-1/2 -translate-y-1/2 w-0.5 h-1 rounded-full bg-foreground/25" />
-                                <div className="absolute inset-[1px] bg-foreground/40 rounded-[1px] w-3/4" />
+            {/* Mobile: full iPhone mockup */}
+            <div className="md:hidden mx-auto w-[240px]">
+                {/* Phone shell — dark bezel */}
+                <div className="relative bg-gray-900 dark:bg-zinc-800 rounded-[3rem] p-[4px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]">
+                    {/* Volume buttons (left) */}
+                    <div className="absolute -left-[5px] top-[72px] w-[5px] h-6 bg-gray-700 dark:bg-zinc-600 rounded-l-full" />
+                    <div className="absolute -left-[5px] top-[106px] w-[5px] h-8 bg-gray-700 dark:bg-zinc-600 rounded-l-full" />
+                    <div className="absolute -left-[5px] top-[148px] w-[5px] h-8 bg-gray-700 dark:bg-zinc-600 rounded-l-full" />
+                    {/* Power button (right) */}
+                    <div className="absolute -right-[5px] top-[110px] w-[5px] h-14 bg-gray-700 dark:bg-zinc-600 rounded-r-full" />
+
+                    {/* Screen */}
+                    <div className="rounded-[2.7rem] overflow-hidden bg-background">
+                        {/* Dynamic Island / notch */}
+                        <div className="relative flex items-center justify-between bg-background px-4 pt-3 pb-1">
+                            <span className="text-[9px] font-semibold text-foreground/50 tabular-nums">9:41</span>
+                            {/* Dynamic Island pill */}
+                            <div className="absolute left-1/2 -translate-x-1/2 top-2.5 w-16 h-4 bg-gray-900 dark:bg-black rounded-full" />
+                            <div className="flex items-center gap-1">
+                                {/* Signal bars */}
+                                <div className="flex gap-px items-end h-2.5">
+                                    <div className="w-px h-1 bg-foreground/40 rounded-full" />
+                                    <div className="w-px h-1.5 bg-foreground/40 rounded-full" />
+                                    <div className="w-px h-2 bg-foreground/40 rounded-full" />
+                                    <div className="w-px h-2.5 bg-foreground/40 rounded-full" />
+                                </div>
+                                {/* Battery */}
+                                <div className="flex items-center gap-px">
+                                    <div className="w-4 h-2 border border-foreground/35 rounded-[2px] relative">
+                                        <div className="absolute right-[-2.5px] top-1/2 -translate-y-1/2 w-[2.5px] h-1 bg-foreground/30 rounded-r-full" />
+                                        <div className="absolute inset-[1.5px] right-[1.5px] bg-foreground/45 rounded-[1px]" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        {/* App content */}
+                        {render(true)}
+
+                        {/* Home indicator */}
+                        <div className="flex justify-center pt-1 pb-2 bg-background">
+                            <div className="w-20 h-1 rounded-full bg-foreground/20" />
+                        </div>
                     </div>
-                    {/* Content — compact mode strips outer card styling */}
-                    {render(true)}
                 </div>
             </div>
             {/* Desktop: normal rendering */}
@@ -614,29 +636,60 @@ function PhoneMockup({ render }: { render: (compact: boolean) => React.ReactNode
 }
 
 function MockOrderCard({ tr, compact }: { tr: MockOrderCardTr; compact?: boolean }) {
-    return (
-        <div className={cn(
-            "bg-background space-y-3",
-            compact ? "p-4" : "rounded-2xl border border-border shadow-xl p-5 space-y-4 max-w-sm mx-auto"
-        )}>
-            {/* App-style nav bar in compact mode */}
-            {compact && (
-                <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                    <span className="text-xs font-bold text-primary">RestaurantsOS</span>
-                    <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Devis</span>
+    if (compact) return (
+        <div className="bg-background">
+            {/* App top bar */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-muted/30">
+                <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-primary" />
+                    </div>
+                    <span className="text-[11px] font-bold text-foreground">Devis</span>
                 </div>
-            )}
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{tr.status}</span>
+            </div>
+            {/* Order hero */}
+            <div className="px-4 py-3 bg-gradient-to-b from-primary/5 to-transparent border-b border-border/40">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{tr.label}</p>
+                <p className="font-bold text-foreground font-serif text-sm leading-tight">{tr.event}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{tr.date}</p>
+            </div>
+            {/* Items */}
+            <div className="px-4 py-2.5 space-y-1.5">
+                {tr.items.map(({ name, qty, price }) => (
+                    <div key={name} className="flex items-center justify-between">
+                        <span className="text-[11px] text-foreground font-medium">{name} <span className="text-muted-foreground font-normal">{qty}</span></span>
+                        <span className="text-[11px] text-muted-foreground font-mono">{price}</span>
+                    </div>
+                ))}
+            </div>
+            {/* Total bar */}
+            <div className="mx-3 mb-3 bg-primary/8 rounded-xl px-3 py-2.5 flex items-center justify-between">
+                <div>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{tr.total}</p>
+                    <p className="font-bold text-primary text-base font-mono leading-tight">{tr.totalAmount}</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{tr.deposit}</p>
+                    <p className="text-[11px] font-semibold text-emerald-600">{tr.depositAmount}</p>
+                </div>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="rounded-2xl border border-border bg-background shadow-xl p-5 space-y-4 max-w-sm mx-auto">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{tr.label}</span>
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{tr.status}</span>
             </div>
             <div>
-                <p className={cn("font-bold text-foreground font-serif", compact ? "text-base" : "text-lg")}>{tr.event}</p>
-                <p className="text-xs text-muted-foreground">{tr.date}</p>
+                <p className="font-bold text-foreground font-serif text-lg">{tr.event}</p>
+                <p className="text-sm text-muted-foreground">{tr.date}</p>
             </div>
-            <div className={cn("border-y border-border", compact ? "space-y-1.5 py-3" : "space-y-2 py-4")}>
+            <div className="space-y-2 border-y border-border py-4">
                 {tr.items.map(({ name, qty, price }) => (
-                    <div key={name} className="flex items-center justify-between text-xs md:text-sm">
+                    <div key={name} className="flex items-center justify-between text-sm">
                         <span className="text-foreground font-medium">{name} <span className="text-muted-foreground font-normal">{qty}</span></span>
                         <span className="text-muted-foreground">{price}</span>
                     </div>
@@ -645,11 +698,11 @@ function MockOrderCard({ tr, compact }: { tr: MockOrderCardTr; compact?: boolean
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-xs text-muted-foreground">{tr.total}</p>
-                    <p className={cn("font-bold text-foreground font-serif", compact ? "text-lg" : "text-xl")}>{tr.totalAmount}</p>
+                    <p className="font-bold text-foreground text-xl">{tr.totalAmount}</p>
                 </div>
                 <div className="text-right">
                     <p className="text-xs text-muted-foreground">{tr.deposit}</p>
-                    <p className="font-semibold text-emerald-600 text-sm">{tr.depositAmount}</p>
+                    <p className="font-semibold text-emerald-600">{tr.depositAmount}</p>
                 </div>
             </div>
         </div>
@@ -666,36 +719,39 @@ function MockCalendar({ tr, compact }: { tr: MockCalendarTr; compact?: boolean }
         { label: "16", load: 0 }, { label: "17", load: 60 }, { label: "18", load: 0 },
         { label: "19", load: 0 }, { label: "20", load: 100, event: true }, { label: "21", load: 0 },
     ];
-    return (
-        <div className={cn(
-            "bg-background",
-            compact ? "p-3" : "rounded-2xl border border-border shadow-xl p-5 max-w-sm mx-auto"
-        )}>
-            {/* App-style nav bar in compact mode */}
-            {compact && (
-                <div className="flex items-center justify-between pb-2 mb-1 border-b border-border/60">
-                    <span className="text-xs font-bold text-primary">RestaurantsOS</span>
-                    <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Agenda</span>
+
+    if (compact) return (
+        <div className="bg-background">
+            {/* App top bar */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-muted/30">
+                <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-primary" />
+                    </div>
+                    <span className="text-[11px] font-bold text-foreground">Agenda</span>
                 </div>
-            )}
-            <div className="flex items-center justify-between mb-3">
-                <p className={cn("font-bold font-serif text-foreground", compact && "text-sm")}>{tr.month}</p>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">{tr.eventsCount}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">{tr.eventsCount}</span>
             </div>
-            <div className="grid grid-cols-7 gap-0.5 mb-0.5">
-                {tr.days.map((d, i) => <div key={i} className="text-center text-[9px] font-bold text-muted-foreground py-0.5">{d}</div>)}
+            {/* Month header */}
+            <div className="px-4 pt-2.5 pb-1.5">
+                <p className="font-bold font-serif text-foreground text-sm">{tr.month}</p>
             </div>
-            <div className="grid grid-cols-7 gap-0.5">
+            {/* Day labels */}
+            <div className="grid grid-cols-7 px-3 mb-0.5">
+                {tr.days.map((d, i) => <div key={i} className="text-center text-[8px] font-bold text-muted-foreground py-0.5">{d}</div>)}
+            </div>
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-0.5 px-3">
                 {cells.map(({ label, load, event }) => (
                     <div key={label} className={cn(
-                        "aspect-square rounded-md flex flex-col items-center justify-center text-[10px] font-medium relative overflow-hidden",
+                        "aspect-square rounded-md flex flex-col items-center justify-center text-[9px] font-medium relative overflow-hidden",
                         load === 0 ? "text-muted-foreground" :
                         load === 100 ? "bg-primary/15 text-primary font-bold border border-primary/30" :
                         "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
                     )}>
                         {label}
                         {load > 0 && load < 100 && (
-                            <div className="absolute bottom-0.5 left-0.5 right-0.5 h-0.5 rounded-full bg-amber-200 dark:bg-amber-800">
+                            <div className="absolute bottom-0.5 left-0.5 right-0.5 h-[2px] rounded-full bg-amber-200 dark:bg-amber-800">
                                 <div className="h-full bg-amber-500 rounded-full" style={{ width: `${load}%` }} />
                             </div>
                         )}
@@ -703,15 +759,58 @@ function MockCalendar({ tr, compact }: { tr: MockCalendarTr; compact?: boolean }
                     </div>
                 ))}
             </div>
-            <div className={cn("space-y-1.5", compact ? "mt-3" : "mt-4 space-y-2")}>
+            {/* Upcoming events */}
+            <div className="px-3 pb-3 mt-2.5 space-y-1.5">
                 {tr.events.map(({ name, date }) => (
-                    <div key={name} className="flex items-center gap-2 p-1.5 rounded-lg bg-muted/40 text-xs">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                    <div key={name} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-muted/50">
+                        <div className="w-1 h-6 rounded-full bg-primary flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-foreground truncate text-[11px]">{name}</p>
-                            <p className="text-muted-foreground text-[10px]">{date}</p>
+                            <p className="font-semibold text-foreground truncate text-[10px]">{name}</p>
+                            <p className="text-muted-foreground text-[9px]">{date}</p>
                         </div>
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-bold flex-shrink-0">{tr.full}</span>
+                        <span className="text-[8px] px-1 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-bold flex-shrink-0">{tr.full}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="rounded-2xl border border-border bg-background shadow-xl p-5 max-w-sm mx-auto">
+            <div className="flex items-center justify-between mb-4">
+                <p className="font-bold font-serif text-foreground">{tr.month}</p>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">{tr.eventsCount}</span>
+            </div>
+            <div className="grid grid-cols-7 gap-1 mb-1">
+                {tr.days.map((d, i) => <div key={i} className="text-center text-[10px] font-bold text-muted-foreground py-1">{d}</div>)}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+                {cells.map(({ label, load, event }) => (
+                    <div key={label} className={cn(
+                        "aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-medium relative overflow-hidden",
+                        load === 0 ? "text-muted-foreground hover:bg-muted/50" :
+                        load === 100 ? "bg-primary/15 text-primary font-bold border border-primary/30" :
+                        "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
+                    )}>
+                        {label}
+                        {load > 0 && load < 100 && (
+                            <div className="absolute bottom-0.5 left-1 right-1 h-0.5 rounded-full bg-amber-200 dark:bg-amber-800">
+                                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${load}%` }} />
+                            </div>
+                        )}
+                        {event && <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-primary" />}
+                    </div>
+                ))}
+            </div>
+            <div className="mt-4 space-y-2">
+                {tr.events.map(({ name, date }) => (
+                    <div key={name} className="flex items-center gap-3 p-2 rounded-lg bg-muted/40 text-xs">
+                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-foreground truncate">{name}</p>
+                            <p className="text-muted-foreground">{date}</p>
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-bold flex-shrink-0">{tr.full}</span>
                     </div>
                 ))}
             </div>
@@ -728,55 +827,90 @@ const CHANNEL_COLORS: Record<string, { dot: string; unread: number }> = {
 
 function MockInbox({ tr, compact }: { tr: MockInboxTr; compact?: boolean }) {
     const unreadCount = tr.conversations.filter(c => (CHANNEL_COLORS[c.name]?.unread ?? 0) > 0).length;
-    return (
-        <div className={cn(
-            "bg-background overflow-hidden",
-            !compact && "rounded-2xl border border-border shadow-xl max-w-sm mx-auto"
-        )}>
-            <div className={cn(
-                "border-b border-border bg-muted/30 flex items-center justify-between",
-                compact ? "px-3 py-2" : "px-4 py-3"
-            )}>
-                {compact ? (
-                    <div className="flex items-center justify-between w-full">
-                        <span className="text-xs font-bold text-primary">RestaurantsOS</span>
-                        <p className="font-bold font-serif text-foreground text-xs">{tr.title}</p>
-                        <span className="h-4 w-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center">{unreadCount}</span>
+
+    if (compact) return (
+        <div className="bg-background overflow-hidden">
+            {/* App top bar */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-muted/30">
+                <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-primary" />
                     </div>
-                ) : (
-                    <>
-                        <p className="font-bold font-serif text-foreground text-sm">{tr.title}</p>
-                        <span className="h-5 w-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">{unreadCount}</span>
-                    </>
+                    <span className="text-[11px] font-bold text-foreground">{tr.title}</span>
+                </div>
+                {unreadCount > 0 && (
+                    <span className="h-4 w-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center">{unreadCount}</span>
                 )}
+            </div>
+            {/* Conversations */}
+            <div className="divide-y divide-border/60">
+                {tr.conversations.map(({ name, msg, time }) => {
+                    const meta = CHANNEL_COLORS[name] ?? { dot: "bg-gray-400", unread: 0 };
+                    return (
+                        <div key={name} className={cn("flex items-center gap-2.5 px-3 py-2.5", meta.unread > 0 && "bg-primary/4")}>
+                            <div className="relative flex-shrink-0">
+                                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center font-bold text-foreground text-xs">
+                                    {name[0]}
+                                </div>
+                                <div className={cn("absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-[1.5px] border-background", meta.dot)} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                    <p className={cn("text-[11px] text-foreground truncate", meta.unread > 0 ? "font-bold" : "font-semibold")}>{name}</p>
+                                    <span className="text-[9px] text-muted-foreground ml-1 flex-shrink-0">{time}</span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{msg}</p>
+                            </div>
+                            {meta.unread > 0 && (
+                                <div className="h-3.5 w-3.5 rounded-full bg-primary text-white text-[8px] font-bold flex items-center justify-center flex-shrink-0">{meta.unread}</div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+            {/* Bottom tab bar simulation */}
+            <div className="flex items-center justify-around border-t border-border/50 py-2 px-2 bg-background">
+                {[
+                    { label: "Accueil", active: false },
+                    { label: "Devis", active: false },
+                    { label: "Agenda", active: false },
+                    { label: "Chat", active: true },
+                ].map(({ label, active }) => (
+                    <div key={label} className="flex flex-col items-center gap-0.5">
+                        <div className={cn("w-4 h-4 rounded", active ? "bg-primary/20" : "bg-muted")} />
+                        <span className={cn("text-[8px] font-medium", active ? "text-primary" : "text-muted-foreground")}>{label}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="rounded-2xl border border-border bg-background shadow-xl overflow-hidden max-w-sm mx-auto">
+            <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+                <p className="font-bold font-serif text-foreground text-sm">{tr.title}</p>
+                <span className="h-5 w-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">{unreadCount}</span>
             </div>
             <div className="divide-y divide-border">
                 {tr.conversations.map(({ name, msg, time }) => {
                     const meta = CHANNEL_COLORS[name] ?? { dot: "bg-gray-400", unread: 0 };
                     return (
-                        <div key={name} className={cn(
-                            "flex items-start gap-2.5 cursor-pointer transition-colors",
-                            compact ? "px-3 py-2.5" : "px-4 py-3 hover:bg-muted/30",
-                            meta.unread > 0 && "bg-primary/3"
-                        )}>
+                        <div key={name} className={cn("flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer", meta.unread > 0 && "bg-primary/3")}>
                             <div className="relative flex-shrink-0">
-                                <div className={cn(
-                                    "rounded-full bg-muted flex items-center justify-center font-bold text-foreground",
-                                    compact ? "h-7 w-7 text-xs" : "h-9 w-9 text-sm"
-                                )}>
+                                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold text-foreground text-sm">
                                     {name[0]}
                                 </div>
-                                <div className={cn("absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-background", meta.dot, compact ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
+                                <div className={cn("absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background", meta.dot)} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-0.5">
-                                    <p className={cn("font-semibold text-foreground truncate", compact ? "text-xs" : "text-sm", meta.unread > 0 && "font-bold")}>{name}</p>
-                                    <span className="text-[9px] text-muted-foreground flex-shrink-0 ml-1">{time}</span>
+                                    <p className={cn("text-sm font-semibold text-foreground truncate", meta.unread > 0 && "font-bold")}>{name}</p>
+                                    <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-2">{time}</span>
                                 </div>
-                                <p className="text-[10px] text-muted-foreground truncate">{msg}</p>
+                                <p className="text-xs text-muted-foreground truncate">{msg}</p>
                             </div>
                             {meta.unread > 0 && (
-                                <div className={cn("rounded-full bg-primary text-white font-bold flex items-center justify-center flex-shrink-0 mt-0.5", compact ? "h-3.5 w-3.5 text-[8px]" : "h-4 w-4 text-[9px]")}>{meta.unread}</div>
+                                <div className="h-4 w-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{meta.unread}</div>
                             )}
                         </div>
                     );
