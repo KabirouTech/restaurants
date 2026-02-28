@@ -15,6 +15,7 @@ import {
   Receipt,
   MoreVertical,
   MessageSquare,
+  CalendarDays,
 } from "lucide-react";
 import { formatPrice } from "@/lib/currencies";
 import { CapacityFilter } from "@/components/dashboard/CapacityFilter";
@@ -237,292 +238,485 @@ export default async function DashboardPage({
     };
   });
 
+  const statsCards = [
+    {
+      href: "/dashboard/orders",
+      icon: DollarSign,
+      label: "Revenu",
+      value: formatPrice(monthlyRevenue, currency),
+      extra: <RevenueFilter />,
+      iconClass: "text-primary",
+      bgClass: "bg-primary/10",
+    },
+    {
+      href: "/dashboard/orders",
+      icon: FileText,
+      label: "Devis en attente",
+      value: String(pendingQuotesCount),
+      iconClass: "text-blue-500",
+      bgClass: "bg-blue-500/10",
+    },
+    {
+      href: "/dashboard/calendar",
+      icon: Truck,
+      label: "Événements",
+      value: String(todayOrdersCount),
+      iconClass: "text-primary",
+      bgClass: "bg-primary/10",
+    },
+    {
+      href: "/dashboard/customers",
+      icon: Users,
+      label: "Clients",
+      value: String(customerCount || 0),
+      iconClass: "text-green-600",
+      bgClass: "bg-green-500/10",
+    },
+  ];
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans">
-      {/* Header */}
-      <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
-        <div>
-          <h1 className="text-3xl font-bold font-serif text-foreground">Tableau de bord</h1>
-          <p className="text-sm text-muted-foreground font-light">Bonjour, voici le programme culinaire du jour.</p>
+
+      {/* ── MOBILE LAYOUT ─────────────────────────────────────────────── */}
+      <div className="md:hidden flex flex-col h-full overflow-y-auto">
+
+        {/* Greeting */}
+        <div className="px-4 pt-4 pb-2 shrink-0">
+          <h1 className="text-lg font-bold font-serif text-foreground">Bonjour, {orgName}</h1>
+          <p className="text-xs text-muted-foreground">{format(today, "eeee d MMMM", { locale: fr })}</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:block">
-            <CloseDateButton />
-          </div>
+
+        {/* Quick actions */}
+        <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto no-scrollbar shrink-0">
           <Link href="/dashboard/orders/new">
-            <Button className="flex items-center gap-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md shadow-primary/20 transition-all transform hover:scale-105 h-10 px-5">
-              <Plus className="h-4 w-4" />
-              Créer un devis
-            </Button>
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-full text-xs font-semibold shadow-sm whitespace-nowrap">
+              <Plus className="h-3.5 w-3.5" /> Nouveau devis
+            </span>
           </Link>
-        </div>
-      </header>
-
-      {/* Main Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-8">
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Revenue */}
-          <Link href="/dashboard/orders" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <DollarSign className="h-6 w-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Revenu</p>
-                <RevenueFilter />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground font-serif">{formatPrice(monthlyRevenue, currency)}</h3>
-            </div>
+          <Link href="/dashboard/calendar">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-muted border border-border rounded-full text-xs font-medium text-foreground whitespace-nowrap">
+              <CalendarDays className="h-3.5 w-3.5" /> Calendrier
+            </span>
           </Link>
-
-          {/* Pending Quotes */}
-          <Link href="/dashboard/orders" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-blue-500/30 transition-all">
-            <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-              <FileText className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Devis en Attente</p>
-              <h3 className="text-2xl font-bold text-foreground font-serif">{pendingQuotesCount}</h3>
-            </div>
-          </Link>
-
-          {/* Today's Events */}
-          <Link href="/dashboard/calendar" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <Truck className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Événements du Jour</p>
-              <h3 className="text-2xl font-bold text-foreground font-serif">{todayOrdersCount}</h3>
-            </div>
-          </Link>
-
-          {/* Total Customers */}
-          <Link href="/dashboard/customers" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-green-500/30 transition-all">
-            <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
-              <Users className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Clients</p>
-              <h3 className="text-2xl font-bold text-foreground font-serif">{customerCount || 0}</h3>
-            </div>
-          </Link>
+          <CloseDateButton />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* Capacity Overview */}
-            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
-                  <BarChart className="text-primary h-5 w-5" />
-                  Aperçu de la Capacité
-                </h2>
-                <CapacityFilter />
-              </div>
-              <div className="p-6">
-                <div className="space-y-5">
-                  {capacityDays.map((day, i) => (
-                    <Link key={i} href="/dashboard/calendar" className="grid grid-cols-12 gap-4 items-center group hover:bg-muted/30 -mx-2 px-2 py-1 rounded-lg transition-colors">
-                      <div className="col-span-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors capitalize">
-                        {day.dayName}
-                      </div>
-                      <div className="col-span-9 relative h-3 bg-muted rounded-full overflow-hidden">
-                        {day.isClosed ? (
-                          <div className="absolute inset-0 bg-muted-foreground/20 rounded-full" />
-                        ) : (
-                          <div
-                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${day.isFull ? 'bg-red-500' : 'bg-primary'}`}
-                            style={{ width: `${day.percent}%`, opacity: day.isFull ? 1 : 0.4 + (day.percent / 200) }}
-                          />
-                        )}
-                      </div>
-                      <div className={`col-span-1 text-xs text-right font-medium ${day.isClosed ? 'text-muted-foreground' : day.isFull ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
-                        {day.isClosed ? 'Fermé' : day.isFull ? 'PLEIN' : `${day.percent}%`}
-                      </div>
-                    </Link>
-                  ))}
+        {/* Stats 2×2 */}
+        <div className="grid grid-cols-2 gap-3 px-4 mb-4 shrink-0">
+          {statsCards.map((card) => (
+            <Link key={card.label} href={card.href}>
+              <div className="bg-card rounded-2xl border border-border p-3 flex items-center gap-3 h-[88px]">
+                <div className={`w-9 h-9 rounded-full ${card.bgClass} flex items-center justify-center shrink-0`}>
+                  <card.icon className={`h-4 w-4 ${card.iconClass}`} />
                 </div>
-              </div>
-            </div>
-
-            {/* Recent Orders Table */}
-            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
-                  <Receipt className="text-primary h-5 w-5" />
-                  Commandes à venir
-                </h2>
-                <Link href="/dashboard/orders" className="text-sm text-primary hover:text-primary/80 font-medium border-b border-transparent hover:border-primary transition-all">
-                  Voir tout
-                </Link>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="text-xs text-muted-foreground border-b border-border bg-muted/50">
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Client</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Événement</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Date & Heure</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Couverts</th>
-                      <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Statut</th>
-                      <th className="px-6 py-4"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {recentOrders && recentOrders.length > 0 ? (
-                      recentOrders.map((order) => {
-                        const initials = order.customers?.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || "C";
-                        const statusStyles =
-                          order.status === 'confirmed' ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" :
-                            order.status === 'draft' ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800" :
-                              "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
-                        const statusLabel =
-                          order.status === 'confirmed' ? "Confirmé" :
-                            order.status === 'draft' ? "Brouillon" : "En attente";
-
-                        return (
-                          <tr key={order.id} className="border-b border-border hover:bg-muted/30 transition-colors group">
-                            <td className="px-6 py-4">
-                              <Link href={`/dashboard/orders/${order.id}`} className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs">
-                                  {initials}
-                                </div>
-                                <span className="font-bold text-foreground font-serif">{order.customers?.full_name || "Client Inconnu"}</span>
-                              </Link>
-                            </td>
-                            <td className="px-6 py-4 text-muted-foreground">{order.internal_notes || "Commande"}</td>
-                            <td className="px-6 py-4 text-muted-foreground capitalize">
-                              {order.event_date ? format(new Date(order.event_date), "EEE, d MMM", { locale: fr }) : "-"} • {order.event_time?.slice(0, 5) || "12:00"}
-                            </td>
-                            <td className="px-6 py-4 text-muted-foreground">{order.guest_count || 0} pers.</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusStyles}`}>
-                                {statusLabel}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <Link href={`/dashboard/orders/${order.id}`} className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
-                                <MoreVertical className="h-4 w-4" />
-                              </Link>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">Aucune commande à venir.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right Column (1/3) */}
-          <div className="lg:col-span-1 space-y-6">
-
-            {/* Messages Widget */}
-            <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col h-[500px]">
-              <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
-                  <MessageSquare className="text-primary h-5 w-5" />
-                  Messages récents
-                </h2>
-                {totalUnread > 0 && (
-                  <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">{totalUnread} Nouv.</span>
-                )}
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {recentMessages.length > 0 ? (
-                  recentMessages.map((msg) => {
-                    const platformStyles: Record<string, { bg: string; text: string }> = {
-                      whatsapp: { bg: "bg-[#25D366]/10", text: "text-[#25D366]" },
-                      instagram: { bg: "bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500", text: "" },
-                      email: { bg: "bg-blue-500/10", text: "text-blue-500" },
-                      messenger: { bg: "bg-blue-600/10", text: "text-blue-600" },
-                    };
-                    const style = platformStyles[msg.platform] || platformStyles.email;
-                    const initial = msg.customerName[0]?.toUpperCase() || "C";
-                    const timeAgo = msg.time ? formatTimeAgo(new Date(msg.time)) : "";
-
-                    return (
-                      <Link key={msg.id} href={`/dashboard/inbox?conversationId=${msg.id}`}>
-                        <div className={`p-4 ${msg.unread > 0 ? 'bg-muted/30 border-border' : 'bg-card border-border/50 hover:border-primary/20'} border hover:bg-muted/50 rounded-xl cursor-pointer transition-all shadow-sm group relative`}>
-                          {msg.unread > 0 && <div className="absolute right-2 top-2 w-2 h-2 bg-primary rounded-full" />}
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-7 h-7 rounded-full ${style.bg} flex items-center justify-center ${style.text}`}>
-                                {msg.platform === 'instagram' ? (
-                                  <div className="w-full h-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-full p-[1.5px]">
-                                    <div className="w-full h-full bg-card rounded-full flex items-center justify-center text-foreground text-[10px] font-bold">{initial}</div>
-                                  </div>
-                                ) : (
-                                  <MessageSquare className="h-3 w-3" />
-                                )}
-                              </div>
-                              <span className="text-sm font-bold text-foreground font-serif">{msg.customerName}</span>
-                            </div>
-                            <span className="text-[10px] text-muted-foreground font-medium">{timeAgo}</span>
-                          </div>
-                          <p className={`text-xs line-clamp-2 pl-9 ${msg.unread > 0 ? 'text-foreground font-medium' : 'text-muted-foreground group-hover:text-foreground'} transition-colors`}>
-                            {msg.lastMessage || "Pas de message"}
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center py-12 text-muted-foreground">
-                    <MessageSquare className="h-10 w-10 mb-3 text-muted-foreground/40" />
-                    <p className="text-sm font-medium">Aucun message</p>
-                    <p className="text-xs mt-1">Les conversations apparaîtront ici</p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{card.label}</p>
+                    {card.extra}
                   </div>
-                )}
-              </div>
-              <div className="p-4 border-t border-border bg-muted/50">
-                <Link href="/dashboard/inbox">
-                  <Button variant="ghost" className="w-full text-sm text-muted-foreground hover:text-primary font-medium">Aller à la Messagerie</Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Promo Banner (dynamic from platform_banners) */}
-            {activeBanner && (
-              <div className="relative rounded-xl overflow-hidden h-40 group shadow-md border border-border">
-                <div className="absolute inset-0 bg-secondary/80 mix-blend-multiply transition-colors"></div>
-                {activeBanner.image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={activeBanner.title}
-                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 -z-10"
-                    src={activeBanner.image_url}
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent p-6 flex flex-col justify-end">
-                  <h3 className="text-white font-serif font-bold text-xl mb-1">{activeBanner.title}</h3>
-                  {activeBanner.description && (
-                    <p className="text-xs text-white/70 mb-3 font-medium">{activeBanner.description}</p>
-                  )}
-                  {activeBanner.link_url && (
-                    <Link href={activeBanner.link_url} className="w-fit px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/40 transition-colors">
-                      En savoir plus
-                    </Link>
-                  )}
+                  <p className="text-xl font-bold font-serif truncate">{card.value}</p>
                 </div>
               </div>
-            )}
+            </Link>
+          ))}
+        </div>
 
+        {/* Capacity bars */}
+        <div className="mx-4 mb-4 bg-card rounded-2xl border border-border overflow-hidden shrink-0">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 className="text-sm font-bold font-serif flex items-center gap-1.5">
+              <BarChart className="h-4 w-4 text-primary" /> Capacité
+            </h2>
+            <CapacityFilter />
+          </div>
+          <div className="px-4 py-3 space-y-3">
+            {capacityDays.map((day, i) => (
+              <Link key={i} href="/dashboard/calendar" className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-14 capitalize shrink-0">{day.dayName}</span>
+                <div className="flex-1 relative h-2 bg-muted rounded-full overflow-hidden">
+                  {!day.isClosed && (
+                    <div
+                      className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${day.isFull ? "bg-red-500" : "bg-primary"}`}
+                      style={{ width: `${day.percent}%`, opacity: day.isFull ? 1 : 0.4 + (day.percent / 200) }}
+                    />
+                  )}
+                </div>
+                <span className={`text-[10px] font-semibold w-10 text-right shrink-0 ${day.isClosed ? "text-muted-foreground" : day.isFull ? "text-red-500" : "text-muted-foreground"}`}>
+                  {day.isClosed ? "Fermé" : day.isFull ? "PLEIN" : `${day.percent}%`}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent orders — cards */}
+        <div className="mx-4 mb-4 bg-card rounded-2xl border border-border overflow-hidden shrink-0">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 className="text-sm font-bold font-serif flex items-center gap-1.5">
+              <Receipt className="h-4 w-4 text-primary" /> Commandes à venir
+            </h2>
+            <Link href="/dashboard/orders" className="text-xs text-primary font-medium">Voir tout</Link>
+          </div>
+          <div className="px-4 divide-y divide-border/50">
+            {recentOrders && recentOrders.length > 0 ? (
+              recentOrders.map((order) => {
+                const initials = order.customers?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "C";
+                const statusStyles =
+                  order.status === "confirmed" ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" :
+                  order.status === "draft" ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800" :
+                  "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
+                const statusLabel =
+                  order.status === "confirmed" ? "Confirmé" :
+                  order.status === "draft" ? "Brouillon" : "En attente";
+                return (
+                  <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
+                    <div className="flex items-center gap-3 py-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{order.customers?.full_name || "Client Inconnu"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {order.event_date ? format(new Date(order.event_date), "d MMM", { locale: fr }) : "—"}
+                          {order.guest_count ? ` · ${order.guest_count} pers.` : ""}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${statusStyles}`}>{statusLabel}</span>
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <p className="py-6 text-center text-sm text-muted-foreground">Aucune commande à venir.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Messages — compact */}
+        <div className="mx-4 mb-4 bg-card rounded-2xl border border-border overflow-hidden shrink-0">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 className="text-sm font-bold font-serif flex items-center gap-1.5">
+              <MessageSquare className="h-4 w-4 text-primary" /> Messages récents
+            </h2>
+            {totalUnread > 0 && (
+              <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{totalUnread}</span>
+            )}
+          </div>
+          {recentMessages.length > 0 ? (
+            <div className="px-4 divide-y divide-border/50">
+              {recentMessages.slice(0, 3).map((msg) => {
+                const timeAgo = msg.time ? formatTimeAgo(new Date(msg.time)) : "";
+                return (
+                  <Link key={msg.id} href={`/dashboard/inbox?conversationId=${msg.id}`}>
+                    <div className="flex items-center gap-3 py-3 relative">
+                      {msg.unread > 0 && <div className="absolute right-0 top-3 w-2 h-2 bg-primary rounded-full" />}
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0 text-foreground">
+                        {msg.customerName[0]?.toUpperCase() || "C"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{msg.customerName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{msg.lastMessage || "Pas de message"}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0 pr-4">{timeAgo}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="px-4 py-6 text-center text-sm text-muted-foreground">Aucun message récent.</div>
+          )}
+          <div className="px-4 py-2 border-t border-border">
+            <Link href="/dashboard/inbox">
+              <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground">Aller à la messagerie</Button>
+            </Link>
           </div>
         </div>
 
       </div>
+
+      {/* ── DESKTOP LAYOUT ────────────────────────────────────────────── */}
+      <div className="hidden md:flex flex-col h-full overflow-hidden">
+        {/* Header */}
+        <header className="bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 py-0 h-20 z-10 shrink-0">
+          <div>
+            <h1 className="text-3xl font-bold font-serif text-foreground">Tableau de bord</h1>
+            <p className="text-sm text-muted-foreground font-light">Bonjour, voici le programme culinaire du jour.</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <CloseDateButton />
+            <Link href="/dashboard/orders/new">
+              <Button className="flex items-center gap-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md shadow-primary/20 transition-all transform hover:scale-105 h-10 px-5">
+                <Plus className="h-4 w-4" />
+                Créer un devis
+              </Button>
+            </Link>
+          </div>
+        </header>
+
+        {/* Main Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-8">
+
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Link href="/dashboard/orders" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <DollarSign className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Revenu</p>
+                  <RevenueFilter />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground font-serif">{formatPrice(monthlyRevenue, currency)}</h3>
+              </div>
+            </Link>
+
+            <Link href="/dashboard/orders" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-blue-500/30 transition-all">
+              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <FileText className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Devis en Attente</p>
+                <h3 className="text-2xl font-bold text-foreground font-serif">{pendingQuotesCount}</h3>
+              </div>
+            </Link>
+
+            <Link href="/dashboard/calendar" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Truck className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Événements du Jour</p>
+                <h3 className="text-2xl font-bold text-foreground font-serif">{todayOrdersCount}</h3>
+              </div>
+            </Link>
+
+            <Link href="/dashboard/customers" className="bg-card p-6 rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md hover:border-green-500/30 transition-all">
+              <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Clients</p>
+                <h3 className="text-2xl font-bold text-foreground font-serif">{customerCount || 0}</h3>
+              </div>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column (2/3) */}
+            <div className="lg:col-span-2 space-y-6">
+
+              {/* Capacity Overview */}
+              <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
+                    <BarChart className="text-primary h-5 w-5" />
+                    Aperçu de la Capacité
+                  </h2>
+                  <CapacityFilter />
+                </div>
+                <div className="p-6">
+                  <div className="space-y-5">
+                    {capacityDays.map((day, i) => (
+                      <Link key={i} href="/dashboard/calendar" className="grid grid-cols-12 gap-4 items-center group hover:bg-muted/30 -mx-2 px-2 py-1 rounded-lg transition-colors">
+                        <div className="col-span-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors capitalize">
+                          {day.dayName}
+                        </div>
+                        <div className="col-span-9 relative h-3 bg-muted rounded-full overflow-hidden">
+                          {day.isClosed ? (
+                            <div className="absolute inset-0 bg-muted-foreground/20 rounded-full" />
+                          ) : (
+                            <div
+                              className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${day.isFull ? "bg-red-500" : "bg-primary"}`}
+                              style={{ width: `${day.percent}%`, opacity: day.isFull ? 1 : 0.4 + (day.percent / 200) }}
+                            />
+                          )}
+                        </div>
+                        <div className={`col-span-1 text-xs text-right font-medium ${day.isClosed ? "text-muted-foreground" : day.isFull ? "text-red-500 font-bold" : "text-muted-foreground"}`}>
+                          {day.isClosed ? "Fermé" : day.isFull ? "PLEIN" : `${day.percent}%`}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Orders Table */}
+              <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
+                    <Receipt className="text-primary h-5 w-5" />
+                    Commandes à venir
+                  </h2>
+                  <Link href="/dashboard/orders" className="text-sm text-primary hover:text-primary/80 font-medium border-b border-transparent hover:border-primary transition-all">
+                    Voir tout
+                  </Link>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground border-b border-border bg-muted/50">
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Client</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Événement</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Date</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Couverts</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Statut</th>
+                        <th className="px-6 py-4"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {recentOrders && recentOrders.length > 0 ? (
+                        recentOrders.map((order) => {
+                          const initials = order.customers?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "C";
+                          const statusStyles =
+                            order.status === "confirmed" ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" :
+                            order.status === "draft" ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800" :
+                            "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
+                          const statusLabel =
+                            order.status === "confirmed" ? "Confirmé" :
+                            order.status === "draft" ? "Brouillon" : "En attente";
+
+                          return (
+                            <tr key={order.id} className="border-b border-border hover:bg-muted/30 transition-colors group">
+                              <td className="px-6 py-4">
+                                <Link href={`/dashboard/orders/${order.id}`} className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs shrink-0">
+                                    {initials}
+                                  </div>
+                                  <span className="font-bold text-foreground font-serif text-sm">{order.customers?.full_name || "Client Inconnu"}</span>
+                                </Link>
+                              </td>
+                              <td className="px-6 py-4 text-muted-foreground">{order.internal_notes || "Commande"}</td>
+                              <td className="px-6 py-4 text-muted-foreground capitalize text-sm">
+                                {order.event_date ? format(new Date(order.event_date), "d MMM", { locale: fr }) : "-"}
+                              </td>
+                              <td className="px-6 py-4 text-muted-foreground">{order.guest_count || 0} pers.</td>
+                              <td className="px-6 py-4">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusStyles}`}>
+                                  {statusLabel}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <Link href={`/dashboard/orders/${order.id}`} className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-all">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Link>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">Aucune commande à venir.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column (1/3) */}
+            <div className="lg:col-span-1 space-y-6">
+
+              {/* Messages Widget */}
+              <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col h-[500px]">
+                <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
+                    <MessageSquare className="text-primary h-5 w-5" />
+                    Messages récents
+                  </h2>
+                  {totalUnread > 0 && (
+                    <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">{totalUnread} Nouv.</span>
+                  )}
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {recentMessages.length > 0 ? (
+                    recentMessages.map((msg) => {
+                      const platformStyles: Record<string, { bg: string; text: string }> = {
+                        whatsapp: { bg: "bg-[#25D366]/10", text: "text-[#25D366]" },
+                        instagram: { bg: "bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500", text: "" },
+                        email: { bg: "bg-blue-500/10", text: "text-blue-500" },
+                        messenger: { bg: "bg-blue-600/10", text: "text-blue-600" },
+                      };
+                      const style = platformStyles[msg.platform] || platformStyles.email;
+                      const initial = msg.customerName[0]?.toUpperCase() || "C";
+                      const timeAgo = msg.time ? formatTimeAgo(new Date(msg.time)) : "";
+
+                      return (
+                        <Link key={msg.id} href={`/dashboard/inbox?conversationId=${msg.id}`}>
+                          <div className={`p-4 ${msg.unread > 0 ? "bg-muted/30 border-border" : "bg-card border-border/50 hover:border-primary/20"} border hover:bg-muted/50 rounded-xl cursor-pointer transition-all shadow-sm group relative`}>
+                            {msg.unread > 0 && <div className="absolute right-2 top-2 w-2 h-2 bg-primary rounded-full" />}
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-7 h-7 rounded-full ${style.bg} flex items-center justify-center ${style.text}`}>
+                                  {msg.platform === "instagram" ? (
+                                    <div className="w-full h-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-full p-[1.5px]">
+                                      <div className="w-full h-full bg-card rounded-full flex items-center justify-center text-foreground text-[10px] font-bold">{initial}</div>
+                                    </div>
+                                  ) : (
+                                    <MessageSquare className="h-3 w-3" />
+                                  )}
+                                </div>
+                                <span className="text-sm font-bold text-foreground font-serif">{msg.customerName}</span>
+                              </div>
+                              <span className="text-[10px] text-muted-foreground font-medium">{timeAgo}</span>
+                            </div>
+                            <p className={`text-xs line-clamp-2 pl-9 ${msg.unread > 0 ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"} transition-colors`}>
+                              {msg.lastMessage || "Pas de message"}
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-12 text-muted-foreground">
+                      <MessageSquare className="h-10 w-10 mb-3 text-muted-foreground/40" />
+                      <p className="text-sm font-medium">Aucun message</p>
+                      <p className="text-xs mt-1">Les conversations apparaîtront ici</p>
+                    </div>
+                  )}
+                </div>
+                <div className="p-4 border-t border-border bg-muted/50">
+                  <Link href="/dashboard/inbox">
+                    <Button variant="ghost" className="w-full text-sm text-muted-foreground hover:text-primary font-medium">Aller à la Messagerie</Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Promo Banner */}
+              {activeBanner && (
+                <div className="relative rounded-xl overflow-hidden h-40 group shadow-md border border-border">
+                  <div className="absolute inset-0 bg-secondary/80 mix-blend-multiply transition-colors"></div>
+                  {activeBanner.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt={activeBanner.title}
+                      className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 -z-10"
+                      src={activeBanner.image_url}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent p-6 flex flex-col justify-end">
+                    <h3 className="text-white font-serif font-bold text-xl mb-1">{activeBanner.title}</h3>
+                    {activeBanner.description && (
+                      <p className="text-xs text-white/70 mb-3 font-medium">{activeBanner.description}</p>
+                    )}
+                    {activeBanner.link_url && (
+                      <Link href={activeBanner.link_url} className="w-fit px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/40 transition-colors">
+                        En savoir plus
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   );
 }

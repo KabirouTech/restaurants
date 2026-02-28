@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,10 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
     const [filter, setFilter] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
+
+    useEffect(() => {
+        if (window.innerWidth < 768) setView("grid");
+    }, []);
     const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
     const [loading, setLoading] = useState(false);
     const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
@@ -197,8 +201,8 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
     return (
         <div className="space-y-4">
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-4">
-                <div className="relative w-full max-w-sm">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="relative w-full md:max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Rechercher un ingrédient..."
@@ -208,7 +212,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                     />
                 </div>
 
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-2 flex-wrap">
                     {selectedIds.size > 0 && (
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-lg animate-in slide-in-from-right-4 duration-200">
                             <span className="text-sm font-medium text-destructive">{selectedIds.size} sélectionné(s)</span>
@@ -407,7 +411,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
 
             {/* Create/Edit Modal */}
             <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetSupplierForm(); setIsDialogOpen(open); }}>
-                <DialogContent className={cn("transition-all duration-300", isCreatingSupplier ? "max-w-3xl" : "max-w-lg")}>
+                <DialogContent className={cn("max-w-[95vw] transition-all duration-300", isCreatingSupplier ? "sm:max-w-3xl" : "sm:max-w-lg")}>
                     <div className="flex gap-6 overflow-hidden">
                         {/* Left: Ingredient form */}
                         <div className={cn("shrink-0 transition-all duration-300", isCreatingSupplier ? "w-1/2" : "w-full")}>

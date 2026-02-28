@@ -43,7 +43,7 @@ export default async function LandingPage() {
     const tNav = await getTranslations("nav");
 
     return (
-        <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <div className="flex flex-col min-h-screen bg-background text-foreground pb-[72px] md:pb-0">
             <HomepageLightMode />
 
             {/* ── Navbar ────────────────────────────── */}
@@ -56,14 +56,16 @@ export default async function LandingPage() {
                         <Link href="#tarifs" className="hover:text-foreground transition-colors">{tNav("pricing")}</Link>
                         <Link href="/tutoriels" className="hover:text-foreground transition-colors">{tNav("tutorials")}</Link>
                     </nav>
-                    <div className="flex items-center gap-3">
-                        <LanguageSwitcher />
-                        <ModeToggle />
-                        <Link href="/auth/login" className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2">
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <div className="hidden md:flex items-center gap-2">
+                            <LanguageSwitcher />
+                            <ModeToggle />
+                        </div>
+                        <Link href="/auth/login" className="hidden md:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2">
                             {tNav("login")}
                         </Link>
                         <Link href="/auth/signup">
-                            <Button className="rounded-full bg-primary hover:bg-primary/90 text-white font-semibold px-5 py-2 shadow-md shadow-primary/20 text-sm">
+                            <Button className="rounded-full bg-primary hover:bg-primary/90 text-white font-semibold px-4 md:px-5 py-2 shadow-md shadow-primary/20 text-sm">
                                 {tNav("freeTrial")}
                             </Button>
                         </Link>
@@ -72,29 +74,29 @@ export default async function LandingPage() {
             </header>
 
             {/* ── Hero ──────────────────────────────── */}
-            <section className="pt-36 pb-16 md:pt-52 md:pb-24 px-6 relative overflow-hidden">
+            <section className="pt-24 pb-10 md:pt-52 md:pb-24 px-4 md:px-6 relative overflow-hidden">
                 {/* Background accents */}
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-50/80 via-background to-amber-50/30 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900 -z-10" />
                 <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/8 rounded-full blur-[140px] -z-10 translate-x-1/3 -translate-y-1/3" />
 
-                <div className="container mx-auto max-w-4xl text-center space-y-7">
+                <div className="container mx-auto max-w-4xl text-center space-y-4 md:space-y-7">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest border border-primary/20">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         {t("hero.badge")}
                     </div>
 
-                    <h1 className="text-5xl md:text-[68px] font-bold tracking-tight text-secondary font-serif leading-[1.08]">
+                    <h1 className="text-[36px] md:text-[68px] font-bold tracking-tight text-secondary font-serif leading-[1.1] md:leading-[1.08]">
                         {t("hero.title1")}<br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
                             {t("hero.title2")}
                         </span>
                     </h1>
 
-                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                         {t("hero.subtitle")}
                     </p>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
+                    <div className="hidden sm:flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
                         <Link href="/auth/signup">
                             <Button size="lg" className="h-13 px-8 rounded-full text-base bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/25 transition-all hover:scale-[1.03] font-semibold">
                                 {t("hero.cta")} <ArrowRight className="ml-2 h-4 w-4" />
@@ -107,16 +109,23 @@ export default async function LandingPage() {
                         </Link>
                     </div>
 
-                    <p className="text-xs text-muted-foreground pt-1">
+                    <p className="hidden sm:block text-xs text-muted-foreground pt-1">
                         {t("hero.free")}
                     </p>
 
+                    {/* Mobile secondary link (demo) */}
+                    <div className="sm:hidden">
+                        <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            {t("hero.demo")} <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                    </div>
+
                     {/* Arcade embed */}
-                    <div className="pt-14 md:pt-20 w-full max-w-5xl mx-auto">
-                        <div className="relative rounded-2xl border-2 border-border/60 bg-card shadow-[0_30px_80px_-20px_rgba(234,88,12,0.18)] overflow-hidden">
+                    <div className="pt-4 md:pt-20 w-full max-w-5xl mx-auto">
+                        <div className="relative rounded-xl md:rounded-2xl border-2 border-border/60 bg-card shadow-[0_30px_80px_-20px_rgba(234,88,12,0.18)] overflow-hidden">
                             <div dangerouslySetInnerHTML={{ __html: heroEmbed }} />
                         </div>
-                        <p className="mt-5 text-center text-sm text-muted-foreground">
+                        <p className="mt-4 text-center text-xs md:text-sm text-muted-foreground">
                             {t("hero.demoNote")}{" "}
                             <Link href="/tutoriels" className="text-primary hover:underline font-medium">
                                 {t("hero.demoLink")}
@@ -127,10 +136,10 @@ export default async function LandingPage() {
             </section>
 
             {/* ── Trust bar ─────────────────────────── */}
-            <div className="py-10 border-y border-border/50 bg-muted/20">
+            <div className="py-6 md:py-10 border-y border-border/50 bg-muted/20">
                 <div className="container mx-auto px-6">
                     <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">{t("trust.label")}</p>
-                    <div className="flex flex-wrap items-center justify-center gap-10 opacity-50 hover:opacity-80 transition-opacity duration-500">
+                    <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 opacity-50 hover:opacity-80 transition-opacity duration-500">
                         {["Chez Fatou", "Dakar Catering", "Teranga Events", "Saveurs d'Afrik", "Le Roi du Thiébou"].map(name => (
                             <span key={name} className="text-lg font-bold font-serif text-secondary">{name}</span>
                         ))}
@@ -139,13 +148,13 @@ export default async function LandingPage() {
             </div>
 
             {/* ── Problem section ───────────────────── */}
-            <section id="probleme" className="py-24 px-6">
+            <section id="probleme" className="py-12 md:py-24 px-4 md:px-6">
                 <div className="container mx-auto max-w-5xl">
-                    <div className="text-center mb-16 space-y-4">
-                        <h2 className="text-3xl md:text-4xl font-bold font-serif text-secondary">
+                    <div className="text-center mb-8 md:mb-16 space-y-3">
+                        <h2 className="text-2xl md:text-4xl font-bold font-serif text-secondary">
                             {t("problem.title")}
                         </h2>
-                        <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+                        <p className="text-muted-foreground text-sm md:text-lg max-w-xl mx-auto">
                             {t("problem.subtitle")}
                         </p>
                     </div>
@@ -191,20 +200,21 @@ export default async function LandingPage() {
             </section>
 
             {/* ── Features ──────────────────────────── */}
-            <section id="fonctionnalites" className="py-24 px-6 bg-card border-y border-border">
-                <div className="container mx-auto max-w-6xl space-y-24">
+            <section id="fonctionnalites" className="py-12 md:py-24 px-4 md:px-6 bg-card border-y border-border">
+                <div className="container mx-auto max-w-6xl space-y-14 md:space-y-24">
 
                     {/* F1: Commandes & Devis */}
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div className="space-y-6 order-2 md:order-1">
+                    <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
+                        {/* Text: always first in DOM → top on mobile, left on desktop */}
+                        <div className="space-y-5 md:space-y-6">
                             <FeaturePill icon={<ShoppingCart className="h-3.5 w-3.5" />} label={t("features.orders.pill")} />
-                            <h3 className="text-3xl md:text-4xl font-bold font-serif text-secondary leading-tight">
+                            <h3 className="text-2xl md:text-4xl font-bold font-serif text-secondary leading-tight">
                                 {t("features.orders.title")}
                             </h3>
-                            <p className="text-muted-foreground text-lg leading-relaxed">
+                            <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
                                 {t("features.orders.body")}
                             </p>
-                            <ul className="space-y-3">
+                            <ul className="space-y-2.5 md:space-y-3">
                                 {(t.raw("features.orders.items") as string[]).map((item: string) => (
                                     <li key={item} className="flex items-center gap-3 text-sm text-foreground">
                                         <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
@@ -213,25 +223,24 @@ export default async function LandingPage() {
                                 ))}
                             </ul>
                         </div>
-                        <div className="order-1 md:order-2">
-                            <MockOrderCard tr={t.raw("mocks.orderCard") as MockOrderCardTr} />
-                        </div>
+                        {/* Mock: second in DOM → bottom on mobile, right on desktop */}
+                        <PhoneMockup render={(compact) => (
+                            <MockOrderCard tr={t.raw("mocks.orderCard") as MockOrderCardTr} compact={compact} />
+                        )} />
                     </div>
 
                     {/* F2: Calendrier */}
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <MockCalendar tr={t.raw("mocks.calendar") as MockCalendarTr} />
-                        </div>
-                        <div className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
+                        {/* Text: first in DOM → top on mobile, right on desktop */}
+                        <div className="space-y-5 md:space-y-6 md:order-2">
                             <FeaturePill icon={<CalendarDays className="h-3.5 w-3.5" />} label={t("features.calendar.pill")} />
-                            <h3 className="text-3xl md:text-4xl font-bold font-serif text-secondary leading-tight">
+                            <h3 className="text-2xl md:text-4xl font-bold font-serif text-secondary leading-tight">
                                 {t("features.calendar.title")}
                             </h3>
-                            <p className="text-muted-foreground text-lg leading-relaxed">
+                            <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
                                 {t("features.calendar.body")}
                             </p>
-                            <ul className="space-y-3">
+                            <ul className="space-y-2.5 md:space-y-3">
                                 {(t.raw("features.calendar.items") as string[]).map((item: string) => (
                                     <li key={item} className="flex items-center gap-3 text-sm text-foreground">
                                         <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
@@ -240,19 +249,26 @@ export default async function LandingPage() {
                                 ))}
                             </ul>
                         </div>
+                        {/* Mock: second in DOM → bottom on mobile, left on desktop */}
+                        <div className="md:order-1">
+                            <PhoneMockup render={(compact) => (
+                                <MockCalendar tr={t.raw("mocks.calendar") as MockCalendarTr} compact={compact} />
+                            )} />
+                        </div>
                     </div>
 
                     {/* F3: Messagerie unifiée */}
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div className="space-y-6 order-2 md:order-1">
+                    <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
+                        {/* Text: always first in DOM → top on mobile, left on desktop */}
+                        <div className="space-y-5 md:space-y-6">
                             <FeaturePill icon={<MessageSquare className="h-3.5 w-3.5" />} label={t("features.inbox.pill")} />
-                            <h3 className="text-3xl md:text-4xl font-bold font-serif text-secondary leading-tight">
+                            <h3 className="text-2xl md:text-4xl font-bold font-serif text-secondary leading-tight">
                                 {t("features.inbox.title")}
                             </h3>
-                            <p className="text-muted-foreground text-lg leading-relaxed">
+                            <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
                                 {t("features.inbox.body")}
                             </p>
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-2 md:gap-3">
                                 {[
                                     { label: "WhatsApp", color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400" },
                                     { label: "Instagram", color: "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400" },
@@ -263,9 +279,10 @@ export default async function LandingPage() {
                                 ))}
                             </div>
                         </div>
-                        <div className="order-1 md:order-2">
-                            <MockInbox tr={t.raw("mocks.inbox") as MockInboxTr} />
-                        </div>
+                        {/* Mock: second in DOM → bottom on mobile, right on desktop */}
+                        <PhoneMockup render={(compact) => (
+                            <MockInbox tr={t.raw("mocks.inbox") as MockInboxTr} compact={compact} />
+                        )} />
                     </div>
 
                     {/* F4-F7: Secondary features grid */}
@@ -327,11 +344,11 @@ export default async function LandingPage() {
             </section>
 
             {/* ── How it works ──────────────────────── */}
-            <section className="py-24 px-6">
+            <section className="py-12 md:py-24 px-4 md:px-6">
                 <div className="container mx-auto max-w-3xl text-center space-y-16">
-                    <div className="space-y-4">
-                        <h2 className="text-3xl md:text-4xl font-bold font-serif text-secondary">{t("howItWorks.title")}</h2>
-                        <p className="text-muted-foreground text-lg">{t("howItWorks.subtitle")}</p>
+                    <div className="space-y-3">
+                        <h2 className="text-2xl md:text-4xl font-bold font-serif text-secondary">{t("howItWorks.title")}</h2>
+                        <p className="text-muted-foreground text-sm md:text-lg">{t("howItWorks.subtitle")}</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 text-center">
@@ -354,7 +371,7 @@ export default async function LandingPage() {
             </section>
 
             {/* ── Import highlight ──────────────────── */}
-            <section className="py-24 px-6 bg-gradient-to-r from-emerald-50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/10 border-y border-emerald-100 dark:border-emerald-900/30">
+            <section className="py-12 md:py-24 px-4 md:px-6 bg-gradient-to-r from-emerald-50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/10 border-y border-emerald-100 dark:border-emerald-900/30">
                 <div className="container mx-auto max-w-6xl">
                     <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
                         <div className="space-y-6">
@@ -362,10 +379,10 @@ export default async function LandingPage() {
                                 <Download className="h-3.5 w-3.5" />
                                 {t("import.badge")}
                             </div>
-                            <h3 className="text-3xl md:text-4xl font-bold font-serif text-secondary leading-tight">
+                            <h3 className="text-2xl md:text-4xl font-bold font-serif text-secondary leading-tight">
                                 {t("import.title")}
                             </h3>
-                            <p className="text-muted-foreground leading-relaxed text-lg">
+                            <p className="text-muted-foreground leading-relaxed text-sm md:text-lg">
                                 {t("import.body")}
                             </p>
                         </div>
@@ -384,13 +401,13 @@ export default async function LandingPage() {
             </section>
 
             {/* ── Pricing ───────────────────────────── */}
-            <section id="tarifs" className="py-24 px-6 bg-card border-y border-border">
+            <section id="tarifs" className="py-12 md:py-24 px-4 md:px-6 bg-card border-y border-border">
                 <div className="container mx-auto max-w-5xl">
-                    <div className="text-center mb-16 space-y-4">
-                        <h2 className="text-3xl md:text-4xl font-bold font-serif text-secondary">
+                    <div className="text-center mb-8 md:mb-16 space-y-3">
+                        <h2 className="text-2xl md:text-4xl font-bold font-serif text-secondary">
                             {t("pricing.title")}
                         </h2>
-                        <p className="text-muted-foreground text-lg">
+                        <p className="text-muted-foreground text-sm md:text-lg">
                             {t("pricing.subtitle")}
                         </p>
                     </div>
@@ -440,15 +457,15 @@ export default async function LandingPage() {
             </section>
 
             {/* ── Testimonial ───────────────────────── */}
-            <section id="testimonials" className="py-24 px-6 bg-secondary text-white relative overflow-hidden">
+            <section id="testimonials" className="py-12 md:py-24 px-4 md:px-6 bg-secondary text-white relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay" />
                 <div className="container mx-auto max-w-3xl text-center relative z-10 space-y-12">
-                    <h2 className="text-3xl font-serif font-bold">{t("testimonials.title")}</h2>
+                    <h2 className="text-2xl md:text-3xl font-serif font-bold">{t("testimonials.title")}</h2>
                     <div className="bg-white/10 backdrop-blur-md p-10 rounded-2xl border border-white/10 space-y-6">
                         <div className="flex items-center justify-center gap-1">
                             {[1,2,3,4,5].map(i => <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />)}
                         </div>
-                        <p className="text-xl italic font-serif leading-relaxed">
+                        <p className="text-base md:text-xl italic font-serif leading-relaxed">
                             &quot;{t("testimonials.quote")}&quot;
                         </p>
                         <div className="flex items-center justify-center gap-4">
@@ -468,14 +485,14 @@ export default async function LandingPage() {
             </section>
 
             {/* ── Final CTA ─────────────────────────── */}
-            <section className="py-28 px-6 relative overflow-hidden">
+            <section className="py-16 md:py-28 px-4 md:px-6 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-background to-amber-50/20 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900 -z-10" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/6 rounded-full blur-[120px] -z-10" />
                 <div className="container mx-auto max-w-2xl text-center space-y-8">
-                    <h2 className="text-4xl md:text-5xl font-bold font-serif text-secondary leading-tight">
+                    <h2 className="text-2xl md:text-5xl font-bold font-serif text-secondary leading-tight">
                         {t("cta.title")}
                     </h2>
-                    <p className="text-lg text-muted-foreground">
+                    <p className="text-sm md:text-lg text-muted-foreground">
                         {t("cta.subtitle")}
                     </p>
                     <Link href="/auth/signup">
@@ -489,9 +506,19 @@ export default async function LandingPage() {
                 </div>
             </section>
 
+            {/* ── Floating CTA (mobile only) ─────────── */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-md border-t border-border shadow-2xl px-4 py-3">
+                <Link href="/auth/signup" className="block">
+                    <Button className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-base shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                        {tNav("freeTrial")} <ArrowRight className="h-4 w-4" />
+                    </Button>
+                </Link>
+                <p className="text-center text-[11px] text-muted-foreground mt-1.5">{t("hero.free")}</p>
+            </div>
+
             {/* ── Footer ────────────────────────────── */}
-            <footer className="py-16 bg-muted/20 border-t border-border">
-                <div className="container mx-auto px-6 grid md:grid-cols-4 gap-12">
+            <footer className="py-10 md:py-16 bg-muted/20 border-t border-border">
+                <div className="container mx-auto px-4 md:px-6 grid md:grid-cols-4 gap-8 md:gap-12">
                     <div className="col-span-1 md:col-span-2 space-y-5">
                         <Logo size="md" href="/" className="text-secondary" />
                         <p className="text-muted-foreground max-w-xs leading-relaxed text-sm">
@@ -516,7 +543,7 @@ export default async function LandingPage() {
                         </ul>
                     </div>
                 </div>
-                <div className="container mx-auto px-6 pt-10 mt-10 border-t border-border text-center text-xs text-muted-foreground">
+                <div className="container mx-auto px-4 md:px-6 pt-8 mt-8 border-t border-border text-center text-xs text-muted-foreground">
                     &copy; {new Date().getFullYear()} RestaurantsOS · {t("footer.copyright")}
                 </div>
             </footer>
@@ -553,20 +580,63 @@ function FeaturePill({ icon, label }: { icon: React.ReactNode; label: string }) 
     );
 }
 
-function MockOrderCard({ tr }: { tr: MockOrderCardTr }) {
+function PhoneMockup({ render }: { render: (compact: boolean) => React.ReactNode }) {
     return (
-        <div className="rounded-2xl border border-border bg-background shadow-xl p-5 space-y-4 max-w-sm mx-auto">
+        <>
+            {/* Mobile: phone chrome */}
+            <div className="md:hidden mx-auto w-full max-w-[290px]">
+                <div className="relative rounded-[2.4rem] border-[3px] border-foreground/10 dark:border-foreground/15 overflow-hidden shadow-2xl shadow-black/15 bg-background">
+                    {/* iOS status bar simulation */}
+                    <div className="flex items-center justify-between px-5 pt-3 pb-1 bg-background">
+                        <span className="text-[9px] font-semibold text-foreground/40">9:41</span>
+                        <div className="w-16 h-1.5 rounded-full bg-foreground/10" />
+                        <div className="flex items-center gap-1">
+                            <div className="flex gap-0.5 items-end h-3">
+                                <div className="w-0.5 h-1 bg-foreground/35 rounded-full" />
+                                <div className="w-0.5 h-1.5 bg-foreground/35 rounded-full" />
+                                <div className="w-0.5 h-2 bg-foreground/35 rounded-full" />
+                                <div className="w-0.5 h-3 bg-foreground/35 rounded-full" />
+                            </div>
+                            <div className="w-3.5 h-2 border border-foreground/30 rounded-[2px] ml-1 relative">
+                                <div className="absolute right-[-2.5px] top-1/2 -translate-y-1/2 w-0.5 h-1 rounded-full bg-foreground/25" />
+                                <div className="absolute inset-[1px] bg-foreground/40 rounded-[1px] w-3/4" />
+                            </div>
+                        </div>
+                    </div>
+                    {/* Content — compact mode strips outer card styling */}
+                    {render(true)}
+                </div>
+            </div>
+            {/* Desktop: normal rendering */}
+            <div className="hidden md:block">{render(false)}</div>
+        </>
+    );
+}
+
+function MockOrderCard({ tr, compact }: { tr: MockOrderCardTr; compact?: boolean }) {
+    return (
+        <div className={cn(
+            "bg-background space-y-3",
+            compact ? "p-4" : "rounded-2xl border border-border shadow-xl p-5 space-y-4 max-w-sm mx-auto"
+        )}>
+            {/* App-style nav bar in compact mode */}
+            {compact && (
+                <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                    <span className="text-xs font-bold text-primary">RestaurantsOS</span>
+                    <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Devis</span>
+                </div>
+            )}
             <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{tr.label}</span>
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">{tr.status}</span>
             </div>
             <div>
-                <p className="font-bold text-foreground font-serif text-lg">{tr.event}</p>
-                <p className="text-sm text-muted-foreground">{tr.date}</p>
+                <p className={cn("font-bold text-foreground font-serif", compact ? "text-base" : "text-lg")}>{tr.event}</p>
+                <p className="text-xs text-muted-foreground">{tr.date}</p>
             </div>
-            <div className="space-y-2 border-y border-border py-4">
+            <div className={cn("border-y border-border", compact ? "space-y-1.5 py-3" : "space-y-2 py-4")}>
                 {tr.items.map(({ name, qty, price }) => (
-                    <div key={name} className="flex items-center justify-between text-sm">
+                    <div key={name} className="flex items-center justify-between text-xs md:text-sm">
                         <span className="text-foreground font-medium">{name} <span className="text-muted-foreground font-normal">{qty}</span></span>
                         <span className="text-muted-foreground">{price}</span>
                     </div>
@@ -575,18 +645,18 @@ function MockOrderCard({ tr }: { tr: MockOrderCardTr }) {
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-xs text-muted-foreground">{tr.total}</p>
-                    <p className="font-bold text-foreground text-xl">{tr.totalAmount}</p>
+                    <p className={cn("font-bold text-foreground font-serif", compact ? "text-lg" : "text-xl")}>{tr.totalAmount}</p>
                 </div>
                 <div className="text-right">
                     <p className="text-xs text-muted-foreground">{tr.deposit}</p>
-                    <p className="font-semibold text-emerald-600">{tr.depositAmount}</p>
+                    <p className="font-semibold text-emerald-600 text-sm">{tr.depositAmount}</p>
                 </div>
             </div>
         </div>
     );
 }
 
-function MockCalendar({ tr }: { tr: MockCalendarTr }) {
+function MockCalendar({ tr, compact }: { tr: MockCalendarTr; compact?: boolean }) {
     const cells = [
         { label: "1", load: 0 }, { label: "2", load: 0 }, { label: "3", load: 75 },
         { label: "4", load: 0 }, { label: "5", load: 0 }, { label: "6", load: 100, event: true },
@@ -597,41 +667,51 @@ function MockCalendar({ tr }: { tr: MockCalendarTr }) {
         { label: "19", load: 0 }, { label: "20", load: 100, event: true }, { label: "21", load: 0 },
     ];
     return (
-        <div className="rounded-2xl border border-border bg-background shadow-xl p-5 max-w-sm mx-auto">
-            <div className="flex items-center justify-between mb-4">
-                <p className="font-bold font-serif text-foreground">{tr.month}</p>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">{tr.eventsCount}</span>
+        <div className={cn(
+            "bg-background",
+            compact ? "p-3" : "rounded-2xl border border-border shadow-xl p-5 max-w-sm mx-auto"
+        )}>
+            {/* App-style nav bar in compact mode */}
+            {compact && (
+                <div className="flex items-center justify-between pb-2 mb-1 border-b border-border/60">
+                    <span className="text-xs font-bold text-primary">RestaurantsOS</span>
+                    <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Agenda</span>
+                </div>
+            )}
+            <div className="flex items-center justify-between mb-3">
+                <p className={cn("font-bold font-serif text-foreground", compact && "text-sm")}>{tr.month}</p>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">{tr.eventsCount}</span>
             </div>
-            <div className="grid grid-cols-7 gap-1 mb-1">
-                {tr.days.map((d, i) => <div key={i} className="text-center text-[10px] font-bold text-muted-foreground py-1">{d}</div>)}
+            <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+                {tr.days.map((d, i) => <div key={i} className="text-center text-[9px] font-bold text-muted-foreground py-0.5">{d}</div>)}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-0.5">
                 {cells.map(({ label, load, event }) => (
                     <div key={label} className={cn(
-                        "aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-medium relative overflow-hidden",
-                        load === 0 ? "text-muted-foreground hover:bg-muted/50" :
+                        "aspect-square rounded-md flex flex-col items-center justify-center text-[10px] font-medium relative overflow-hidden",
+                        load === 0 ? "text-muted-foreground" :
                         load === 100 ? "bg-primary/15 text-primary font-bold border border-primary/30" :
                         "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
                     )}>
                         {label}
                         {load > 0 && load < 100 && (
-                            <div className="absolute bottom-0.5 left-1 right-1 h-0.5 rounded-full bg-amber-200 dark:bg-amber-800">
+                            <div className="absolute bottom-0.5 left-0.5 right-0.5 h-0.5 rounded-full bg-amber-200 dark:bg-amber-800">
                                 <div className="h-full bg-amber-500 rounded-full" style={{ width: `${load}%` }} />
                             </div>
                         )}
-                        {event && <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-primary" />}
+                        {event && <div className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-primary" />}
                     </div>
                 ))}
             </div>
-            <div className="mt-4 space-y-2">
+            <div className={cn("space-y-1.5", compact ? "mt-3" : "mt-4 space-y-2")}>
                 {tr.events.map(({ name, date }) => (
-                    <div key={name} className="flex items-center gap-3 p-2 rounded-lg bg-muted/40 text-xs">
-                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                    <div key={name} className="flex items-center gap-2 p-1.5 rounded-lg bg-muted/40 text-xs">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-foreground truncate">{name}</p>
-                            <p className="text-muted-foreground">{date}</p>
+                            <p className="font-semibold text-foreground truncate text-[11px]">{name}</p>
+                            <p className="text-muted-foreground text-[10px]">{date}</p>
                         </div>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-bold flex-shrink-0">{tr.full}</span>
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-bold flex-shrink-0">{tr.full}</span>
                     </div>
                 ))}
             </div>
@@ -646,34 +726,57 @@ const CHANNEL_COLORS: Record<string, { dot: string; unread: number }> = {
     "Oumar Touré":    { dot: "bg-green-500",  unread: 0 },
 };
 
-function MockInbox({ tr }: { tr: MockInboxTr }) {
+function MockInbox({ tr, compact }: { tr: MockInboxTr; compact?: boolean }) {
     const unreadCount = tr.conversations.filter(c => (CHANNEL_COLORS[c.name]?.unread ?? 0) > 0).length;
     return (
-        <div className="rounded-2xl border border-border bg-background shadow-xl overflow-hidden max-w-sm mx-auto">
-            <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
-                <p className="font-bold font-serif text-foreground text-sm">{tr.title}</p>
-                <span className="h-5 w-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">{unreadCount}</span>
+        <div className={cn(
+            "bg-background overflow-hidden",
+            !compact && "rounded-2xl border border-border shadow-xl max-w-sm mx-auto"
+        )}>
+            <div className={cn(
+                "border-b border-border bg-muted/30 flex items-center justify-between",
+                compact ? "px-3 py-2" : "px-4 py-3"
+            )}>
+                {compact ? (
+                    <div className="flex items-center justify-between w-full">
+                        <span className="text-xs font-bold text-primary">RestaurantsOS</span>
+                        <p className="font-bold font-serif text-foreground text-xs">{tr.title}</p>
+                        <span className="h-4 w-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center">{unreadCount}</span>
+                    </div>
+                ) : (
+                    <>
+                        <p className="font-bold font-serif text-foreground text-sm">{tr.title}</p>
+                        <span className="h-5 w-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">{unreadCount}</span>
+                    </>
+                )}
             </div>
             <div className="divide-y divide-border">
                 {tr.conversations.map(({ name, msg, time }) => {
                     const meta = CHANNEL_COLORS[name] ?? { dot: "bg-gray-400", unread: 0 };
                     return (
-                        <div key={name} className={cn("flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer", meta.unread > 0 && "bg-primary/3")}>
+                        <div key={name} className={cn(
+                            "flex items-start gap-2.5 cursor-pointer transition-colors",
+                            compact ? "px-3 py-2.5" : "px-4 py-3 hover:bg-muted/30",
+                            meta.unread > 0 && "bg-primary/3"
+                        )}>
                             <div className="relative flex-shrink-0">
-                                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold text-foreground text-sm">
+                                <div className={cn(
+                                    "rounded-full bg-muted flex items-center justify-center font-bold text-foreground",
+                                    compact ? "h-7 w-7 text-xs" : "h-9 w-9 text-sm"
+                                )}>
                                     {name[0]}
                                 </div>
-                                <div className={cn("absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-background", meta.dot)} />
+                                <div className={cn("absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-background", meta.dot, compact ? "h-2.5 w-2.5" : "h-3.5 w-3.5")} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-0.5">
-                                    <p className={cn("text-sm font-semibold text-foreground truncate", meta.unread > 0 && "font-bold")}>{name}</p>
-                                    <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-2">{time}</span>
+                                    <p className={cn("font-semibold text-foreground truncate", compact ? "text-xs" : "text-sm", meta.unread > 0 && "font-bold")}>{name}</p>
+                                    <span className="text-[9px] text-muted-foreground flex-shrink-0 ml-1">{time}</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground truncate">{msg}</p>
+                                <p className="text-[10px] text-muted-foreground truncate">{msg}</p>
                             </div>
                             {meta.unread > 0 && (
-                                <div className="h-4 w-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{meta.unread}</div>
+                                <div className={cn("rounded-full bg-primary text-white font-bold flex items-center justify-center flex-shrink-0 mt-0.5", compact ? "h-3.5 w-3.5 text-[8px]" : "h-4 w-4 text-[9px]")}>{meta.unread}</div>
                             )}
                         </div>
                     );
@@ -702,7 +805,7 @@ function PricingCard({
         <div className={cn(
             "rounded-2xl border p-7 flex flex-col gap-6 relative",
             isFeatured
-                ? "border-primary shadow-2xl shadow-primary/15 bg-background scale-[1.03]"
+                ? "border-primary shadow-2xl shadow-primary/15 bg-background md:scale-[1.03]"
                 : "border-border bg-background"
         )}>
             {badge && (

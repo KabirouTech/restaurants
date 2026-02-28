@@ -88,7 +88,7 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
     const selectedConversation = formattedConversations.find((c: any) => c.id === selectedConversationId);
 
     return (
-        <div className="flex h-[calc(100vh-theme(spacing.2))] max-h-[800px] border border-border rounded-xl bg-background overflow-hidden relative shadow-sm">
+        <div className="flex h-[calc(100dvh-56px)] md:h-[calc(100vh-theme(spacing.2))] md:max-h-[800px] border-0 md:border md:border-border md:rounded-xl bg-background overflow-hidden relative md:shadow-sm">
 
             {/* Sidebar List */}
             <InboxSidebar

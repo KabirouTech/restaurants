@@ -6,19 +6,44 @@ import { Store, Globe, Utensils, CalendarDays, Kanban, MessageCircle, ChevronLef
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+const TABS = [
+    { value: "general",  icon: Store,         label: "Boutique & Contact" },
+    { value: "site",     icon: Globe,         label: "Éditeur Vitrine" },
+    { value: "menu",     icon: Utensils,      label: "Carte & Allergènes" },
+    { value: "capacity", icon: CalendarDays,  label: "Prestations" },
+    { value: "kanban",   icon: Kanban,        label: "Flux (Kanban)" },
+    { value: "channels", icon: MessageCircle, label: "Canaux Messagerie" },
+    { value: "members",  icon: Users,         label: "Membres" },
+    { value: "billing",  icon: CreditCard,    label: "Abonnement" },
+] as const;
+
+function getSectionHeading(value: string): string | null {
+    if (value === "general")  return "Entreprise";
+    if (value === "site")     return "Site Public";
+    if (value === "capacity") return "Opérations";
+    if (value === "channels") return "Intégrations";
+    if (value === "members")  return "Équipe & Plan";
+    return null;
+}
+
 export function SettingsSidebar() {
     const [collapsed, setCollapsed] = useState(false);
 
     return (
         <div className={cn(
-            "relative shrink-0 transition-all duration-300 ease-in-out md:sticky md:top-[160px] z-10 group",
+            "relative shrink-0 transition-all duration-300 ease-in-out",
+            "sticky top-0 md:top-[160px] z-10 group",
+            "bg-background md:bg-transparent",
+            "border-b border-border md:border-0",
             collapsed ? "w-full md:w-[60px]" : "w-full md:w-64"
         )}>
+            {/* Desktop collapse toggle */}
             <Button
                 variant="ghost"
                 size="icon"
                 className={cn(
-                    "absolute -right-3 top-2 h-6 w-6 rounded-full border border-border bg-card shadow-md z-20 text-muted-foreground hover:text-foreground hidden md:flex items-center justify-center transition-transform",
+                    "absolute -right-3 top-2 h-6 w-6 rounded-full border border-border bg-card shadow-md z-20",
+                    "text-muted-foreground hover:text-foreground hidden md:flex items-center justify-center transition-transform",
                     collapsed && "rotate-180"
                 )}
                 onClick={() => setCollapsed(!collapsed)}
@@ -26,77 +51,60 @@ export function SettingsSidebar() {
                 <ChevronLeft className="h-3 w-3" />
             </Button>
 
-            <TabsList className="flex flex-row md:flex-col justify-start items-stretch h-auto bg-transparent p-0 gap-1 w-full overflow-x-auto md:overflow-visible no-scrollbar">
+            {/* ── MOBILE: icon-only horizontal strip ── */}
+            <TabsList className="md:hidden flex flex-row items-center h-auto bg-transparent p-0 overflow-x-auto no-scrollbar px-2 py-2 gap-1 w-full justify-start">
+                {TABS.map(({ value, icon: Icon, label }) => (
+                    <TabsTrigger
+                        key={value}
+                        value={value}
+                        title={label}
+                        className={cn(
+                            "flex flex-col items-center justify-center w-11 h-11 rounded-xl shrink-0",
+                            "text-muted-foreground",
+                            "data-[state=active]:bg-primary/15 data-[state=active]:text-primary",
+                            "hover:bg-muted/60 data-[state=active]:shadow-none transition-all",
+                            "border-2 border-transparent data-[state=active]:border-primary/30"
+                        )}
+                    >
+                        <Icon className="h-[18px] w-[18px]" />
+                    </TabsTrigger>
+                ))}
+            </TabsList>
 
-                {/* Entreprise */}
-                <h3 className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-4 hidden md:block px-3 transition-all duration-300", collapsed ? "opacity-0 h-0 overflow-hidden mb-0 mt-2" : "opacity-100")}>
-                    Entreprise
-                </h3>
-                {collapsed && <div className="hidden md:block h-2" />}
-
-                <TabsTrigger value="general" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Boutique & Contact" : undefined}>
-                    <Store className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Boutique & Contact</span>
-                </TabsTrigger>
-
-                {/* Site Public */}
-                <h3 className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-6 hidden md:block px-3 transition-opacity", collapsed ? "opacity-0 h-0 overflow-hidden mb-0 mt-2" : "opacity-100")}>
-                    Site Public
-                </h3>
-                {collapsed && <div className="hidden md:block h-6" />}
-
-                <TabsTrigger value="site" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Éditeur Vitrine" : undefined}>
-                    <Globe className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Éditeur Vitrine</span>
-                </TabsTrigger>
-
-                <TabsTrigger value="menu" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Carte & Allergènes" : undefined}>
-                    <Utensils className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Carte & Allergènes</span>
-                </TabsTrigger>
-
-                {/* Opérations */}
-                <h3 className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-6 hidden md:block px-3 transition-opacity", collapsed ? "opacity-0 h-0 overflow-hidden mb-0 mt-2" : "opacity-100")}>
-                    Opérations
-                </h3>
-                {collapsed && <div className="hidden md:block h-6" />}
-
-                <TabsTrigger value="capacity" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Prestations" : undefined}>
-                    <CalendarDays className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Prestations</span>
-                </TabsTrigger>
-
-                <TabsTrigger value="kanban" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Flux (Kanban)" : undefined}>
-                    <Kanban className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Flux (Kanban)</span>
-                </TabsTrigger>
-
-                {/* Intégrations */}
-                <h3 className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-6 hidden md:block px-3 transition-opacity", collapsed ? "opacity-0 h-0 overflow-hidden mb-0 mt-2" : "opacity-100")}>
-                    Intégrations
-                </h3>
-                {collapsed && <div className="hidden md:block h-6" />}
-
-                <TabsTrigger value="channels" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Canaux Messagerie" : undefined}>
-                    <MessageCircle className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Canaux Messagerie</span>
-                </TabsTrigger>
-
-                {/* Équipe & Abonnement */}
-                <h3 className={cn("text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-6 hidden md:block px-3 transition-opacity", collapsed ? "opacity-0 h-0 overflow-hidden mb-0 mt-2" : "opacity-100")}>
-                    Équipe & Plan
-                </h3>
-                {collapsed && <div className="hidden md:block h-6" />}
-
-                <TabsTrigger value="members" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Membres" : undefined}>
-                    <Users className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Membres</span>
-                </TabsTrigger>
-
-                <TabsTrigger value="billing" className={cn("w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/50 transition-colors rounded-lg", collapsed && "md:justify-center md:px-0")} title={collapsed ? "Abonnement" : undefined}>
-                    <CreditCard className="h-4 w-4 shrink-0" />
-                    <span className={cn("transition-opacity whitespace-nowrap", collapsed && "md:hidden")}>Abonnement</span>
-                </TabsTrigger>
+            {/* ── DESKTOP: vertical sidebar ── */}
+            <TabsList className="hidden md:flex flex-col justify-start items-stretch h-auto bg-transparent p-0 gap-1 w-full">
+                {TABS.map(({ value, icon: Icon, label }) => {
+                    const heading = getSectionHeading(value);
+                    return (
+                        <div key={value}>
+                            {heading && (
+                                <h3 className={cn(
+                                    "text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 transition-all duration-300",
+                                    value === "general" ? "mb-2 mt-4" : "mb-2 mt-6",
+                                    collapsed ? "opacity-0 h-0 overflow-hidden mb-0 mt-2" : "opacity-100"
+                                )}>
+                                    {heading}
+                                </h3>
+                            )}
+                            {collapsed && heading && <div className="h-6" />}
+                            <TabsTrigger
+                                value={value}
+                                title={collapsed ? label : undefined}
+                                className={cn(
+                                    "w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium",
+                                    "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
+                                    "hover:bg-muted/50 transition-colors rounded-lg",
+                                    collapsed && "justify-center px-0"
+                                )}
+                            >
+                                <Icon className="h-4 w-4 shrink-0" />
+                                <span className={cn("transition-opacity whitespace-nowrap", collapsed && "hidden")}>
+                                    {label}
+                                </span>
+                            </TabsTrigger>
+                        </div>
+                    );
+                })}
             </TabsList>
         </div>
     );

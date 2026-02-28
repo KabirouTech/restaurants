@@ -100,6 +100,14 @@
 }
 
 @layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .teranga-card {
     @apply rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-300;
   }

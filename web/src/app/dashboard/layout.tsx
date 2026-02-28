@@ -1,4 +1,6 @@
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { MobileHeader } from "@/components/dashboard/MobileHeader";
+import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { AnnouncementBar } from "@/components/dashboard/AnnouncementBar";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
@@ -61,12 +63,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
     return (
         <div className="flex flex-col h-[100dvh] overflow-hidden bg-muted/10 print:h-auto print:overflow-visible print:bg-white">
             <AnnouncementBar announcements={activeAnnouncements} />
+            <MobileHeader />
             <div className="flex flex-1 overflow-hidden">
-                <Sidebar isSuperAdmin={isSuperAdmin} plan={plan} />
-                <main className={`flex-1 overflow-y-auto h-full w-full print:h-auto print:w-full print:overflow-visible ${hasBottomAnnouncements ? "pb-12" : ""}`}>
+                <div className="hidden md:flex">
+                    <Sidebar isSuperAdmin={isSuperAdmin} plan={plan} />
+                </div>
+                <main className={`flex-1 overflow-y-auto h-full w-full print:h-auto print:w-full print:overflow-visible pb-[72px] md:pb-0 ${hasBottomAnnouncements ? "md:pb-12" : ""}`}>
                     {children}
                 </main>
             </div>
+            <MobileBottomNav plan={plan} isSuperAdmin={isSuperAdmin} />
         </div>
     );
 }

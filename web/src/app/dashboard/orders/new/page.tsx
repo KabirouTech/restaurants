@@ -56,7 +56,7 @@ export default async function NewOrderPage() {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-hidden p-6 bg-muted/10">
+            <main className="flex-1 overflow-auto lg:overflow-hidden p-4 md:p-6 bg-muted/10">
                 <Suspense fallback={<div>Chargement...</div>}>
                     <CreateOrderForm
                         products={products || []}

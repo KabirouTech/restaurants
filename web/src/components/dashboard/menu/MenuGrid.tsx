@@ -174,9 +174,9 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
                                 </div>
 
                                 <CardContent className="p-4">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="font-bold text-lg font-serif text-secondary line-clamp-1">{product.name}</h3>
-                                        <span className="font-mono font-medium text-primary shrink-0 ml-2">
+                                    <div className="flex justify-between items-start mb-2 gap-2">
+                                        <h3 className="font-bold text-base md:text-lg font-serif text-secondary line-clamp-1 flex-1 min-w-0">{product.name}</h3>
+                                        <span className="font-mono font-medium text-primary shrink-0 text-sm md:text-base">
                                             {formatPrice(product.price_cents, currency)}
                                         </span>
                                     </div>

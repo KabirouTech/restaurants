@@ -104,22 +104,22 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
             <div className="flex flex-col h-screen bg-background text-foreground animate-in fade-in duration-500 overflow-hidden">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-border bg-card shadow-sm shrink-0 z-10">
+                <div className="flex items-center justify-between p-4 md:p-6 border-b border-border bg-card shadow-sm shrink-0 z-10">
                     <div>
-                        <h1 className="text-2xl font-bold font-serif text-foreground capitalize flex items-center gap-2">
+                        <h1 className="text-lg md:text-2xl font-bold font-serif text-foreground capitalize flex items-center gap-2">
                             {format(viewDate, "MMMM yyyy", { locale: fr })}
-                            <span className="text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            <span className="text-xs md:text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                                 {orders?.length || 0} événements
                             </span>
                         </h1>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="bg-muted/30 p-1 rounded-lg border border-border flex items-center mr-4">
+                        <div className="bg-muted/30 p-1 rounded-lg border border-border flex items-center mr-2 md:mr-4">
                             <Link href={`?date=${format(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1), "yyyy-MM-dd")}`}>
                                 <Button variant="ghost" size="icon" className="h-7 w-7"><ChevronLeft className="h-4 w-4" /></Button>
                             </Link>
                             <Link href={`?date=${format(new Date(), "yyyy-MM-dd")}`}>
-                                <Button variant="ghost" size="sm" className="h-7 text-xs font-medium px-2">Aujourd'hui</Button>
+                                <Button variant="ghost" size="sm" className="h-7 text-xs font-medium px-2">Auj.</Button>
                             </Link>
                             <Link href={`?date=${format(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1), "yyyy-MM-dd")}`}>
                                 <Button variant="ghost" size="icon" className="h-7 w-7"><ChevronRight className="h-4 w-4" /></Button>
@@ -129,15 +129,74 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                         {/* "Nouveau" button in the header also opens the dialog (today's date) */}
                         <button
                             data-calendar-new-order={format(new Date(), "yyyy-MM-dd")}
-                            className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white shadow-sm font-medium text-sm h-9 px-4 rounded-md transition-colors"
+                            className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white shadow-sm font-medium text-sm h-9 px-3 md:px-4 rounded-md transition-colors"
                         >
-                            <Plus className="h-4 w-4" /> Nouveau
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden sm:inline">Nouveau</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Calendar Grid Container */}
-                <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Mobile: Agenda view */}
+                <div className="md:hidden flex-1 overflow-y-auto p-4 space-y-3">
+                    {(() => {
+                        const monthOrders = (orders || []).filter((o: any) =>
+                            o.event_date && isSameMonth(parseISO(o.event_date), monthStart)
+                        ).sort((a: any, b: any) => a.event_date.localeCompare(b.event_date));
+
+                        if (monthOrders.length === 0) {
+                            return (
+                                <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+                                    <p className="text-sm font-medium">Aucun événement ce mois-ci</p>
+                                </div>
+                            );
+                        }
+
+                        // Group by date
+                        const grouped: Record<string, typeof monthOrders> = {};
+                        for (const o of monthOrders) {
+                            if (!grouped[o.event_date]) grouped[o.event_date] = [];
+                            grouped[o.event_date].push(o);
+                        }
+
+                        return Object.entries(grouped).map(([date, dayOrders]) => (
+                            <div key={date} className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                                <div className="bg-muted/40 px-4 py-2 border-b border-border">
+                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider capitalize">
+                                        {format(parseISO(date), "EEEE d MMMM", { locale: fr })}
+                                    </span>
+                                </div>
+                                <div className="divide-y divide-border/50">
+                                    {(dayOrders as any[]).map((order: any) => {
+                                        const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
+                                        const capType = Array.isArray(order.capacity_types) ? order.capacity_types[0] : order.capacity_types;
+                                        return (
+                                            <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
+                                                <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
+                                                    {capType?.color_code && (
+                                                        <div className="w-1.5 h-8 rounded-full shrink-0" style={{ backgroundColor: capType.color_code }} />
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-sm text-foreground truncate">{customer?.full_name || "Client"}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {order.event_time?.slice(0, 5) || ""}
+                                                            {capType && ` · ${capType.name}`}
+                                                            {order.guest_count ? ` · ${order.guest_count} pers.` : ""}
+                                                        </p>
+                                                    </div>
+                                                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ));
+                    })()}
+                </div>
+
+                {/* Desktop: Calendar Grid Container */}
+                <div className="hidden md:flex flex-1 flex-col overflow-hidden">
 
                     {/* Week Header */}
                     <div className="grid grid-cols-7 border-b border-border bg-muted/60 shrink-0">
@@ -255,7 +314,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                         })}
                     </div>
                 </div>
-            </div>
+            </div>{/* end desktop grid container */}
         </CalendarShell>
     );
 }

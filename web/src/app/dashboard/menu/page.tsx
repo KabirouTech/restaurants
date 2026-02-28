@@ -34,25 +34,26 @@ export default async function MenuPage() {
     const currency = (org?.settings as any)?.currency || "EUR";
 
     return (
-        <div className="min-h-screen p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="min-h-screen p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-6">
-                <div>
-                    <div className="flex items-center gap-2 text-primary font-medium mb-1">
-                        <ChefHat className="h-5 w-5" />
-                        <span>Carte & Menus</span>
+            <div className="border-b border-border pb-4 md:pb-6">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 text-primary font-medium mb-1">
+                            <ChefHat className="h-4 w-4 shrink-0" />
+                            <span className="text-sm">Carte & Menus</span>
+                        </div>
+                        <h1 className="text-xl md:text-3xl font-bold font-serif text-foreground truncate">
+                            Gestion du Menu
+                        </h1>
+                        <p className="text-muted-foreground mt-1 text-xs md:text-base hidden sm:block">
+                            Ajoutez, modifiez ou supprimez vos plats.
+                        </p>
                     </div>
-                    <h1 className="text-3xl font-bold font-serif text-foreground">
-                        Gestion du Menu
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Ajoutez, modifiez ou supprimez vos plats. Ils apparaîtront instantanément sur vos devis.
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <ImportMenuDialog currency={currency} />
-                    <ProductDialog currency={currency} />
+                    <div className="flex items-center gap-2 shrink-0">
+                        <ImportMenuDialog currency={currency} />
+                        <ProductDialog currency={currency} />
+                    </div>
                 </div>
             </div>
 

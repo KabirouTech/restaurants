@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { LayoutGrid, List, Kanban, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,7 +69,7 @@ function ListView({
     const someSelected = orders.some(o => selectedIds.has(o.id));
 
     return (
-        <div className="rounded-xl border border-border bg-card shadow-sm">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
             <div className="max-h-[calc(100vh-260px)] overflow-y-auto">
                 <table className="w-full text-sm">
                     <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm border-b border-border">
@@ -82,9 +82,13 @@ function ListView({
                                     data-state={!allSelected && someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
                                 />
                             </th>
-                            {["Client", "Date", "Type", "Invités", "Statut", "Total", ""].map((h) => (
-                                <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
-                            ))}
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Client</th>
+                            <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</th>
+                            <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Type</th>
+                            <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Invités</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Statut</th>
+                            <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total</th>
+                            <th className="px-4 py-3"></th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -105,13 +109,13 @@ function ListView({
                                         />
                                     </td>
                                     <td className="px-4 py-3 font-medium text-foreground">{customer?.full_name || "—"}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">
+                                    <td className="hidden sm:table-cell px-4 py-3 text-muted-foreground">
                                         {order.event_date ? format(new Date(order.event_date + "T00:00:00"), "d MMM yyyy", { locale: fr }) : "—"}
                                     </td>
-                                    <td className="px-4 py-3 text-muted-foreground">{cap?.name || "—"}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">{order.guest_count ?? "—"}</td>
+                                    <td className="hidden md:table-cell px-4 py-3 text-muted-foreground">{cap?.name || "—"}</td>
+                                    <td className="hidden md:table-cell px-4 py-3 text-muted-foreground">{order.guest_count ?? "—"}</td>
                                     <td className="px-4 py-3"><StatusBadge status={order.status} columns={columns} /></td>
-                                    <td className="px-4 py-3 font-mono font-semibold text-primary">
+                                    <td className="hidden sm:table-cell px-4 py-3 font-mono font-semibold text-primary">
                                         {order.total_amount_cents > 0 ? formatPrice(order.total_amount_cents, currency) : "—"}
                                     </td>
                                     <td className="px-4 py-3">
@@ -201,6 +205,10 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
     const router = useRouter();
     const [view, setView] = useState<ViewMode>("kanban");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (window.innerWidth < 768) setView("list");
+    }, []);
     const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
     const [isBulkDeleting, startBulkDelete] = useTransition();
 
@@ -237,7 +245,7 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
     return (
         <div className="space-y-4">
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
                 <div className="flex items-center gap-3">
                     <p className="text-sm text-muted-foreground">{orders.length} commande{orders.length > 1 ? "s" : ""}</p>
 
@@ -260,13 +268,13 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
                     )}
                 </div>
 
-                {/* View toggle */}
-                <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg border border-border">
+                {/* View toggle — hide Kanban on mobile */}
+                <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg border border-border self-end md:self-auto">
                     {([
-                        { id: "kanban", icon: Kanban, label: "Kanban" },
-                        { id: "list", icon: List, label: "Liste" },
-                        { id: "grid", icon: LayoutGrid, label: "Grille" },
-                    ] as const).map(({ id, icon: Icon, label }) => (
+                        { id: "kanban", icon: Kanban, label: "Kanban", mobileHidden: true },
+                        { id: "list", icon: List, label: "Liste", mobileHidden: false },
+                        { id: "grid", icon: LayoutGrid, label: "Grille", mobileHidden: false },
+                    ] as const).map(({ id, icon: Icon, label, mobileHidden }) => (
                         <Button
                             key={id}
                             variant="ghost"
@@ -274,6 +282,7 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
                             onClick={() => { setView(id); setSelectedIds(new Set()); }}
                             className={cn(
                                 "h-7 px-2.5 gap-1.5 text-xs",
+                                mobileHidden && "hidden md:inline-flex",
                                 view === id ? "bg-card shadow-sm text-primary font-semibold" : "text-muted-foreground"
                             )}
                         >
