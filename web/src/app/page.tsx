@@ -201,96 +201,169 @@ export default async function LandingPage() {
 
             {/* ── Features ──────────────────────────── */}
             <section id="fonctionnalites" className="py-12 md:py-24 px-4 md:px-6 bg-card border-y border-border">
-                <div className="container mx-auto max-w-6xl space-y-14 md:space-y-24">
+                <div className="container mx-auto max-w-6xl">
 
-                    {/* F1: Commandes & Devis */}
-                    <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
-                        {/* Text: always first in DOM → top on mobile, left on desktop */}
-                        <div className="space-y-5 md:space-y-6">
-                            <FeaturePill icon={<ShoppingCart className="h-3.5 w-3.5" />} label={t("features.orders.pill")} />
-                            <h3 className="text-2xl md:text-4xl font-bold font-serif text-secondary leading-tight">
-                                {t("features.orders.title")}
-                            </h3>
-                            <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
-                                {t("features.orders.body")}
-                            </p>
-                            <ul className="space-y-2.5 md:space-y-3">
-                                {(t.raw("features.orders.items") as string[]).map((item: string) => (
-                                    <li key={item} className="flex items-center gap-3 text-sm text-foreground">
-                                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        {/* Mock: second in DOM → bottom on mobile, right on desktop */}
-                        <PhoneMockup render={(compact) => (
-                            <MockOrderCard tr={t.raw("mocks.orderCard") as MockOrderCardTr} compact={compact} />
-                        )} />
+                    {/* Section header */}
+                    <div className="text-center mb-8 md:mb-16">
+                        <h2 className="text-2xl md:text-4xl font-bold font-serif text-secondary">{t("features.moreTitle")}</h2>
+                        <p className="text-sm md:text-lg text-muted-foreground mt-3 max-w-xl mx-auto">{t("features.moreSubtitle")}</p>
                     </div>
 
-                    {/* F2: Calendrier */}
-                    <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
-                        {/* Text: first in DOM → top on mobile, right on desktop */}
-                        <div className="space-y-5 md:space-y-6 md:order-2">
-                            <FeaturePill icon={<CalendarDays className="h-3.5 w-3.5" />} label={t("features.calendar.pill")} />
-                            <h3 className="text-2xl md:text-4xl font-bold font-serif text-secondary leading-tight">
-                                {t("features.calendar.title")}
-                            </h3>
-                            <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
-                                {t("features.calendar.body")}
-                            </p>
-                            <ul className="space-y-2.5 md:space-y-3">
-                                {(t.raw("features.calendar.items") as string[]).map((item: string) => (
-                                    <li key={item} className="flex items-center gap-3 text-sm text-foreground">
-                                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
+                    {/* ── MOBILE: horizontal snap carousel ── */}
+                    <div className="md:hidden">
+                        {/* Swipeable phone frames */}
+                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-3 no-scrollbar -mx-4 px-4">
+                            {/* F1 — Orders */}
+                            <div className="snap-center flex-shrink-0 w-[72vw] flex flex-col items-center gap-3">
+                                <PhoneMockup render={(compact) => (
+                                    <MockOrderCard tr={t.raw("mocks.orderCard") as MockOrderCardTr} compact={compact} />
+                                )} />
+                                <FeaturePill icon={<ShoppingCart className="h-3 w-3" />} label={t("features.orders.pill")} />
+                            </div>
+                            {/* F2 — Calendar */}
+                            <div className="snap-center flex-shrink-0 w-[72vw] flex flex-col items-center gap-3">
+                                <PhoneMockup render={(compact) => (
+                                    <MockCalendar tr={t.raw("mocks.calendar") as MockCalendarTr} compact={compact} />
+                                )} />
+                                <FeaturePill icon={<CalendarDays className="h-3 w-3" />} label={t("features.calendar.pill")} />
+                            </div>
+                            {/* F3 — Inbox */}
+                            <div className="snap-center flex-shrink-0 w-[72vw] flex flex-col items-center gap-3">
+                                <PhoneMockup render={(compact) => (
+                                    <MockInbox tr={t.raw("mocks.inbox") as MockInboxTr} compact={compact} />
+                                )} />
+                                <FeaturePill icon={<MessageSquare className="h-3 w-3" />} label={t("features.inbox.pill")} />
+                            </div>
                         </div>
-                        {/* Mock: second in DOM → bottom on mobile, left on desktop */}
-                        <div className="md:order-1">
+
+                        {/* Scroll hint dots */}
+                        <div className="flex justify-center gap-1.5 mt-3 mb-8">
+                            <div className="w-5 h-1.5 rounded-full bg-primary" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/25" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/25" />
+                        </div>
+
+                        {/* Feature details — compact stacked cards, text only */}
+                        <div className="space-y-3">
+                            {/* F1 */}
+                            <div className="bg-background border border-border rounded-2xl p-4 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                        <ShoppingCart className="h-3.5 w-3.5" />
+                                    </div>
+                                    <h3 className="font-bold text-sm text-foreground font-serif">{t("features.orders.title")}</h3>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{t("features.orders.body")}</p>
+                                <ul className="space-y-1">
+                                    {(t.raw("features.orders.items") as string[]).slice(0, 3).map((item: string) => (
+                                        <li key={item} className="flex items-center gap-2 text-xs text-foreground">
+                                            <Check className="h-3 w-3 text-emerald-500 flex-shrink-0" />{item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            {/* F2 */}
+                            <div className="bg-background border border-border rounded-2xl p-4 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                        <CalendarDays className="h-3.5 w-3.5" />
+                                    </div>
+                                    <h3 className="font-bold text-sm text-foreground font-serif">{t("features.calendar.title")}</h3>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{t("features.calendar.body")}</p>
+                                <ul className="space-y-1">
+                                    {(t.raw("features.calendar.items") as string[]).slice(0, 3).map((item: string) => (
+                                        <li key={item} className="flex items-center gap-2 text-xs text-foreground">
+                                            <Check className="h-3 w-3 text-emerald-500 flex-shrink-0" />{item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            {/* F3 */}
+                            <div className="bg-background border border-border rounded-2xl p-4 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                        <MessageSquare className="h-3.5 w-3.5" />
+                                    </div>
+                                    <h3 className="font-bold text-sm text-foreground font-serif">{t("features.inbox.title")}</h3>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{t("features.inbox.body")}</p>
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {["WhatsApp", "Instagram", "Email", "Messenger"].map(ch => (
+                                        <span key={ch} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-muted text-muted-foreground">{ch}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── DESKTOP: classic 2-col sections ── */}
+                    <div className="hidden md:block space-y-24">
+                        {/* F1: Commandes & Devis */}
+                        <div className="grid md:grid-cols-2 gap-12 items-center">
+                            <div className="space-y-6">
+                                <FeaturePill icon={<ShoppingCart className="h-3.5 w-3.5" />} label={t("features.orders.pill")} />
+                                <h3 className="text-4xl font-bold font-serif text-secondary leading-tight">{t("features.orders.title")}</h3>
+                                <p className="text-muted-foreground text-lg leading-relaxed">{t("features.orders.body")}</p>
+                                <ul className="space-y-3">
+                                    {(t.raw("features.orders.items") as string[]).map((item: string) => (
+                                        <li key={item} className="flex items-center gap-3 text-sm text-foreground">
+                                            <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />{item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                             <PhoneMockup render={(compact) => (
-                                <MockCalendar tr={t.raw("mocks.calendar") as MockCalendarTr} compact={compact} />
+                                <MockOrderCard tr={t.raw("mocks.orderCard") as MockOrderCardTr} compact={compact} />
+                            )} />
+                        </div>
+
+                        {/* F2: Calendrier */}
+                        <div className="grid md:grid-cols-2 gap-12 items-center">
+                            <div>
+                                <PhoneMockup render={(compact) => (
+                                    <MockCalendar tr={t.raw("mocks.calendar") as MockCalendarTr} compact={compact} />
+                                )} />
+                            </div>
+                            <div className="space-y-6">
+                                <FeaturePill icon={<CalendarDays className="h-3.5 w-3.5" />} label={t("features.calendar.pill")} />
+                                <h3 className="text-4xl font-bold font-serif text-secondary leading-tight">{t("features.calendar.title")}</h3>
+                                <p className="text-muted-foreground text-lg leading-relaxed">{t("features.calendar.body")}</p>
+                                <ul className="space-y-3">
+                                    {(t.raw("features.calendar.items") as string[]).map((item: string) => (
+                                        <li key={item} className="flex items-center gap-3 text-sm text-foreground">
+                                            <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />{item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* F3: Messagerie unifiée */}
+                        <div className="grid md:grid-cols-2 gap-12 items-center">
+                            <div className="space-y-6">
+                                <FeaturePill icon={<MessageSquare className="h-3.5 w-3.5" />} label={t("features.inbox.pill")} />
+                                <h3 className="text-4xl font-bold font-serif text-secondary leading-tight">{t("features.inbox.title")}</h3>
+                                <p className="text-muted-foreground text-lg leading-relaxed">{t("features.inbox.body")}</p>
+                                <div className="flex flex-wrap gap-3">
+                                    {[
+                                        { label: "WhatsApp", color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400" },
+                                        { label: "Instagram", color: "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400" },
+                                        { label: "Email", color: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400" },
+                                        { label: "Messenger", color: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400" },
+                                    ].map(({ label, color }) => (
+                                        <span key={label} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border", color)}>{label}</span>
+                                    ))}
+                                </div>
+                            </div>
+                            <PhoneMockup render={(compact) => (
+                                <MockInbox tr={t.raw("mocks.inbox") as MockInboxTr} compact={compact} />
                             )} />
                         </div>
                     </div>
 
-                    {/* F3: Messagerie unifiée */}
-                    <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
-                        {/* Text: always first in DOM → top on mobile, left on desktop */}
-                        <div className="space-y-5 md:space-y-6">
-                            <FeaturePill icon={<MessageSquare className="h-3.5 w-3.5" />} label={t("features.inbox.pill")} />
-                            <h3 className="text-2xl md:text-4xl font-bold font-serif text-secondary leading-tight">
-                                {t("features.inbox.title")}
-                            </h3>
-                            <p className="text-muted-foreground text-sm md:text-lg leading-relaxed">
-                                {t("features.inbox.body")}
-                            </p>
-                            <div className="flex flex-wrap gap-2 md:gap-3">
-                                {[
-                                    { label: "WhatsApp", color: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400" },
-                                    { label: "Instagram", color: "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400" },
-                                    { label: "Email", color: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400" },
-                                    { label: "Messenger", color: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400" },
-                                ].map(({ label, color }) => (
-                                    <span key={label} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border", color)}>{label}</span>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Mock: second in DOM → bottom on mobile, right on desktop */}
-                        <PhoneMockup render={(compact) => (
-                            <MockInbox tr={t.raw("mocks.inbox") as MockInboxTr} compact={compact} />
-                        )} />
-                    </div>
-
                     {/* F4-F7: Secondary features grid */}
-                    <div>
-                        <div className="text-center mb-12">
-                            <h3 className="text-2xl md:text-3xl font-bold font-serif text-secondary">{t("features.moreTitle")}</h3>
-                            <p className="text-muted-foreground mt-3">{t("features.moreSubtitle")}</p>
-                        </div>
+                    <div className="mt-12 md:mt-0">
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                             {[
                                 {
