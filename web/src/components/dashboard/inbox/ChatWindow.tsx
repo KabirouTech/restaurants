@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { format } from "date-fns";
-import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle } from "lucide-react";
+import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,15 +19,25 @@ interface ChatWindowProps {
     channelPlatform?: string;
 }
 
-const platformConfig: Record<string, { icon: typeof Phone; label: string; colorClass: string }> = {
-    whatsapp: { icon: Phone, label: "WhatsApp", colorClass: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" },
-    instagram: { icon: Instagram, label: "Instagram", colorClass: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400" },
-    email: { icon: Mail, label: "Email", colorClass: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
-    website: { icon: Globe, label: "Site Web", colorClass: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400" },
+const platformConfig: Record<string, { icon: typeof Phone; colorClass: string }> = {
+    whatsapp: { icon: Phone, colorClass: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" },
+    instagram: { icon: Instagram, colorClass: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400" },
+    email: { icon: Mail, colorClass: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+    website: { icon: Globe, colorClass: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400" },
+};
+
+const platformLabelKeys: Record<string, string> = {
+    whatsapp: "WhatsApp",
+    instagram: "Instagram",
+    email: "Email",
 };
 
 export function ChatWindow({ conversationId, customerName, customerAvatar, channelPlatform }: ChatWindowProps) {
+    const t = useTranslations("dashboard.inbox");
+    const tc = useTranslations("common");
     const supabase = createClient();
+    const router = useRouter();
+    const pathname = usePathname();
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
@@ -98,6 +110,16 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-sm z-10">
                 <div className="flex items-center gap-3">
+                    {/* Mobile back button */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="md:hidden h-8 w-8 -ml-1 shrink-0"
+                        onClick={() => router.push(pathname)}
+                        aria-label={tc('back')}
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </Button>
                     <Avatar className="h-10 w-10 border border-border">
                         <AvatarImage src={customerAvatar} />
                         <AvatarFallback>{customerName.substring(0, 2).toUpperCase()}</AvatarFallback>
@@ -109,12 +131,12 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
                                 <span className={cn("flex items-center justify-center h-4 w-4 rounded-full", platform.colorClass)}>
                                     <PlatformIcon className="h-2.5 w-2.5" />
                                 </span>
-                                <span className="text-xs text-muted-foreground">{platform.label}</span>
+                                <span className="text-xs text-muted-foreground">{channelPlatform === 'website' ? t('website') : platformLabelKeys[channelPlatform!] || channelPlatform}</span>
                             </div>
                         ) : (
                             <p className="text-xs text-green-500 flex items-center gap-1">
                                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                                En ligne
+                                {t('online')}
                             </p>
                         )}
                     </div>
@@ -187,7 +209,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
                                 handleSend();
                             }
                         }}
-                        placeholder="Écrivez un message..."
+                        placeholder={t('writeMessage')}
                         className="min-h-[40px] max-h-[120px] bg-transparent border-none focus-visible:ring-0 resize-none py-3 text-sm"
                     />
                     <Button
@@ -201,7 +223,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
                 </div>
                 <div className="text-center mt-2">
                     <p className="text-[10px] text-muted-foreground">
-                        Entrée pour envoyer · Shift + Entrée pour nouvelle ligne
+                        {t('enterToSend')}
                     </p>
                 </div>
             </div>

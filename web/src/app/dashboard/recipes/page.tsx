@@ -5,8 +5,10 @@ import { Plus, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // Button + Link kept for the header CTA
 import { RecipesClient } from "./RecipesClient";
+import { getTranslations } from "next-intl/server";
 
 export default async function RecipesPage() {
+    const t = await getTranslations("dashboard.recipes");
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect("/auth/login");
@@ -51,19 +53,19 @@ export default async function RecipesPage() {
                     <div>
                         <div className="flex items-center gap-2 text-primary font-medium mb-1">
                             <BookOpen className="h-5 w-5" />
-                            <span>Recettes</span>
+                            <span>{t('title')}</span>
                         </div>
                         <h1 className="text-2xl md:text-3xl font-bold font-serif">
-                            Mes Recettes
+                            {t('myRecipes')}
                         </h1>
                         <p className="text-muted-foreground text-sm mt-1">
-                            {all.length} recette{all.length !== 1 ? 's' : ''} — texte, photo ou audio
+                            {t('recipeCount', { count: all.length })} — {t('format')}
                         </p>
                     </div>
                     <Button asChild className="bg-primary text-white gap-2">
                         <Link href="/dashboard/recipes/new">
                             <Plus className="h-4 w-4" />
-                            Nouvelle recette
+                            {t('newRecipe')}
                         </Link>
                     </Button>
                 </div>

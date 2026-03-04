@@ -13,6 +13,7 @@ import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { formatPrice } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 type Product = {
     id: string;
@@ -24,6 +25,8 @@ type Product = {
 };
 
 export function MenuGrid({ products, currency }: { products: Product[], currency: string }) {
+    const t = useTranslations("dashboard.menu");
+    const tc = useTranslations("common");
     const router = useRouter();
     const [view, setView] = useState<ViewMode>("grid");
     const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -60,7 +63,7 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
         if (res.error) {
             toast.error(res.error);
         } else {
-            toast.success(`"${deletingProduct.name}" a été supprimé.`);
+            toast.success(t('deletedSuccess', { name: deletingProduct.name }));
             router.refresh();
         }
         setLoadingId(null);
@@ -73,7 +76,7 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
             if (result.error) {
                 toast.error(result.error);
             } else {
-                toast.success(`${result.count} plat(s) supprimé(s).`);
+                toast.success(t('bulkDeletedSuccess', { count: result.count ?? 0 }));
                 setSelectedIds(new Set());
                 setIsBulkDeleteOpen(false);
                 router.refresh();
@@ -84,8 +87,8 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
     if (products.length === 0) {
         return (
             <div className="text-center p-12 bg-muted/20 border border-dashed border-border rounded-xl">
-                <p className="text-muted-foreground">Aucun plat dans votre menu pour le moment.</p>
-                <p className="text-sm text-muted-foreground/70">Cliquez sur "Ajouter un Plat" pour commencer.</p>
+                <p className="text-muted-foreground">{t('noDishes')}</p>
+                <p className="text-sm text-muted-foreground/70">{t('addDishHint')}</p>
             </div>
         );
     }
@@ -95,21 +98,21 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-4 gap-3">
                 <div className="flex items-center gap-2">
-                    <p className="text-sm text-muted-foreground">{products.length} plat{products.length > 1 ? "s" : ""}</p>
+                    <p className="text-sm text-muted-foreground">{t('dishCount', { count: products.length })}</p>
                     {/* Bulk action bar */}
                     {selectedIds.size > 0 && (
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-lg animate-in slide-in-from-left-4 duration-200">
-                            <span className="text-sm font-medium text-destructive">{selectedIds.size} sélectionné(s)</span>
+                            <span className="text-sm font-medium text-destructive">{tc('selected', { count: selectedIds.size })}</span>
                             <Button
                                 size="sm"
                                 variant="destructive"
                                 className="h-7 gap-1.5 text-xs"
                                 onClick={() => setIsBulkDeleteOpen(true)}
                             >
-                                <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                                <Trash2 className="h-3.5 w-3.5" /> {tc('delete')}
                             </Button>
                             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
-                                Annuler
+                                {tc('cancel')}
                             </Button>
                         </div>
                     )}
@@ -181,7 +184,7 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
                                         </span>
                                     </div>
                                     <p className="text-sm text-muted-foreground line-clamp-2 h-10 leading-relaxed">
-                                        {product.description || "Aucune description disponible."}
+                                        {product.description || t('noDescription')}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -198,12 +201,12 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
                         <Checkbox
                             checked={allSelected}
                             onCheckedChange={toggleSelectAll}
-                            aria-label="Tout sélectionner"
+                            aria-label={tc('selectAll')}
                             data-state={!allSelected && someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
                         />
-                        <div className="h-4 w-16 shrink-0">Image</div>
-                        <div className="flex-1">Nom / Catégorie</div>
-                        <div className="shrink-0 w-20 text-right">Prix</div>
+                        <div className="h-4 w-16 shrink-0">{tc('image')}</div>
+                        <div className="flex-1">{t('nameCategory')}</div>
+                        <div className="shrink-0 w-20 text-right">{tc('price')}</div>
                         <div className="shrink-0 w-16"></div>
                     </div>
                     <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
@@ -240,7 +243,7 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
                                         </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                        {product.description || "Aucune description."}
+                                        {product.description || t('noDescriptionShort')}
                                     </p>
                                 </div>
 
@@ -276,10 +279,10 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
             <ConfirmDialog
                 open={!!deletingProduct}
                 onOpenChange={(open) => { if (!open) setDeletingProduct(null); }}
-                title="Supprimer ce plat ?"
-                description={`"${deletingProduct?.name}" sera définitivement retiré de votre menu. Cette action est irréversible.`}
-                confirmLabel="Supprimer"
-                cancelLabel="Annuler"
+                title={t('deleteTitle')}
+                description={t('deleteDesc', { name: deletingProduct?.name ?? '' })}
+                confirmLabel={tc('delete')}
+                cancelLabel={tc('cancel')}
                 variant="destructive"
                 onConfirm={handleDeleteConfirmed}
             />
@@ -288,10 +291,10 @@ export function MenuGrid({ products, currency }: { products: Product[], currency
             <ConfirmDialog
                 open={isBulkDeleteOpen}
                 onOpenChange={setIsBulkDeleteOpen}
-                title={`Supprimer ${selectedIds.size} plat(s) ?`}
-                description={`Ces ${selectedIds.size} plats seront retirés de votre menu. Cette action est irréversible.`}
-                confirmLabel={isBulkDeleting ? "Suppression..." : `Supprimer ${selectedIds.size} plat(s)`}
-                cancelLabel="Annuler"
+                title={t('bulkDeleteTitle', { count: selectedIds.size })}
+                description={t('bulkDeleteDesc', { count: selectedIds.size })}
+                confirmLabel={isBulkDeleting ? tc('deleting') : tc('confirm')}
+                cancelLabel={tc('cancel')}
                 variant="destructive"
                 onConfirm={handleBulkDelete}
             />

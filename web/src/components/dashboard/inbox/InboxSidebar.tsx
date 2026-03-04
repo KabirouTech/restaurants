@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Search, Filter, Phone, Mail, Instagram, MessageCircle, Globe, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -33,16 +34,17 @@ interface InboxSidebarProps {
     className?: string;
 }
 
-const platformFilters = [
-    { value: "all", label: "Tous", icon: MessageCircle },
-    { value: "whatsapp", label: "WhatsApp", icon: Phone },
-    { value: "instagram", label: "Instagram", icon: Instagram },
-    { value: "email", label: "Email", icon: Mail },
-    { value: "website", label: "Site Web", icon: Globe },
-];
-
 export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
+    const t = useTranslations("dashboard.inbox");
     const searchParams = useSearchParams();
+
+    const platformFilters = [
+        { value: "all", label: t('all'), icon: MessageCircle },
+        { value: "whatsapp", label: "WhatsApp", icon: Phone },
+        { value: "instagram", label: "Instagram", icon: Instagram },
+        { value: "email", label: "Email", icon: Mail },
+        { value: "website", label: t('website'), icon: Globe },
+    ];
     const router = useRouter();
     const pathname = usePathname();
     const selectedId = searchParams.get("conversationId");
@@ -87,7 +89,7 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
             {/* Header */}
             <div className="p-4 border-b border-border space-y-3">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-serif font-bold text-foreground">Discussions</h2>
+                    <h2 className="text-xl font-serif font-bold text-foreground">{t('discussions')}</h2>
                     <Button
                         variant={showFilters ? "secondary" : "ghost"}
                         size="icon"
@@ -126,7 +128,7 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
                 <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Rechercher..."
+                        placeholder={t('searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9 bg-background/50 border-input/50 focus-visible:ring-primary/20"
@@ -138,7 +140,7 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
             <div className="flex-1 overflow-y-auto">
                 {filteredConversations.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground text-sm">
-                        {platformFilter !== "all" ? "Aucune conversation pour ce canal" : "Aucune conversation"}
+                        {platformFilter !== "all" ? t('noConversationChannel') : t('noConversation')}
                     </div>
                 ) : (
                     filteredConversations.map((conv) => {

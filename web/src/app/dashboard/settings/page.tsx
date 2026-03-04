@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Store, Utensils, CalendarDays, Info, Kanban, Globe, MessageCircle } from "lucide-react";
 import { SettingsForm } from "@/components/dashboard/settings/SettingsForm";
 import { SiteSettings } from "@/components/dashboard/settings/SiteSettings";
@@ -15,6 +16,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function SettingsPage() {
+    const t = await getTranslations("dashboard.settings");
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -54,13 +56,13 @@ export default async function SettingsPage() {
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 text-primary font-medium mb-1">
                             <Store className="h-5 w-5" />
-                            <span>Configuration</span>
+                            <span>{t('configuration')}</span>
                         </div>
                         <h1 className="text-2xl md:text-3xl font-bold font-serif text-foreground">
-                            Paramètres de la Boutique
+                            {t('pageTitle')}
                         </h1>
                         <p className="text-muted-foreground text-sm md:text-base">
-                            Gérez votre identité, votre site vitrine et vos opérations.
+                            {t('pageSubtitle')}
                         </p>
                     </div>
                     {/* Save Portal Target */}
@@ -80,9 +82,9 @@ export default async function SettingsPage() {
                         {/* ── Boutique (General) ──────────────────────── */}
                         <TabsContent value="general" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Boutique & Contact</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('shopAndContact')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Informations légales, devise et coordonnées de l'établissement.
+                                    {t('shopAndContactDesc')}
                                 </p>
                             </div>
                             <SettingsForm org={org} settings={settings} />
@@ -91,9 +93,9 @@ export default async function SettingsPage() {
                         {/* ── Site Web ────────────────────────────────── */}
                         <TabsContent value="site" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Éditeur Vitrine</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('siteEditor')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Personnalisez l'apparence, les couleurs, et les sections de votre site internet.
+                                    {t('siteEditorDesc')}
                                 </p>
                             </div>
                             <SiteSettings org={org} settings={settings} products={products || []} />
@@ -102,9 +104,9 @@ export default async function SettingsPage() {
                         {/* ── Menu & Infos ─────────────────────────────── */}
                         <TabsContent value="menu" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Carte & Allergènes</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('menuAndAllergens')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Mentions légales, allergènes, et labels de qualité affichés sur votre carte.
+                                    {t('menuAndAllergensDesc')}
                                 </p>
                             </div>
                             <MenuInfoSettings orgId={org.id} settings={settings} />
@@ -113,9 +115,9 @@ export default async function SettingsPage() {
                         {/* ── Capacity ─────────────────────────────────── */}
                         <TabsContent value="capacity" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Prestations & Événements</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('servicesAndEvents')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Configurez les types d'événements et leur impact sur votre calendrier.
+                                    {t('servicesAndEventsDesc')}
                                 </p>
                             </div>
                             <CapacitySettings capacityTypes={capacityTypes || []} />
@@ -124,14 +126,14 @@ export default async function SettingsPage() {
                         {/* ── Kanban ───────────────────────────────────── */}
                         <TabsContent value="kanban" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Flux de travail (Kanban)</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('workflow')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Personnalisez les étapes par lesquelles passent vos devis et commandes.
+                                    {t('workflowDesc')}
                                 </p>
                             </div>
                             <Card>
                                 <CardHeader className="pb-4">
-                                    <CardTitle className="text-base">Étapes personnalisées</CardTitle>
+                                    <CardTitle className="text-base">{t('customSteps')}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <KanbanSettings initialColumns={kanbanColumns} />
@@ -142,9 +144,9 @@ export default async function SettingsPage() {
                         {/* ── Canaux (Messaging Channels) ─────────────── */}
                         <TabsContent value="channels" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Canaux de Messagerie</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('messagingChannels')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Connectez WhatsApp, Instagram et Email pour centraliser tous vos échanges.
+                                    {t('messagingChannelsDesc')}
                                 </p>
                             </div>
                             <ChannelSettings orgId={org.id} />
@@ -153,9 +155,9 @@ export default async function SettingsPage() {
                         {/* ── Membres ──────────────────────────────────── */}
                         <TabsContent value="members" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Membres de l'équipe</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('teamMembers')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Invitez votre équipe, gérez les rôles et les accès.
+                                    {t('teamMembersDesc')}
                                 </p>
                             </div>
                             <MembersSettings orgId={org.id} currentUserProfileId={profile.id} />
@@ -164,9 +166,9 @@ export default async function SettingsPage() {
                         {/* ── Abonnement ───────────────────────────────── */}
                         <TabsContent value="billing" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
                             <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">Abonnement & Facturation</h2>
+                                <h2 className="text-xl font-bold text-foreground">{t('subscription')}</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Suivez votre utilisation et gérez votre plan RestaurantsOS.
+                                    {t('subscriptionDesc')}
                                 </p>
                             </div>
                             <BillingSettings orgId={org.id} currentPlan={org.subscription_plan || 'free'} />

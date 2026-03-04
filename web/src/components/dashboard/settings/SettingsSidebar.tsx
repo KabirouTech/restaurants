@@ -5,29 +5,31 @@ import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Store, Globe, Utensils, CalendarDays, Kanban, MessageCircle, ChevronLeft, Users, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
-const TABS = [
-    { value: "general",  icon: Store,         label: "Boutique & Contact" },
-    { value: "site",     icon: Globe,         label: "Éditeur Vitrine" },
-    { value: "menu",     icon: Utensils,      label: "Carte & Allergènes" },
-    { value: "capacity", icon: CalendarDays,  label: "Prestations" },
-    { value: "kanban",   icon: Kanban,        label: "Flux (Kanban)" },
-    { value: "channels", icon: MessageCircle, label: "Canaux Messagerie" },
-    { value: "members",  icon: Users,         label: "Membres" },
-    { value: "billing",  icon: CreditCard,    label: "Abonnement" },
-] as const;
-
-function getSectionHeading(value: string): string | null {
-    if (value === "general")  return "Entreprise";
-    if (value === "site")     return "Site Public";
-    if (value === "capacity") return "Opérations";
-    if (value === "channels") return "Intégrations";
-    if (value === "members")  return "Équipe & Plan";
-    return null;
-}
+import { useTranslations } from "next-intl";
 
 export function SettingsSidebar() {
+    const t = useTranslations("dashboard.settings");
     const [collapsed, setCollapsed] = useState(false);
+
+    const TABS = [
+        { value: "general",  icon: Store,         label: t('sidebarShop') },
+        { value: "site",     icon: Globe,         label: t('sidebarSite') },
+        { value: "menu",     icon: Utensils,      label: t('sidebarMenu') },
+        { value: "capacity", icon: CalendarDays,  label: t('sidebarCapacity') },
+        { value: "kanban",   icon: Kanban,        label: t('sidebarKanban') },
+        { value: "channels", icon: MessageCircle, label: t('sidebarChannels') },
+        { value: "members",  icon: Users,         label: t('sidebarMembers') },
+        { value: "billing",  icon: CreditCard,    label: t('sidebarBilling') },
+    ];
+
+    const getSectionHeading = (value: string): string | null => {
+        if (value === "general")  return t('headingCompany');
+        if (value === "site")     return t('headingPublicSite');
+        if (value === "capacity") return t('headingOperations');
+        if (value === "channels") return t('headingIntegrations');
+        if (value === "members")  return t('headingTeamPlan');
+        return null;
+    };
 
     return (
         <div className={cn(

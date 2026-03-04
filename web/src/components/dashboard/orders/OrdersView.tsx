@@ -14,6 +14,7 @@ import { formatPrice } from "@/lib/currencies";
 import { bulkDeleteOrdersAction } from "@/actions/orders";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 type ViewMode = "kanban" | "list" | "grid";
 
@@ -40,13 +41,14 @@ function StatusBadge({ status, columns }: { status: string; columns: KanbanColum
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
+    const t = useTranslations("dashboard.orders");
     return (
         <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
                 <Kanban className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold text-foreground mb-1">Aucune commande</h3>
-            <p className="text-sm text-muted-foreground">Créez votre premier devis depuis le calendrier ou le bouton ci-dessus.</p>
+            <h3 className="font-semibold text-foreground mb-1">{t('noOrders')}</h3>
+            <p className="text-sm text-muted-foreground">{t('noOrdersDesc')}</p>
         </div>
     );
 }
@@ -63,6 +65,9 @@ function ListView({
     toggleSelect: (id: string) => void;
     toggleSelectAll: () => void;
 }) {
+    const t = useTranslations("dashboard.orders");
+    const tc = useTranslations("common");
+
     if (orders.length === 0) return <EmptyState />;
 
     const allSelected = orders.length > 0 && orders.every(o => selectedIds.has(o.id));
@@ -78,16 +83,16 @@ function ListView({
                                 <Checkbox
                                     checked={allSelected}
                                     onCheckedChange={toggleSelectAll}
-                                    aria-label="Tout sélectionner"
+                                    aria-label={tc('selectAll')}
                                     data-state={!allSelected && someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
                                 />
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Client</th>
-                            <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</th>
-                            <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Type</th>
-                            <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Invités</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Statut</th>
-                            <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('form.client')}</th>
+                            <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{tc('date')}</th>
+                            <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{tc('type')}</th>
+                            <th className="hidden md:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('guestsCol')}</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{tc('status')}</th>
+                            <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{tc('total')}</th>
                             <th className="px-4 py-3"></th>
                         </tr>
                     </thead>
@@ -105,7 +110,7 @@ function ListView({
                                         <Checkbox
                                             checked={isSelected}
                                             onCheckedChange={() => toggleSelect(order.id)}
-                                            aria-label={`Sélectionner commande ${customer?.full_name}`}
+                                            aria-label={t('selectOrder', { name: customer?.full_name })}
                                         />
                                     </td>
                                     <td className="px-4 py-3 font-medium text-foreground">{customer?.full_name || "—"}</td>
@@ -120,7 +125,7 @@ function ListView({
                                     </td>
                                     <td className="px-4 py-3">
                                         <Link href={`/dashboard/orders/${order.id}`}>
-                                            <Button variant="ghost" size="sm" className="h-7 text-xs">Voir</Button>
+                                            <Button variant="ghost" size="sm" className="h-7 text-xs">{tc('view')}</Button>
                                         </Link>
                                     </td>
                                 </tr>
@@ -144,6 +149,8 @@ function GridView({
     selectedIds: Set<string>;
     toggleSelect: (id: string) => void;
 }) {
+    const t = useTranslations("dashboard.orders");
+
     if (orders.length === 0) return <EmptyState />;
     return (
         <div className="max-h-[calc(100vh-260px)] overflow-y-auto pr-1">
@@ -169,7 +176,7 @@ function GridView({
                                 <Checkbox
                                     checked={isSelected}
                                     onCheckedChange={() => toggleSelect(order.id)}
-                                    aria-label={`Sélectionner commande ${customer?.full_name}`}
+                                    aria-label={t('selectOrder', { name: customer?.full_name })}
                                     className="bg-card/90 border-border/60 opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity shadow-sm"
                                 />
                             </div>
@@ -202,6 +209,8 @@ function GridView({
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersViewProps) {
+    const t = useTranslations("dashboard.orders");
+    const tc = useTranslations("common");
     const router = useRouter();
     const [view, setView] = useState<ViewMode>("kanban");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -234,7 +243,7 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
             if (result.error) {
                 toast.error(result.error);
             } else {
-                toast.success(`${result.count} commande(s) supprimée(s).`);
+                toast.success(t('deletedSuccess', { count: result.count ?? 0 }));
                 setSelectedIds(new Set());
                 setIsBulkDeleteOpen(false);
                 router.refresh();
@@ -247,22 +256,22 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
             {/* Toolbar */}
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
                 <div className="flex items-center gap-3">
-                    <p className="text-sm text-muted-foreground">{orders.length} commande{orders.length > 1 ? "s" : ""}</p>
+                    <p className="text-sm text-muted-foreground">{t('orderCount', { count: orders.length })}</p>
 
                     {/* Bulk action bar — only in list/grid mode */}
                     {selectedIds.size > 0 && view !== "kanban" && (
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-lg animate-in slide-in-from-left-4 duration-200">
-                            <span className="text-sm font-medium text-destructive">{selectedIds.size} sélectionné(s)</span>
+                            <span className="text-sm font-medium text-destructive">{tc('selected', { count: selectedIds.size })}</span>
                             <Button
                                 size="sm"
                                 variant="destructive"
                                 className="h-7 gap-1.5 text-xs"
                                 onClick={() => setIsBulkDeleteOpen(true)}
                             >
-                                <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                                <Trash2 className="h-3.5 w-3.5" /> {tc('delete')}
                             </Button>
                             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
-                                Annuler
+                                {tc('cancel')}
                             </Button>
                         </div>
                     )}
@@ -271,10 +280,10 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
                 {/* View toggle — hide Kanban on mobile */}
                 <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg border border-border self-end md:self-auto">
                     {([
-                        { id: "kanban", icon: Kanban, label: "Kanban", mobileHidden: true },
-                        { id: "list", icon: List, label: "Liste", mobileHidden: false },
-                        { id: "grid", icon: LayoutGrid, label: "Grille", mobileHidden: false },
-                    ] as const).map(({ id, icon: Icon, label, mobileHidden }) => (
+                        { id: "kanban" as ViewMode, icon: Kanban, label: t('kanban'), mobileHidden: true },
+                        { id: "list" as ViewMode, icon: List, label: t('list'), mobileHidden: false },
+                        { id: "grid" as ViewMode, icon: LayoutGrid, label: t('grid'), mobileHidden: false },
+                    ]).map(({ id, icon: Icon, label, mobileHidden }) => (
                         <Button
                             key={id}
                             variant="ghost"
@@ -318,10 +327,10 @@ export function OrdersView({ orders, kanbanColumns, currency = "EUR" }: OrdersVi
             <ConfirmDialog
                 open={isBulkDeleteOpen}
                 onOpenChange={setIsBulkDeleteOpen}
-                title={`Supprimer ${selectedIds.size} commande(s) ?`}
-                description={`Ces ${selectedIds.size} commande(s) et leurs articles associés seront définitivement supprimés. Cette action est irréversible.`}
-                confirmLabel={isBulkDeleting ? "Suppression..." : `Supprimer ${selectedIds.size} commande(s)`}
-                cancelLabel="Annuler"
+                title={t('deleteTitle', { count: selectedIds.size })}
+                description={t('deleteDesc', { count: selectedIds.size })}
+                confirmLabel={isBulkDeleting ? tc('deleting') : t('deleteTitle', { count: selectedIds.size })}
+                cancelLabel={tc('cancel')}
                 variant="destructive"
                 onConfirm={handleBulkDelete}
             />

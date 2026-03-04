@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { format, addDays, addWeeks, subWeeks, startOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+import { getTranslations } from "next-intl/server";
 import {
   Plus,
   DollarSign,
@@ -34,6 +35,9 @@ export default async function DashboardPage({
   if (!user) {
     redirect("/auth/login");
   }
+
+  const t = await getTranslations("dashboard.home");
+  const tc = await getTranslations("common");
 
   // Fetch Profile & Organization (User Context)
   const { data: profile } = await supabase
@@ -238,11 +242,23 @@ export default async function DashboardPage({
     };
   });
 
+  function formatTimeAgo(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return t('justNow');
+    if (diffMin < 60) return t('minutesAgo', { min: diffMin });
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return t('hoursAgo', { h: diffH });
+    const diffD = Math.floor(diffH / 24);
+    return t('daysAgo', { d: diffD });
+  }
+
   const statsCards = [
     {
       href: "/dashboard/orders",
       icon: DollarSign,
-      label: "Revenu",
+      label: t('revenue'),
       value: formatPrice(monthlyRevenue, currency),
       extra: <RevenueFilter />,
       iconClass: "text-primary",
@@ -251,7 +267,7 @@ export default async function DashboardPage({
     {
       href: "/dashboard/orders",
       icon: FileText,
-      label: "Devis en attente",
+      label: t('pendingQuotes'),
       value: String(pendingQuotesCount),
       iconClass: "text-blue-500",
       bgClass: "bg-blue-500/10",
@@ -259,7 +275,7 @@ export default async function DashboardPage({
     {
       href: "/dashboard/calendar",
       icon: Truck,
-      label: "Événements",
+      label: t('events'),
       value: String(todayOrdersCount),
       iconClass: "text-primary",
       bgClass: "bg-primary/10",
@@ -267,7 +283,7 @@ export default async function DashboardPage({
     {
       href: "/dashboard/customers",
       icon: Users,
-      label: "Clients",
+      label: t('clients'),
       value: String(customerCount || 0),
       iconClass: "text-green-600",
       bgClass: "bg-green-500/10",
@@ -282,7 +298,7 @@ export default async function DashboardPage({
 
         {/* Greeting */}
         <div className="px-4 pt-4 pb-2 shrink-0">
-          <h1 className="text-lg font-bold font-serif text-foreground">Bonjour, {orgName}</h1>
+          <h1 className="text-lg font-bold font-serif text-foreground">{t('greeting', { name: orgName })}</h1>
           <p className="text-xs text-muted-foreground">{format(today, "eeee d MMMM", { locale: fr })}</p>
         </div>
 
@@ -290,7 +306,7 @@ export default async function DashboardPage({
         <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto no-scrollbar shrink-0">
           <Link href="/dashboard/orders/new">
             <span className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-full text-xs font-semibold shadow-sm whitespace-nowrap">
-              <Plus className="h-3.5 w-3.5" /> Nouveau devis
+              <Plus className="h-3.5 w-3.5" /> {t('newQuote')}
             </span>
           </Link>
           <Link href="/dashboard/calendar">
@@ -325,7 +341,7 @@ export default async function DashboardPage({
         <div className="mx-4 mb-4 bg-card rounded-2xl border border-border overflow-hidden shrink-0">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h2 className="text-sm font-bold font-serif flex items-center gap-1.5">
-              <BarChart className="h-4 w-4 text-primary" /> Capacité
+              <BarChart className="h-4 w-4 text-primary" /> {t('capacity')}
             </h2>
             <CapacityFilter />
           </div>
@@ -342,7 +358,7 @@ export default async function DashboardPage({
                   )}
                 </div>
                 <span className={`text-[10px] font-semibold w-10 text-right shrink-0 ${day.isClosed ? "text-muted-foreground" : day.isFull ? "text-red-500" : "text-muted-foreground"}`}>
-                  {day.isClosed ? "Fermé" : day.isFull ? "PLEIN" : `${day.percent}%`}
+                  {day.isClosed ? t('closed') : day.isFull ? t('full') : `${day.percent}%`}
                 </span>
               </Link>
             ))}
@@ -353,9 +369,9 @@ export default async function DashboardPage({
         <div className="mx-4 mb-4 bg-card rounded-2xl border border-border overflow-hidden shrink-0">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h2 className="text-sm font-bold font-serif flex items-center gap-1.5">
-              <Receipt className="h-4 w-4 text-primary" /> Commandes à venir
+              <Receipt className="h-4 w-4 text-primary" /> {t('upcomingOrders')}
             </h2>
-            <Link href="/dashboard/orders" className="text-xs text-primary font-medium">Voir tout</Link>
+            <Link href="/dashboard/orders" className="text-xs text-primary font-medium">{t('viewAll')}</Link>
           </div>
           <div className="px-4 divide-y divide-border/50">
             {recentOrders && recentOrders.length > 0 ? (
@@ -366,8 +382,8 @@ export default async function DashboardPage({
                   order.status === "draft" ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800" :
                   "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
                 const statusLabel =
-                  order.status === "confirmed" ? "Confirmé" :
-                  order.status === "draft" ? "Brouillon" : "En attente";
+                  order.status === "confirmed" ? t('confirmed') :
+                  order.status === "draft" ? t('draft') : t('pending');
                 return (
                   <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
                     <div className="flex items-center gap-3 py-3">
@@ -375,7 +391,7 @@ export default async function DashboardPage({
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">{order.customers?.full_name || "Client Inconnu"}</p>
+                        <p className="font-semibold text-sm truncate">{order.customers?.full_name || t('unknownClient')}</p>
                         <p className="text-xs text-muted-foreground">
                           {order.event_date ? format(new Date(order.event_date), "d MMM", { locale: fr }) : "—"}
                           {order.guest_count ? ` · ${order.guest_count} pers.` : ""}
@@ -387,7 +403,7 @@ export default async function DashboardPage({
                 );
               })
             ) : (
-              <p className="py-6 text-center text-sm text-muted-foreground">Aucune commande à venir.</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">{t('noUpcomingOrders')}</p>
             )}
           </div>
         </div>
@@ -396,7 +412,7 @@ export default async function DashboardPage({
         <div className="mx-4 mb-4 bg-card rounded-2xl border border-border overflow-hidden shrink-0">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h2 className="text-sm font-bold font-serif flex items-center gap-1.5">
-              <MessageSquare className="h-4 w-4 text-primary" /> Messages récents
+              <MessageSquare className="h-4 w-4 text-primary" /> {t('recentMessages')}
             </h2>
             {totalUnread > 0 && (
               <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{totalUnread}</span>
@@ -415,7 +431,7 @@ export default async function DashboardPage({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm truncate">{msg.customerName}</p>
-                        <p className="text-xs text-muted-foreground truncate">{msg.lastMessage || "Pas de message"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{msg.lastMessage || t('noMessage')}</p>
                       </div>
                       <span className="text-[10px] text-muted-foreground shrink-0 pr-4">{timeAgo}</span>
                     </div>
@@ -424,11 +440,11 @@ export default async function DashboardPage({
               })}
             </div>
           ) : (
-            <div className="px-4 py-6 text-center text-sm text-muted-foreground">Aucun message récent.</div>
+            <div className="px-4 py-6 text-center text-sm text-muted-foreground">{t('noMessages')}</div>
           )}
           <div className="px-4 py-2 border-t border-border">
             <Link href="/dashboard/inbox">
-              <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground">Aller à la messagerie</Button>
+              <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground">{t('goToInbox')}</Button>
             </Link>
           </div>
         </div>
@@ -440,15 +456,15 @@ export default async function DashboardPage({
         {/* Header */}
         <header className="bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 py-0 h-20 z-10 shrink-0">
           <div>
-            <h1 className="text-3xl font-bold font-serif text-foreground">Tableau de bord</h1>
-            <p className="text-sm text-muted-foreground font-light">Bonjour, voici le programme culinaire du jour.</p>
+            <h1 className="text-3xl font-bold font-serif text-foreground">{t('title')}</h1>
+            <p className="text-sm text-muted-foreground font-light">{t('greeting', { name: '' })}{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-4">
             <CloseDateButton />
             <Link href="/dashboard/orders/new">
               <Button className="flex items-center gap-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md shadow-primary/20 transition-all transform hover:scale-105 h-10 px-5">
                 <Plus className="h-4 w-4" />
-                Créer un devis
+                {t('createQuote')}
               </Button>
             </Link>
           </div>
@@ -465,7 +481,7 @@ export default async function DashboardPage({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Revenu</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('revenue')}</p>
                   <RevenueFilter />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground font-serif">{formatPrice(monthlyRevenue, currency)}</h3>
@@ -477,7 +493,7 @@ export default async function DashboardPage({
                 <FileText className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Devis en Attente</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('pendingQuotes')}</p>
                 <h3 className="text-2xl font-bold text-foreground font-serif">{pendingQuotesCount}</h3>
               </div>
             </Link>
@@ -487,7 +503,7 @@ export default async function DashboardPage({
                 <Truck className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Événements du Jour</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('todayEvents')}</p>
                 <h3 className="text-2xl font-bold text-foreground font-serif">{todayOrdersCount}</h3>
               </div>
             </Link>
@@ -497,7 +513,7 @@ export default async function DashboardPage({
                 <Users className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Clients</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('totalClients')}</p>
                 <h3 className="text-2xl font-bold text-foreground font-serif">{customerCount || 0}</h3>
               </div>
             </Link>
@@ -512,7 +528,7 @@ export default async function DashboardPage({
                 <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
                   <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
                     <BarChart className="text-primary h-5 w-5" />
-                    Aperçu de la Capacité
+                    {t('capacityOverview')}
                   </h2>
                   <CapacityFilter />
                 </div>
@@ -534,7 +550,7 @@ export default async function DashboardPage({
                           )}
                         </div>
                         <div className={`col-span-1 text-xs text-right font-medium ${day.isClosed ? "text-muted-foreground" : day.isFull ? "text-red-500 font-bold" : "text-muted-foreground"}`}>
-                          {day.isClosed ? "Fermé" : day.isFull ? "PLEIN" : `${day.percent}%`}
+                          {day.isClosed ? t('closed') : day.isFull ? t('full') : `${day.percent}%`}
                         </div>
                       </Link>
                     ))}
@@ -547,21 +563,21 @@ export default async function DashboardPage({
                 <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
                   <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
                     <Receipt className="text-primary h-5 w-5" />
-                    Commandes à venir
+                    {t('upcomingOrders')}
                   </h2>
                   <Link href="/dashboard/orders" className="text-sm text-primary hover:text-primary/80 font-medium border-b border-transparent hover:border-primary transition-all">
-                    Voir tout
+                    {t('viewAll')}
                   </Link>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="text-xs text-muted-foreground border-b border-border bg-muted/50">
-                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Client</th>
-                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Événement</th>
-                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Date</th>
-                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Couverts</th>
-                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">Statut</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">{t('client')}</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">{t('event')}</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">{tc('date')}</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">{t('covers')}</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider font-serif text-foreground">{tc('status')}</th>
                         <th className="px-6 py-4"></th>
                       </tr>
                     </thead>
@@ -574,8 +590,8 @@ export default async function DashboardPage({
                             order.status === "draft" ? "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800" :
                             "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
                           const statusLabel =
-                            order.status === "confirmed" ? "Confirmé" :
-                            order.status === "draft" ? "Brouillon" : "En attente";
+                            order.status === "confirmed" ? t('confirmed') :
+                            order.status === "draft" ? t('draft') : t('pending');
 
                           return (
                             <tr key={order.id} className="border-b border-border hover:bg-muted/30 transition-colors group">
@@ -584,10 +600,10 @@ export default async function DashboardPage({
                                   <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs shrink-0">
                                     {initials}
                                   </div>
-                                  <span className="font-bold text-foreground font-serif text-sm">{order.customers?.full_name || "Client Inconnu"}</span>
+                                  <span className="font-bold text-foreground font-serif text-sm">{order.customers?.full_name || t('unknownClient')}</span>
                                 </Link>
                               </td>
-                              <td className="px-6 py-4 text-muted-foreground">{order.internal_notes || "Commande"}</td>
+                              <td className="px-6 py-4 text-muted-foreground">{order.internal_notes || t('order')}</td>
                               <td className="px-6 py-4 text-muted-foreground capitalize text-sm">
                                 {order.event_date ? format(new Date(order.event_date), "d MMM", { locale: fr }) : "-"}
                               </td>
@@ -607,7 +623,7 @@ export default async function DashboardPage({
                         })
                       ) : (
                         <tr>
-                          <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">Aucune commande à venir.</td>
+                          <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">{t('noUpcomingOrders')}</td>
                         </tr>
                       )}
                     </tbody>
@@ -625,10 +641,10 @@ export default async function DashboardPage({
                 <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
                   <h2 className="text-lg font-bold text-foreground flex items-center gap-2 font-serif">
                     <MessageSquare className="text-primary h-5 w-5" />
-                    Messages récents
+                    {t('recentMessages')}
                   </h2>
                   {totalUnread > 0 && (
-                    <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">{totalUnread} Nouv.</span>
+                    <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">{totalUnread} {t('newMsg')}</span>
                   )}
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -664,7 +680,7 @@ export default async function DashboardPage({
                               <span className="text-[10px] text-muted-foreground font-medium">{timeAgo}</span>
                             </div>
                             <p className={`text-xs line-clamp-2 pl-9 ${msg.unread > 0 ? "text-foreground font-medium" : "text-muted-foreground group-hover:text-foreground"} transition-colors`}>
-                              {msg.lastMessage || "Pas de message"}
+                              {msg.lastMessage || t('noMessage')}
                             </p>
                           </div>
                         </Link>
@@ -673,14 +689,14 @@ export default async function DashboardPage({
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-center py-12 text-muted-foreground">
                       <MessageSquare className="h-10 w-10 mb-3 text-muted-foreground/40" />
-                      <p className="text-sm font-medium">Aucun message</p>
-                      <p className="text-xs mt-1">Les conversations apparaîtront ici</p>
+                      <p className="text-sm font-medium">{t('noMessages')}</p>
+                      <p className="text-xs mt-1">{t('conversationsAppear')}</p>
                     </div>
                   )}
                 </div>
                 <div className="p-4 border-t border-border bg-muted/50">
                   <Link href="/dashboard/inbox">
-                    <Button variant="ghost" className="w-full text-sm text-muted-foreground hover:text-primary font-medium">Aller à la Messagerie</Button>
+                    <Button variant="ghost" className="w-full text-sm text-muted-foreground hover:text-primary font-medium">{t('goToInbox')}</Button>
                   </Link>
                 </div>
               </div>
@@ -704,7 +720,7 @@ export default async function DashboardPage({
                     )}
                     {activeBanner.link_url && (
                       <Link href={activeBanner.link_url} className="w-fit px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/40 transition-colors">
-                        En savoir plus
+                        {t('learnMore')}
                       </Link>
                     )}
                   </div>
@@ -720,16 +736,3 @@ export default async function DashboardPage({
     </div>
   );
 }
-
-function formatTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "à l'instant";
-  if (diffMin < 60) return `il y a ${diffMin}m`;
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `il y a ${diffH}h`;
-  const diffD = Math.floor(diffH / 24);
-  return `il y a ${diffD}j`;
-}
-

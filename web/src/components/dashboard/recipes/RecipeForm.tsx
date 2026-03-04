@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { createClient } from '@/utils/supabase/client'
 import { upsertRecipeAction } from '@/actions/recipes'
+import { useTranslations } from 'next-intl'
 
 type Product = { id: string; name: string; category: string }
 type Ingredient = { name: string; quantity: string; unit: string }
@@ -207,6 +208,7 @@ function RecipeSheetPreview({
   ingredients: Ingredient[]; instructions: string; images: string[]; tags: string[]
   onDownload: () => void
 }) {
+  const t = useTranslations('dashboard.recipes')
   const thumb = images[0]
   const prepMin = toMinutes(prepTime, prepUnit) ?? 0
   const cookMin = toMinutes(cookTime, cookUnit) ?? 0
@@ -217,10 +219,10 @@ function RecipeSheetPreview({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Aperçu</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('preview')}</p>
         <Button type="button" size="sm" variant="outline" onClick={onDownload} className="gap-1.5 h-8 text-xs">
           <Download className="h-3.5 w-3.5" />
-          Télécharger PDF
+          {t('downloadPDF')}
         </Button>
       </div>
 
@@ -252,7 +254,7 @@ function RecipeSheetPreview({
                 {name}
               </h3>
             ) : (
-              <p className="text-white/30 text-xs relative">Aperçu de la recette</p>
+              <p className="text-white/30 text-xs relative">{t('recipePreview')}</p>
             )}
             {category && (
               <p className="text-[10px] uppercase tracking-[0.2em] text-white/50 relative">{category}</p>
@@ -361,7 +363,7 @@ function RecipeSheetPreview({
                     </li>
                   ))}
                   {steps.length > 6 && (
-                    <li className="text-[10px] text-zinc-400 italic pl-7">+ {steps.length - 6} étapes supplémentaires...</li>
+                    <li className="text-[10px] text-zinc-400 italic pl-7">{t('moreSteps', { count: steps.length - 6 })}</li>
                   )}
                 </ol>
               </div>
@@ -403,6 +405,8 @@ function RecipeSheetPreview({
 // ─── Main form ────────────────────────────────────────────────────────────────
 
 export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
+  const t = useTranslations('dashboard.recipes')
+  const tc = useTranslations('common')
   const router = useRouter()
   const [saving, startSave] = useTransition()
 
@@ -451,7 +455,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
 
   function handleProductChange(productId: string) {
     const prevProduct = products.find(p => p.id === linkedProductId)
-    const autoName = prevProduct ? `Préparation de ${prevProduct.name}` : ''
+    const autoName = prevProduct ? t('preparationOf', { name: prevProduct.name }) : ''
     setLinkedProductId(productId)
     if (productId === 'none') {
       if (name === autoName) setName('')
@@ -460,7 +464,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
     const nextProduct = products.find(p => p.id === productId)
     if (!nextProduct) return
     if (!name.trim() || name === autoName) {
-      setName(`Préparation de ${nextProduct.name}`)
+      setName(t('preparationOf', { name: nextProduct.name }))
     }
   }
 
@@ -506,7 +510,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
     const supabase = createClient()
     const path = `${orgId}/images/${Date.now()}-${file.name}`
     const { error } = await supabase.storage.from('recipes').upload(path, file)
-    if (error) { toast.error('Erreur upload image'); setUploadingImg(false); return }
+    if (error) { toast.error(t('errorUploadImage')); setUploadingImg(false); return }
     const { data: { publicUrl } } = supabase.storage.from('recipes').getPublicUrl(path)
     setImages(prev => [...prev, publicUrl])
     setUploadingImg(false)
@@ -522,11 +526,11 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
     const supabase = createClient()
     const path = `${orgId}/audio/${Date.now()}-${file.name}`
     const { error } = await supabase.storage.from('recipes').upload(path, file)
-    if (error) { toast.error('Erreur upload audio'); setUploadingAudio(false); return }
+    if (error) { toast.error(t('errorUploadAudio')); setUploadingAudio(false); return }
     const { data: { publicUrl } } = supabase.storage.from('recipes').getPublicUrl(path)
     setAudioUrl(publicUrl)
     setUploadingAudio(false)
-    toast.success('Audio enregistré')
+    toast.success(t('audioSaved'))
   }
 
   // ─── Audio — enregistrement micro ────────────────────────────────────────
@@ -545,17 +549,17 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
         const supabase = createClient()
         const path = `${orgId}/audio/${Date.now()}-recording.webm`
         const { error } = await supabase.storage.from('recipes').upload(path, file)
-        if (error) { toast.error('Erreur upload audio'); setUploadingAudio(false); return }
+        if (error) { toast.error(t('errorUploadAudio')); setUploadingAudio(false); return }
         const { data: { publicUrl } } = supabase.storage.from('recipes').getPublicUrl(path)
         setAudioUrl(publicUrl)
         setUploadingAudio(false)
-        toast.success('Enregistrement sauvegardé')
+        toast.success(t('recordingSaved'))
       }
       mr.start()
       mediaRecorderRef.current = mr
       setRecording(true)
     } catch {
-      toast.error('Microphone non accessible')
+      toast.error(t('micNotAccessible'))
     }
   }
 
@@ -579,7 +583,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
   // ─── Save ─────────────────────────────────────────────────────────────────
 
   function handleSave() {
-    if (!name.trim()) { toast.error('Le nom de la recette est requis'); return }
+    if (!name.trim()) { toast.error(t('nameRequired')); return }
     startSave(async () => {
       const result = await upsertRecipeAction({
         id:              initialData?.id,
@@ -603,7 +607,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success(initialData ? 'Recette mise à jour !' : 'Recette créée !')
+        toast.success(initialData ? t('recipeUpdated') : t('recipeCreated'))
         router.push('/dashboard/recipes')
         router.refresh()
       }
@@ -621,17 +625,17 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
           <CardContent className="pt-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5 md:col-span-2">
-                <Label>Nom de la recette *</Label>
+                <Label>{t('recipeName')}</Label>
                 <Input
-                  placeholder="Ex : Thiéboudienne au poisson frais"
+                  placeholder={t('namePlaceholder')}
                   value={name}
                   onChange={e => setName(e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Catégorie</Label>
+                <Label>{tc('category')}</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('chooseCategory')} /></SelectTrigger>
                   <SelectContent>
                     {RECIPE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
@@ -639,7 +643,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
               </div>
               <div className="space-y-1.5">
                 <Label className="flex items-center gap-1.5">
-                  <Link2 className="h-3.5 w-3.5" />Lier à un plat du menu
+                  <Link2 className="h-3.5 w-3.5" />{t('linkToProduct')}
                 </Label>
                 <Select value={linkedProductId} onValueChange={handleProductChange}>
                   <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
@@ -656,25 +660,25 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Description courte</Label>
+              <Label>{t('shortDescription')}</Label>
               <Textarea
-                placeholder="Un plat traditionnel sénégalais..."
+                placeholder={t('descPlaceholder')}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 rows={2}
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {/* Portions */}
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />Portions</Label>
+                <Label className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{t('portions')}</Label>
                 <Input type="number" min="1" placeholder="4" value={servings} onChange={e => setServings(e.target.value)} />
               </div>
 
               {/* Temps de préparation */}
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />Préparation</Label>
+                <Label className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{t('preparation')}</Label>
                 <div className="flex gap-1.5">
                   <Input type="number" min="0" placeholder="20" value={prepTime} onChange={e => setPrepTime(e.target.value)} className="min-w-0" />
                   <Select value={prepUnit} onValueChange={(v) => setPrepUnit(v as TimeUnit)}>
@@ -689,7 +693,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
 
               {/* Temps de cuisson */}
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />Cuisson</Label>
+                <Label className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{t('cooking')}</Label>
                 <div className="flex gap-1.5">
                   <Input type="number" min="0" placeholder="45" value={cookTime} onChange={e => setCookTime(e.target.value)} className="min-w-0" />
                   <Select value={cookUnit} onValueChange={(v) => setCookUnit(v as TimeUnit)}>
@@ -709,7 +713,7 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
         <Card>
           <CardContent className="pt-6 space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">Ingrédients</Label>
+              <Label className="text-base font-semibold">{t('ingredients')}</Label>
               <Button type="button" size="sm" variant="outline" onClick={addIngredient}>
                 <Plus className="h-3.5 w-3.5 mr-1" />Ajouter
               </Button>
@@ -719,14 +723,14 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
                 <div key={i} className="grid grid-cols-[1fr_80px_100px_32px] gap-2 items-center">
                   <Input
                     ref={el => { ingNameRefs.current[i] = el }}
-                    placeholder="Ingrédient"
+                    placeholder={t('ingredient')}
                     value={ing.name}
                     onChange={e => updateIngredient(i, 'name', e.target.value)}
                     onKeyDown={e => {
                       if (e.key === 'Enter') { e.preventDefault(); addIngredient() }
                     }}
                   />
-                  <Input placeholder="Qté" value={ing.quantity} onChange={e => updateIngredient(i, 'quantity', e.target.value)} />
+                  <Input placeholder={tc('quantity')} value={ing.quantity} onChange={e => updateIngredient(i, 'quantity', e.target.value)} />
                   <Select value={ing.unit} onValueChange={v => updateIngredient(i, 'unit', v)}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -747,9 +751,9 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
         {/* Instructions */}
         <Card>
           <CardContent className="pt-6 space-y-2">
-            <Label className="text-base font-semibold">Instructions</Label>
+            <Label className="text-base font-semibold">{t('instructions')}</Label>
             <Textarea
-              placeholder={"1. Nettoyer le poisson et couper en morceaux.\n2. Faire revenir les oignons dans l'huile...\n3. ..."}
+              placeholder={t('instructionsPlaceholder')}
               value={instructions}
               onChange={e => setInstructions(e.target.value)}
               rows={8}
@@ -762,10 +766,10 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
         <Card>
           <CardContent className="pt-6 space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">Photos</Label>
+              <Label className="text-base font-semibold">{t('photos')}</Label>
               <Button type="button" size="sm" variant="outline" onClick={() => imgInputRef.current?.click()} disabled={uploadingImg}>
                 {uploadingImg ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
-                Ajouter une photo
+                {t('addPhoto')}
               </Button>
               <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
             </div>
@@ -790,8 +794,8 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
                 onClick={() => imgInputRef.current?.click()}
               >
                 <ImageIcon className="h-8 w-8 mb-2 opacity-40" />
-                <p>Cliquez pour ajouter des photos</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">JPG, PNG, WebP, SVG supportés</p>
+                <p>{t('clickToAddPhotos')}</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">{t('supportedFormats')}</p>
               </div>
             )}
           </CardContent>
@@ -800,23 +804,23 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
         {/* Audio */}
         <Card>
           <CardContent className="pt-6 space-y-4">
-            <Label className="text-base font-semibold">Enregistrement audio</Label>
+            <Label className="text-base font-semibold">{t('audioRecording')}</Label>
             <p className="text-sm text-muted-foreground -mt-2">
-              Enregistrez ou importez votre recette à l'oral. Vous pourrez la transcrire plus tard (FR/EN).
+              {t('audioDesc')}
             </p>
             <div className="flex items-center gap-3 flex-wrap">
               {!recording ? (
                 <Button type="button" variant="outline" onClick={startRecording} className="gap-2 border-red-300 text-red-600 hover:bg-red-50">
-                  <Mic className="h-4 w-4" />Enregistrer au micro
+                  <Mic className="h-4 w-4" />{t('recordMic')}
                 </Button>
               ) : (
                 <Button type="button" variant="destructive" onClick={stopRecording} className="gap-2 animate-pulse">
-                  <StopCircle className="h-4 w-4" />Arrêter l'enregistrement
+                  <StopCircle className="h-4 w-4" />{t('stopRecording')}
                 </Button>
               )}
               <Button type="button" variant="outline" onClick={() => audioFileInputRef.current?.click()} disabled={uploadingAudio} className="gap-2">
                 {uploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                Importer un fichier audio
+                {t('importAudioFile')}
               </Button>
               <input ref={audioFileInputRef} type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} />
             </div>
@@ -824,23 +828,23 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
               <div className="space-y-2">
                 <audio controls src={audioUrl} className="w-full h-10 rounded-lg" />
                 <Button type="button" size="sm" variant="ghost" className="text-xs text-muted-foreground hover:text-destructive" onClick={() => setAudioUrl(null)}>
-                  <X className="h-3 w-3 mr-1" /> Supprimer l'audio
+                  <X className="h-3 w-3 mr-1" /> {t('deleteAudio')}
                 </Button>
               </div>
             )}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Transcription (optionnel)</Label>
+                <Label>{t('transcription')}</Label>
                 <Select value={audioLanguage} onValueChange={(v) => setAudioLanguage(v as 'fr' | 'en')}>
                   <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="fr">{t('french')}</SelectItem>
+                    <SelectItem value="en">{t('english')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Textarea
-                placeholder="La transcription apparaîtra ici après traitement, ou saisissez-la manuellement..."
+                placeholder={t('transcriptionPlaceholder')}
                 value={audioTranscript}
                 onChange={e => setAudioTranscript(e.target.value)}
                 rows={4}
@@ -853,9 +857,9 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-2">
-              <Label className="flex items-center gap-1.5"><Tag className="h-3.5 w-3.5" />Tags</Label>
+              <Label className="flex items-center gap-1.5"><Tag className="h-3.5 w-3.5" />{t('tags')}</Label>
               <Input
-                placeholder="Tapez un tag et appuyez sur Entrée (ex: sénégalais, épicé, rapide)"
+                placeholder={t('tagsPlaceholder')}
                 value={tagInput}
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={addTag}
@@ -875,8 +879,8 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-border">
               <div>
-                <p className="text-sm font-medium">Recette privée</p>
-                <p className="text-xs text-muted-foreground">Non visible par les membres avec accès limité</p>
+                <p className="text-sm font-medium">{t('privateRecipe')}</p>
+                <p className="text-xs text-muted-foreground">{t('privateRecipeDesc')}</p>
               </div>
               <Checkbox checked={isPrivate} onCheckedChange={(v) => setIsPrivate(v === true)} />
             </div>
@@ -885,10 +889,10 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
 
         {/* Actions */}
         <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t border-border p-4 -mx-6 flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => router.back()}>Annuler</Button>
+          <Button type="button" variant="outline" onClick={() => router.back()}>{tc('cancel')}</Button>
           <Button onClick={handleSave} disabled={saving} className="bg-primary text-white px-8">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            {saving ? 'Enregistrement...' : initialData ? 'Mettre à jour' : 'Créer la recette'}
+            {saving ? tc('saving') : initialData ? t('updateRecipe') : t('createRecipe')}
           </Button>
         </div>
       </div>

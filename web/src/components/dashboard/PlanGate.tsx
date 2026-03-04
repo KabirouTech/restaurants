@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, Lock, MessageSquare, Sparkles, X, Zap } from "lucide-react";
+import { Check, CheckCircle2, Lock, Loader2, MessageSquare, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { createUpgradeRequest, PLAN_PRICES, MOBILE_MONEY_NUMBERS, MOBILE_MONEY_QR_CODES } from "@/lib/plans/upgrade-pipeline";
-import type { PaymentMethod } from "@/lib/plans/upgrade-pipeline";
+import { createUpgradeRequest } from "@/lib/plans/upgrade-pipeline";
 import { useOrganization } from "@/hooks/useOrganization";
 import { toast } from "sonner";
-import Image from "next/image";
 
 // ─── Feature metadata ────────────────────────────────────────────────────────
 
@@ -148,7 +148,7 @@ export function PlanGate({ feature }: PlanGateProps) {
 
                 <p className="text-xs text-muted-foreground">
                     {meta.plan === "premium"
-                        ? "15 000 FCFA/mois · Annulation à tout moment"
+                        ? "Notre équipe vous contactera pour finaliser votre inscription."
                         : "Sur devis · Contactez-nous pour un tarif personnalisé"}
                 </p>
             </div>
@@ -165,35 +165,21 @@ export function PlanGate({ feature }: PlanGateProps) {
 
 // ─── UpgradeDialog ────────────────────────────────────────────────────────────
 
-const PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: string; color: string }[] = [
-    { key: "wave", label: "Wave", icon: "🌊", color: "bg-blue-50 border-blue-200 hover:border-blue-400 dark:bg-blue-950/30 dark:border-blue-800" },
-    { key: "orange_money", label: "Orange Money", icon: "🟠", color: "bg-orange-50 border-orange-200 hover:border-orange-400 dark:bg-orange-950/30 dark:border-orange-800" },
-    { key: "cinetpay", label: "CinetPay", icon: "💳", color: "bg-slate-50 border-slate-200 hover:border-slate-400 dark:bg-slate-950/30 dark:border-slate-800" },
-    { key: "bank_transfer", label: "Virement", icon: "🏦", color: "bg-slate-50 border-slate-200 hover:border-slate-400 dark:bg-slate-950/30 dark:border-slate-800" },
-];
-
 function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () => void; feature: GatedFeature }) {
     const { organization } = useOrganization();
     const meta = FEATURE_META[feature];
-    const [step, setStep] = useState<"choose" | "confirm" | "done">("choose");
-    const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
-    const [reference, setReference] = useState("");
+    const [step, setStep] = useState<"form" | "done">("form");
+    const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const price = meta.plan === "premium" ? PLAN_PRICES.premium : PLAN_PRICES.enterprise;
-    const momoNumber = selectedMethod ? MOBILE_MONEY_NUMBERS[selectedMethod] : null;
-    const qrCode = selectedMethod ? MOBILE_MONEY_QR_CODES[selectedMethod] : null;
-
     async function handleSubmit() {
-        if (!organization?.id || !selectedMethod) return;
+        if (!organization?.id) return;
         setLoading(true);
         try {
             const result = await createUpgradeRequest({
                 orgId: organization.id,
                 targetPlan: meta.plan,
-                paymentMethod: selectedMethod,
-                paymentReference: reference || undefined,
-                amountFcfa: price.fcfa || undefined,
+                notes: notes || undefined,
             });
             if (result.success) {
                 setStep("done");
@@ -206,9 +192,8 @@ function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () 
     }
 
     function handleClose() {
-        setStep("choose");
-        setSelectedMethod(null);
-        setReference("");
+        setStep("form");
+        setNotes("");
         onClose();
     }
 
@@ -218,76 +203,14 @@ function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () 
                 {step === "done" ? (
                     <div className="py-8 text-center space-y-4">
                         <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto">
-                            <Check className="h-8 w-8 text-emerald-600" />
+                            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
                         </div>
                         <h3 className="text-xl font-bold font-serif">Demande envoyée !</h3>
                         <p className="text-muted-foreground text-sm leading-relaxed">
-                            Notre équipe va traiter votre demande sous 24h. Vous recevrez une confirmation par WhatsApp ou email.
+                            Notre équipe vous contactera sous 24h par WhatsApp ou email pour finaliser votre passage au {meta.plan === "premium" ? "Premium" : "Enterprise"}.
                         </p>
                         <Button onClick={handleClose} className="rounded-full mt-2">Fermer</Button>
                     </div>
-                ) : step === "confirm" ? (
-                    <>
-                        <DialogHeader>
-                            <DialogTitle className="font-serif">Confirmer votre paiement</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-5 pt-2">
-                            {/* Instructions */}
-                            <div className="rounded-xl bg-muted/40 border border-border p-4 space-y-3">
-                                <p className="text-sm font-semibold text-foreground">
-                                    {selectedMethod === "wave" || selectedMethod === "orange_money"
-                                        ? `Envoyez ${price.fcfa.toLocaleString()} FCFA au numéro :`
-                                        : "Effectuez votre virement et notez la référence :"}
-                                </p>
-                                {momoNumber && (
-                                    <div className="flex items-center justify-between bg-background border border-border rounded-lg px-4 py-3">
-                                        <span className="font-bold text-xl text-foreground tracking-wide">{momoNumber}</span>
-                                        <button
-                                            onClick={() => { navigator.clipboard.writeText(momoNumber); toast.success("Numéro copié !"); }}
-                                            className="text-xs text-primary hover:underline"
-                                        >
-                                            Copier
-                                        </button>
-                                    </div>
-                                )}
-                                {qrCode && (
-                                    <div className="flex justify-center pt-1">
-                                        <Image src={qrCode} alt="QR Code" width={120} height={120} className="rounded-lg border border-border" />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Reference input */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-foreground">
-                                    Référence de transaction <span className="text-muted-foreground font-normal">(optionnel)</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: WVE-2025-123456"
-                                    value={reference}
-                                    onChange={e => setReference(e.target.value)}
-                                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Ajoutez la référence pour accélérer le traitement de votre demande.
-                                </p>
-                            </div>
-
-                            <div className="flex gap-3">
-                                <Button variant="outline" onClick={() => setStep("choose")} className="flex-1 rounded-full">
-                                    Retour
-                                </Button>
-                                <Button
-                                    onClick={handleSubmit}
-                                    disabled={loading}
-                                    className="flex-1 rounded-full bg-primary text-white hover:bg-primary/90"
-                                >
-                                    {loading ? "Envoi..." : "Confirmer"}
-                                </Button>
-                            </div>
-                        </div>
-                    </>
                 ) : (
                     <>
                         <DialogHeader>
@@ -296,52 +219,43 @@ function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () 
                             </DialogTitle>
                         </DialogHeader>
                         <div className="space-y-5 pt-2">
-                            {/* Plan summary */}
-                            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center justify-between">
-                                <div>
-                                    <p className="font-bold text-foreground capitalize">{meta.plan}</p>
-                                    <p className="text-sm text-muted-foreground">Accès complet à toutes les fonctionnalités</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-2xl font-bold text-primary">
-                                        {price.fcfa > 0 ? `${price.fcfa.toLocaleString()} FCFA` : "Sur devis"}
-                                    </p>
-                                    {price.fcfa > 0 && <p className="text-xs text-muted-foreground">par mois</p>}
-                                </div>
+                            {/* Plan highlights */}
+                            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-3">
+                                <p className="font-bold text-foreground capitalize">{meta.plan}</p>
+                                <p className="text-sm text-muted-foreground">Accès complet à toutes les fonctionnalités</p>
+                                <ul className="text-sm text-foreground space-y-1.5 pt-1">
+                                    {meta.highlights.map(h => (
+                                        <li key={h} className="flex items-center gap-2">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                                            {h}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
 
-                            {/* Payment method */}
-                            <div className="space-y-2">
-                                <p className="text-sm font-semibold text-foreground">Moyen de paiement</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {PAYMENT_METHODS.map(m => (
-                                        <button
-                                            key={m.key}
-                                            onClick={() => setSelectedMethod(m.key)}
-                                            className={cn(
-                                                "flex items-center gap-2 p-3 rounded-xl border-2 text-sm font-medium transition-all",
-                                                m.color,
-                                                selectedMethod === m.key && "ring-2 ring-primary ring-offset-1"
-                                            )}
-                                        >
-                                            <span className="text-base">{m.icon}</span>
-                                            {m.label}
-                                            {selectedMethod === m.key && <Check className="h-3.5 w-3.5 text-primary ml-auto" />}
-                                        </button>
-                                    ))}
-                                </div>
+                            {/* Notes */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="upgrade-notes">Message (optionnel)</Label>
+                                <Textarea
+                                    id="upgrade-notes"
+                                    placeholder="Question, besoin particulier, nombre de membres..."
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                    rows={2}
+                                />
                             </div>
 
                             <Button
-                                onClick={() => setStep("confirm")}
-                                disabled={!selectedMethod}
+                                onClick={handleSubmit}
+                                disabled={loading}
                                 className="w-full rounded-full bg-primary hover:bg-primary/90 text-white h-11 font-semibold"
                             >
-                                Continuer <ArrowRight className="ml-2 h-4 w-4" />
+                                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                {loading ? "Envoi..." : "S'inscrire au " + (meta.plan === "premium" ? "Premium" : "Enterprise")}
                             </Button>
 
                             <p className="text-center text-xs text-muted-foreground">
-                                Votre accès est activé sous 24h après confirmation du paiement.
+                                Notre équipe vous contactera sous 24h pour finaliser votre inscription.
                             </p>
                         </div>
                     </>

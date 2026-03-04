@@ -20,6 +20,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ProductSelector } from "./ProductSelector";
 import { formatPrice } from "@/lib/currencies";
+import { useTranslations } from "next-intl";
 
 type Product = {
     id: string;
@@ -49,6 +50,8 @@ interface CreateOrderFormProps {
 }
 
 export function CreateOrderForm({ products, capacityTypes, customers, currency = "EUR" }: CreateOrderFormProps) {
+    const t = useTranslations("dashboard.orders.form");
+    const tc = useTranslations("common");
     const router = useRouter();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
@@ -100,15 +103,15 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
 
     const handleSubmit = async () => {
         if (!isNewCustomer && !selectedCustomerId) {
-            toast.error("Veuillez sélectionner un client");
+            toast.error(t('selectClientError'));
             return;
         }
         if (isNewCustomer && !newCustomerName) {
-            toast.error("Nom du client requis");
+            toast.error(t('clientNameRequired'));
             return;
         }
         if (!eventDate || !capacityTypeId) {
-            toast.error("Date et Type d'événement requis");
+            toast.error(t('dateAndTypeRequired'));
             return;
         }
 
@@ -135,7 +138,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
         if (result.error) {
             toast.error(result.error);
         } else {
-            toast.success("Commande créée avec succès !");
+            toast.success(t('orderCreated'));
             router.push("/dashboard/orders");
         }
         setLoading(false);
@@ -146,95 +149,99 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
     const EventForm = (
         <div className="bg-card p-4 md:p-6 rounded-xl border border-border shadow-sm space-y-4">
             <h3 className="font-serif text-base md:text-lg font-bold text-foreground border-b pb-2 mb-4">
-                Informations Client & Événement
+                {t('clientAndEvent')}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Client */}
                 <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label>Client</Label>
+                    <Label>{t('client')}</Label>
                     {!isNewCustomer ? (
                         <div className="flex gap-2">
                             <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner un client..." />
+                                    <SelectValue placeholder={t('selectClient')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {customers.map(c => (
                                         <SelectItem key={c.id} value={c.id}>
-                                            {c.full_name} ({c.phone || "Sans tél."})
+                                            {c.full_name} ({c.phone || tc('noPhone')})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <Button variant="outline" size="icon" onClick={() => setIsNewCustomer(true)} title="Nouveau Client">
+                            <Button variant="outline" size="icon" onClick={() => setIsNewCustomer(true)} title={t('newClient')}>
                                 <UserPlus className="h-4 w-4" />
                             </Button>
                         </div>
                     ) : (
                         <div className="space-y-2 bg-muted/20 p-3 rounded-lg border border-dashed border-primary/30 animate-in slide-in-from-left duration-300">
                             <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs font-semibold text-primary">Nouveau Client</span>
+                                <span className="text-xs font-semibold text-primary">{t('newClient')}</span>
                                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setIsNewCustomer(false)}>
-                                    Annuler
+                                    {tc('cancel')}
                                 </Button>
                             </div>
-                            <Input placeholder="Nom Complet *" value={newCustomerName} onChange={e => setNewCustomerName(e.target.value)} className="h-8 text-sm" />
+                            <Input placeholder={t('fullName')} value={newCustomerName} onChange={e => setNewCustomerName(e.target.value)} className="h-8 text-sm" />
                             <div className="grid grid-cols-2 gap-2">
-                                <Input placeholder="Email" value={newCustomerEmail} onChange={e => setNewCustomerEmail(e.target.value)} className="h-8 text-sm" />
-                                <Input placeholder="Téléphone" value={newCustomerPhone} onChange={e => setNewCustomerPhone(e.target.value)} className="h-8 text-sm" />
+                                <Input placeholder={tc('email')} value={newCustomerEmail} onChange={e => setNewCustomerEmail(e.target.value)} className="h-8 text-sm" />
+                                <Input placeholder={tc('phone')} value={newCustomerPhone} onChange={e => setNewCustomerPhone(e.target.value)} className="h-8 text-sm" />
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Date */}
-                <div className="space-y-2">
-                    <Label>Date de l'événement</Label>
-                    <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
-                </div>
-
-                {/* Time */}
-                <div className="space-y-2">
-                    <Label>Heure (Optionnel)</Label>
-                    <Input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} />
-                </div>
-
-                {/* Capacity type */}
-                <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                        <Label>Type de Prestation</Label>
-                        {capacityTypes.length === 0 && (
-                            <span className="text-xs text-red-500 font-medium animate-pulse">
-                                <Link href="/dashboard/settings?tab=capacity" className="underline hover:text-red-700">
-                                    Configurer ?
-                                </Link>
-                            </span>
-                        )}
+                {/* Date & Time */}
+                <div className="col-span-2 md:col-span-1">
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                        <div className="space-y-2">
+                            <Label>{t('eventDate')}</Label>
+                            <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} className="h-9 text-sm" />
+                        </div>
+                        <div className="space-y-2 w-24">
+                            <Label>{t('time')}</Label>
+                            <Input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} className="h-9 text-sm" />
+                        </div>
                     </div>
-                    <Select value={capacityTypeId} onValueChange={setCapacityTypeId} disabled={capacityTypes.length === 0}>
-                        <SelectTrigger>
-                            <SelectValue placeholder={capacityTypes.length === 0 ? "Aucun type (Voir Paramètres)" : "Mariage, Livraison..."} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {capacityTypes.map(ct => (
-                                <SelectItem key={ct.id} value={ct.id}>{ct.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
                 </div>
 
-                {/* Guests */}
-                <div className="space-y-2">
-                    <Label>Nombre d'invités</Label>
-                    <Input type="number" min="0" value={guestCount} onChange={e => setGuestCount(parseInt(e.target.value) || 0)} />
+                {/* Capacity type & Guests */}
+                <div className="col-span-2 md:col-span-1">
+                    <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <Label>{t('serviceType')}</Label>
+                                {capacityTypes.length === 0 && (
+                                    <span className="text-xs text-red-500 font-medium animate-pulse">
+                                        <Link href="/dashboard/settings?tab=capacity" className="underline hover:text-red-700">
+                                            {tc('configure')}
+                                        </Link>
+                                    </span>
+                                )}
+                            </div>
+                            <Select value={capacityTypeId} onValueChange={setCapacityTypeId} disabled={capacityTypes.length === 0}>
+                                <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder={capacityTypes.length === 0 ? t('noType') : t('selectPlaceholder')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {capacityTypes.map(ct => (
+                                        <SelectItem key={ct.id} value={ct.id}>{ct.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2 w-20">
+                            <Label>{t('guestsLabel')}</Label>
+                            <Input type="number" min="0" value={guestCount} onChange={e => setGuestCount(parseInt(e.target.value) || 0)} className="h-9 text-sm" />
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div className="pt-2">
-                <Label>Notes Internes</Label>
+                <Label>{t('internalNotes')}</Label>
                 <Textarea
-                    placeholder="Allergies, préférences, code porte..."
+                    placeholder={t('notesPlaceholder')}
                     className="resize-none h-20 mt-1.5"
                     value={internalNotes}
                     onChange={e => setInternalNotes(e.target.value)}
@@ -246,21 +253,21 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
     const CartPanel = (
         <div className="bg-card p-4 md:p-6 rounded-xl border border-border shadow-sm flex flex-col">
             <h3 className="font-serif text-base md:text-lg font-bold text-foreground border-b pb-2 mb-4 flex justify-between items-center">
-                <span>Détail de la commande</span>
+                <span>{t('orderDetail')}</span>
                 <span className="text-sm font-sans font-medium text-muted-foreground">{cart.length} articles</span>
             </h3>
 
             {cart.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-muted-foreground py-6 border-2 border-dashed border-muted/50 rounded-lg">
-                    <p className="text-sm">Le panier est vide.</p>
-                    <p className="text-xs mt-1">Sélectionnez des articles dans la Carte.</p>
+                    <p className="text-sm">{t('cartEmpty')}</p>
+                    <p className="text-xs mt-1">{t('cartEmptyHint')}</p>
                 </div>
             ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     <div className="grid grid-cols-12 text-xs font-semibold text-muted-foreground uppercase pb-2 border-b mb-2 px-2">
-                        <div className="col-span-6">Article</div>
-                        <div className="col-span-2 text-center">Qté</div>
-                        <div className="col-span-3 text-right">Prix</div>
+                        <div className="col-span-6">{tc('article')}</div>
+                        <div className="col-span-2 text-center">{tc('quantity')}</div>
+                        <div className="col-span-3 text-right">{tc('price')}</div>
                         <div className="col-span-1"></div>
                     </div>
                     {cart.map(item => (
@@ -289,7 +296,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
             {/* Totals — desktop only, mobile has sticky bar */}
             <div className="mt-4 pt-4 border-t hidden md:block">
                 <div className="flex justify-between items-end mb-4">
-                    <span className="font-bold text-xl font-serif text-foreground">Total</span>
+                    <span className="font-bold text-xl font-serif text-foreground">{tc('total')}</span>
                     <span className="font-bold text-2xl font-mono text-primary">{formatPrice(totalCents, currency)}</span>
                 </div>
                 <Button
@@ -298,7 +305,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                     onClick={handleSubmit}
                 >
                     {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                    Créer la Commande
+                    {t('createOrder')}
                 </Button>
             </div>
         </div>
@@ -321,7 +328,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                         )}
                     >
                         <ClipboardList className="h-4 w-4" />
-                        Infos
+                        {t('infos')}
                     </button>
                     <button
                         onClick={() => setMobilePanel("menu")}
@@ -333,7 +340,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                         )}
                     >
                         <UtensilsCrossed className="h-4 w-4" />
-                        Carte
+                        {t('menu')}
                         {cart.length > 0 && (
                             <span className="w-5 h-5 rounded-full bg-white text-primary text-[10px] font-bold flex items-center justify-center">
                                 {cart.length}
@@ -352,7 +359,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                     ) : (
                         <div className="rounded-xl border border-border bg-card overflow-hidden h-[calc(100vh-280px)]">
                             <div className="p-3 bg-secondary text-white font-serif font-bold text-center text-sm">
-                                Carte & Menu
+                                {t('menuAndDishes')}
                             </div>
                             <div className="h-[calc(100%-44px)] overflow-hidden">
                                 <ProductSelector products={products} onAdd={handleAddProduct} currency={currency} />
@@ -365,7 +372,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                 <div className="fixed bottom-[64px] left-0 right-0 z-40 bg-card/95 backdrop-blur border-t border-border px-4 py-3">
                     <div className="flex items-center gap-3">
                         <div className="flex-1 min-w-0">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{tc('total')}</p>
                             <p className="font-bold font-mono text-primary text-lg leading-tight">
                                 {formatPrice(totalCents, currency)}
                             </p>
@@ -380,7 +387,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                             ) : (
                                 <>
                                     <Save className="h-4 w-4 mr-2" />
-                                    Créer la commande
+                                    {t('createOrder')}
                                 </>
                             )}
                         </Button>
@@ -399,7 +406,7 @@ export function CreateOrderForm({ products, capacityTypes, customers, currency =
                 {/* Right: Product Selector */}
                 <div className="lg:col-span-1 lg:h-full min-h-[400px] overflow-hidden flex flex-col rounded-xl border border-border bg-card shadow-sm">
                     <div className="p-3 bg-secondary text-white font-serif font-bold text-center">
-                        Carte & Menu
+                        {t('menuAndDishes')}
                     </div>
                     <div className="flex-1 overflow-hidden">
                         <ProductSelector products={products} onAdd={handleAddProduct} currency={currency} />

@@ -22,6 +22,7 @@ import { updateSettingsAction } from "@/actions/settings";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { SettingsSavePortal } from "./SettingsSavePortal";
 
 interface SettingsFormProps {
@@ -48,6 +49,8 @@ function SectionTitle({ icon: Icon, title, desc }: { icon: any; title: string; d
 // ─── Main ───
 
 export function SettingsForm({ org, settings }: SettingsFormProps) {
+    const t = useTranslations("dashboard.settings");
+    const tc = useTranslations("common");
     const [loading, startTransition] = useTransition();
     const router = useRouter();
 
@@ -64,7 +67,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
             if (result?.error) {
                 toast.error(result.error);
             } else {
-                toast.success("Paramètres entreprise mis à jour !");
+                toast.success(t('settingsUpdated'));
                 router.refresh();
             }
         });
@@ -80,24 +83,24 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
             {/* ── 1. Identity ── */}
             <Card>
                 <CardContent className="pt-6 space-y-4">
-                    <SectionTitle icon={Store} title="Identité" desc="Nom, URL et logo de votre boutique." />
+                    <SectionTitle icon={Store} title={t('identity')} desc={t('identityDesc')} />
 
                     {/* Logo & Info */}
                     <div className="space-y-6">
                         <div className="space-y-2">
-                            <Label>Logo</Label>
+                            <Label>{t('logo')}</Label>
                             <ImageUpload
                                 name="logoUrl"
                                 defaultValue={logoUrl}
                                 folder={`organizations/${org.id}/logo`}
                                 onUpload={(url) => setLogoUrl(url)}
                             />
-                            <p className="text-xs text-muted-foreground">PNG transparent recommandé. Carré ~256×256px.</p>
+                            <p className="text-xs text-muted-foreground">{t('logoHint')}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Nom du restaurant</Label>
+                                <Label htmlFor="name">{t('restaurantName')}</Label>
                                 <Input
                                     id="name" name="name"
                                     value={orgName}
@@ -106,7 +109,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="slug">URL publique (slug)</Label>
+                                <Label htmlFor="slug">{t('publicUrl')}</Label>
                                 <div className="flex items-center">
                                     <span className="text-muted-foreground text-sm font-mono bg-muted/50 px-2 py-2 rounded-l-md border border-r-0 border-border shrink-0">/</span>
                                     <Input
@@ -121,27 +124,27 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
                                 {org.slug && (
                                     <a href={`/${org.slug}`} target="_blank" rel="noopener noreferrer"
                                         className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                        <ExternalLink className="h-3 w-3" /> Voir mon site →
+                                        <ExternalLink className="h-3 w-3" /> {t('viewMySite')}
                                     </a>
                                 )}
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="description">Description / Slogan</Label>
+                            <Label htmlFor="description">{t('descriptionSlogan')}</Label>
                             <Textarea
                                 id="description" name="description" rows={2}
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="La meilleure cuisine de la ville..."
+                                placeholder={t('descPlaceholder')}
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Devise</Label>
+                            <Label>{t('currency')}</Label>
                             <Select value={currency} onValueChange={setCurrency}>
                                 <SelectTrigger className="w-full md:max-w-xs">
-                                    <SelectValue placeholder="Sélectionnez une devise" />
+                                    <SelectValue placeholder={t('selectCurrency')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {CURRENCIES.map((c) => (
@@ -151,7 +154,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <p className="text-xs text-muted-foreground">La devise affichée sur votre menu et vos devis.</p>
+                            <p className="text-xs text-muted-foreground">{t('currencyHint')}</p>
                         </div>
                     </div>
                 </CardContent>
@@ -160,19 +163,19 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
             {/* ── 2. Contact ── */}
             <Card>
                 <CardContent className="pt-6 space-y-4">
-                    <SectionTitle icon={Phone} title="Contact" desc="Visible sur le site et dans vos correspondances." />
+                    <SectionTitle icon={Phone} title={t('contactSection')} desc={t('contactDesc')} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="phone"><Phone className="inline h-3 w-3 mr-1" />Téléphone</Label>
+                            <Label htmlFor="phone"><Phone className="inline h-3 w-3 mr-1" />{tc('phone')}</Label>
                             <Input id="phone" name="phone" defaultValue={settings.contact_phone || ""} placeholder="+33 6 ..." />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="email"><Mail className="inline h-3 w-3 mr-1" />Email public</Label>
+                            <Label htmlFor="email"><Mail className="inline h-3 w-3 mr-1" />{t('publicEmail')}</Label>
                             <Input id="email" name="email" type="email" defaultValue={settings.contact_email || ""} placeholder="contact@restaurant.com" />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="address"><MapPin className="inline h-3 w-3 mr-1" />Adresse</Label>
+                        <Label htmlFor="address"><MapPin className="inline h-3 w-3 mr-1" />{tc('address')}</Label>
                         <Input id="address" name="address" defaultValue={settings.contact_address || ""} placeholder="123 Rue de la Paix, Paris" />
                     </div>
                 </CardContent>
@@ -181,7 +184,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
             {/* ── 3. Réseaux sociaux ── */}
             <Card>
                 <CardContent className="pt-6 space-y-4">
-                    <SectionTitle icon={Globe} title="Réseaux Sociaux" desc="Liens affichés dans le footer de votre vitrine." />
+                    <SectionTitle icon={Globe} title={t('socialNetworks')} desc={t('socialDesc')} />
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="instagram"><Instagram className="inline h-3 w-3 mr-1" />Instagram</Label>
@@ -203,7 +206,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
             <SettingsSavePortal>
                 <Button type="submit" form="settings-general-form" size="lg" className="bg-primary hover:bg-primary/90 gap-2 shadow-sm rounded-lg hidden md:flex px-8" disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    Enregistrer les paramètres
+                    {t('saveSettings')}
                 </Button>
             </SettingsSavePortal>
 
@@ -211,7 +214,7 @@ export function SettingsForm({ org, settings }: SettingsFormProps) {
             <div className="flex justify-end md:hidden sticky bottom-6 bg-background/80 backdrop-blur-sm p-4 border-t border-border rounded-xl shadow-lg mt-8 w-full z-10">
                 <Button type="submit" size="lg" className="bg-primary hover:bg-primary/90 gap-2 w-full rounded-lg" disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    Enregistrer les paramètres
+                    {t('saveSettings')}
                 </Button>
             </div>
         </form>
