@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { createClient } from '@/utils/supabase/client'
+import { approveUpgradeRequest, rejectUpgradeRequest } from './actions'
 
 type Request = {
   id: string
@@ -64,47 +64,28 @@ export function PaymentsClient({ requests: initial }: { requests: Request[] }) {
     if (!selected || !action) return
     setLoading(true)
 
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
+    let result: { success: boolean; error?: string }
 
     if (action === 'approve') {
-      // Appeler la fonction RPC upgrade_organization_plan
-      const { data: upgradeResult, error: upgradeErr } = await supabase.rpc(
-        'upgrade_organization_plan',
-        {
-          p_org_id: selected.organizations?.id,
-          p_new_plan: selected.target_plan,
-          p_triggered_by: user.id,
-          p_payment_reference: selected.payment_reference,
-          p_payment_provider: selected.payment_method,
-        }
+      result = await approveUpgradeRequest(
+        selected.id,
+        selected.organizations?.id ?? '',
+        selected.target_plan,
+        selected.payment_method,
+        selected.payment_reference,
+        adminNotes || null,
       )
-
-      if (upgradeErr || !upgradeResult?.success) {
-        alert(upgradeErr?.message || upgradeResult?.reason || 'Erreur lors de l\'upgrade.')
-        setLoading(false)
-        return
-      }
-
-      await supabase
-        .from('upgrade_requests')
-        .update({
-          status: 'completed',
-          processed_at: new Date().toISOString(),
-          admin_notes: adminNotes || null,
-        })
-        .eq('id', selected.id)
-
     } else {
-      await supabase
-        .from('upgrade_requests')
-        .update({
-          status: 'rejected',
-          processed_at: new Date().toISOString(),
-          admin_notes: adminNotes || null,
-        })
-        .eq('id', selected.id)
+      result = await rejectUpgradeRequest(
+        selected.id,
+        adminNotes || null,
+      )
+    }
+
+    if (!result.success) {
+      alert(result.error || 'Erreur')
+      setLoading(false)
+      return
     }
 
     // Mettre à jour le state local
@@ -139,8 +120,76 @@ export function PaymentsClient({ requests: initial }: { requests: Request[] }) {
         ))}
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* ── MOBILE: Compact list ──────────────────────── */}
+      <div className="md:hidden bg-card rounded-xl border border-border overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground text-sm">Aucune demande</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {filtered.map((req) => {
+              const meta = STATUS_META[req.status] ?? STATUS_META.pending
+              const isPendingReq = req.status === 'pending' || req.status === 'processing'
+
+              return (
+                <div key={req.id} className="px-3 py-2.5 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Link href={`/admin/organizations/${req.organizations?.id}`} className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold truncate">{req.organizations?.name ?? '—'}</span>
+                    </Link>
+                    <span className={cn('px-1.5 py-0 rounded-full text-[9px] font-medium shrink-0', meta.color)}>
+                      {meta.label}
+                    </span>
+                    <span className="px-1.5 py-0 rounded-full bg-amber-100 text-amber-700 text-[9px] font-semibold shrink-0">
+                      {req.target_plan}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>
+                      {METHOD_LABELS[req.payment_method ?? ''] ?? '—'}
+                      {req.amount_fcfa ? ` · ${req.amount_fcfa.toLocaleString('fr-FR')} FCFA` : ''}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {req.payment_proof_url && (
+                        <button
+                          onClick={() => setProofOpen(req.payment_proof_url)}
+                          className="text-blue-600 font-medium flex items-center gap-0.5"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </button>
+                      )}
+                      <span>{new Date(req.created_at).toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  </div>
+                  {isPendingReq && (
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <Button
+                        size="sm"
+                        className="h-6 text-[10px] bg-green-600 hover:bg-green-700 text-white px-2"
+                        onClick={() => { setSelected(req); setAction('approve') }}
+                      >
+                        <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+                        Approuver
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 text-[10px] text-red-600 border-red-200 hover:bg-red-50 px-2"
+                        onClick={() => { setSelected(req); setAction('reject') }}
+                      >
+                        <XCircle className="h-2.5 w-2.5 mr-0.5" />
+                        Rejeter
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── DESKTOP: Table layout ─────────────────────── */}
+      <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

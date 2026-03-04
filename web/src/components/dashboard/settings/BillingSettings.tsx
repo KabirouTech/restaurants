@@ -134,7 +134,7 @@ export function BillingSettings({ orgId, currentPlan }: BillingSettingsProps) {
                 className="w-full bg-amber-500 hover:bg-amber-600 text-white"
               >
                 <Zap className="h-4 w-4 mr-2" />
-                Passer au plan Premium — 15 000 FCFA/mois
+                Passer au plan Premium
               </Button>
             </div>
           )}

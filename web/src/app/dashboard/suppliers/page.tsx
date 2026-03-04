@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { SuppliersTable } from "@/components/dashboard/suppliers/SuppliersTable";
 import { Truck } from "lucide-react";
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 
 export default async function SuppliersPage() {
+    const t = await getTranslations("dashboard.suppliers");
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -31,8 +33,8 @@ export default async function SuppliersPage() {
                 <div className="flex items-center gap-3">
                     <Truck className="h-5 w-5 text-primary" />
                     <div>
-                        <h1 className="text-xl font-bold font-serif text-foreground">Fournisseurs</h1>
-                        <p className="text-sm text-muted-foreground">Gérez vos fournisseurs et contacts.</p>
+                        <h1 className="text-xl font-bold font-serif text-foreground">{t('title')}</h1>
+                        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
                     </div>
                 </div>
             </header>

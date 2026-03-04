@@ -20,6 +20,7 @@ import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { ImportIngredientsDialog } from "./ImportIngredientsDialog";
+import { useTranslations } from "next-intl";
 
 type Ingredient = {
     id: string;
@@ -70,6 +71,8 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
     suppliers: Supplier[];
     currency: string;
 }) {
+    const t = useTranslations("dashboard.inventory");
+    const tc = useTranslations("common");
     const router = useRouter();
     const [view, setView] = useState<ViewMode>("list");
     const [filter, setFilter] = useState("");
@@ -149,7 +152,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                 setLocalSuppliers(prev => [...prev, result.supplier!]);
                 setSelectedSupplierId(result.supplier.id);
                 resetSupplierForm();
-                toast.success(`Fournisseur "${result.supplier.name}" créé !`);
+                toast.success(t('supplierCreated', { name: result.supplier.name }));
             }
         } finally {
             setSavingSupplier(false);
@@ -163,13 +166,13 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                 formData.append("id", editingIngredient.id);
                 const result = await updateIngredientAction(formData);
                 if (result.error) toast.error(result.error);
-                else { toast.success("Ingrédient mis à jour !"); setIsDialogOpen(false); router.refresh(); }
+                else { toast.success(t('ingredientUpdated')); setIsDialogOpen(false); router.refresh(); }
             } else {
                 const result = await createIngredientAction(formData);
                 if (result.error) toast.error(result.error);
-                else { toast.success("Ingrédient créé !"); setIsDialogOpen(false); router.refresh(); }
+                else { toast.success(t('ingredientCreated')); setIsDialogOpen(false); router.refresh(); }
             }
-        } catch { toast.error("Erreur inattendue."); }
+        } catch { toast.error(tc('unexpectedError')); }
         finally { setLoading(false); }
     };
 
@@ -179,7 +182,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
         try {
             const result = await deleteIngredientAction(deletingIngredient.id);
             if (result.error) toast.error(result.error);
-            else { toast.success(`"${deletingIngredient.name}" supprimé.`); setDeletingIngredient(null); router.refresh(); }
+            else { toast.success(t('ingredientDeleted', { name: deletingIngredient.name })); setDeletingIngredient(null); router.refresh(); }
         } finally { setLoading(false); }
     };
 
@@ -190,7 +193,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
             if (result.error) {
                 toast.error(result.error);
             } else {
-                toast.success(`${result.count} ingrédient(s) supprimé(s).`);
+                toast.success(t('bulkDeletedSuccess', { count: result.count ?? 0 }));
                 setSelectedIds(new Set());
                 setIsBulkDeleteOpen(false);
                 router.refresh();
@@ -205,7 +208,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                 <div className="relative w-full md:max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Rechercher un ingrédient..."
+                        placeholder={t('searchPlaceholder')}
                         className="pl-8"
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
@@ -215,33 +218,33 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                 <div className="flex items-center gap-2 flex-wrap">
                     {selectedIds.size > 0 && (
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-lg animate-in slide-in-from-right-4 duration-200">
-                            <span className="text-sm font-medium text-destructive">{selectedIds.size} sélectionné(s)</span>
+                            <span className="text-sm font-medium text-destructive">{tc('selected', { count: selectedIds.size })}</span>
                             <Button
                                 size="sm"
                                 variant="destructive"
                                 className="h-7 gap-1.5 text-xs"
                                 onClick={() => setIsBulkDeleteOpen(true)}
                             >
-                                <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                                <Trash2 className="h-3.5 w-3.5" /> {tc('delete')}
                             </Button>
                             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
-                                Annuler
+                                {tc('cancel')}
                             </Button>
                         </div>
                     )}
                     <ViewToggle view={view} onChange={setView} />
                     <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
-                        <FileSpreadsheet className="h-4 w-4" /> Importer Excel
+                        <FileSpreadsheet className="h-4 w-4" /> {tc('importExcel')}
                     </Button>
                     <Button onClick={handleOpenCreate}>
-                        <Plus className="mr-2 h-4 w-4" /> Nouvel Ingrédient
+                        <Plus className="mr-2 h-4 w-4" /> {t('newIngredientTitle')}
                     </Button>
                 </div>
             </div>
 
             {filteredIngredients.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-xl">
-                    Aucun ingrédient trouvé.
+                    {t('noIngredientFound')}
                 </div>
             ) : (
                 <>
@@ -256,17 +259,17 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                                 <Checkbox
                                                     checked={allSelected}
                                                     onCheckedChange={toggleSelectAll}
-                                                    aria-label="Tout sélectionner"
+                                                    aria-label={tc('selectAll')}
                                                     data-state={!allSelected && someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
                                                 />
                                             </TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Nom</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Catégorie</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Stock</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Seuil</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Coût unitaire</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Fournisseur</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold text-right">Actions</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{tc('name')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{tc('category')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{t('stock')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{t('threshold')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{t('unitCost')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{t('supplier')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold text-right">{tc('actions')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -311,20 +314,20 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Actions</span>
+                                                                <span className="sr-only">{tc('actions')}</span>
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuLabel>{tc('actions')}</DropdownMenuLabel>
                                                             <DropdownMenuItem onClick={() => handleOpenEdit(ingredient)}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Modifier
+                                                                <Edit className="mr-2 h-4 w-4" /> {tc('edit')}
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
                                                                 onClick={() => setDeletingIngredient(ingredient)}
                                                                 className="text-red-600 focus:text-red-600"
                                                             >
-                                                                <Trash className="mr-2 h-4 w-4" /> Supprimer
+                                                                <Trash className="mr-2 h-4 w-4" /> {tc('delete')}
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -383,20 +386,20 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
 
                                         <div className="space-y-2 text-xs text-muted-foreground">
                                             <div className="flex justify-between">
-                                                <span>Stock</span>
+                                                <span>{t('stock')}</span>
                                                 <span className={cn("font-medium", isLowStock(ingredient) ? "text-red-600" : "text-foreground")}>
                                                     {ingredient.current_stock} {ingredient.unit}
                                                 </span>
                                             </div>
                                             {ingredient.cost_per_unit_cents > 0 && (
                                                 <div className="flex justify-between">
-                                                    <span>Coût</span>
+                                                    <span>{t('cost')}</span>
                                                     <span className="text-foreground">{formatCurrency(ingredient.cost_per_unit_cents, currency)}/{ingredient.unit}</span>
                                                 </div>
                                             )}
                                             {ingredient.supplier_id && (
                                                 <div className="flex justify-between">
-                                                    <span>Fournisseur</span>
+                                                    <span>{t('supplier')}</span>
                                                     <span className="text-foreground">{supplierName(ingredient.supplier_id)}</span>
                                                 </div>
                                             )}
@@ -416,16 +419,16 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                         {/* Left: Ingredient form */}
                         <div className={cn("shrink-0 transition-all duration-300", isCreatingSupplier ? "w-1/2" : "w-full")}>
                             <DialogHeader>
-                                <DialogTitle>{editingIngredient ? "Modifier l'Ingrédient" : "Nouvel Ingrédient"}</DialogTitle>
+                                <DialogTitle>{editingIngredient ? t('editIngredient') : t('newIngredientTitle')}</DialogTitle>
                             </DialogHeader>
                             <form action={handleSubmit} className="space-y-4 mt-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Nom</Label>
-                                    <Input id="name" name="name" required defaultValue={editingIngredient?.name} placeholder="Ex: Tomates cerises, Filet de boeuf..." />
+                                    <Label htmlFor="name">{tc('name')}</Label>
+                                    <Input id="name" name="name" required defaultValue={editingIngredient?.name} placeholder={t('namePlaceholder')} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="category">Catégorie</Label>
+                                        <Label htmlFor="category">{tc('category')}</Label>
                                         <Select name="category" defaultValue={editingIngredient?.category || ""}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Sélectionner" />
@@ -438,7 +441,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                         </Select>
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="unit">Unité</Label>
+                                        <Label htmlFor="unit">{t('unit')}</Label>
                                         <Select name="unit" defaultValue={editingIngredient?.unit || "kg"}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Unité" />
@@ -453,21 +456,21 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="current_stock">Stock actuel</Label>
+                                        <Label htmlFor="current_stock">{t('currentStock')}</Label>
                                         <Input id="current_stock" name="current_stock" type="number" step="0.01" defaultValue={editingIngredient?.current_stock ?? 0} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="low_stock_threshold">Seuil d&apos;alerte</Label>
+                                        <Label htmlFor="low_stock_threshold">{t('alertThreshold')}</Label>
                                         <Input id="low_stock_threshold" name="low_stock_threshold" type="number" step="0.01" defaultValue={editingIngredient?.low_stock_threshold ?? 0} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="cost_per_unit">Coût unitaire ({currency})</Label>
+                                        <Label htmlFor="cost_per_unit">{t('unitCost')} ({currency})</Label>
                                         <Input id="cost_per_unit" name="cost_per_unit" type="number" step="0.01" defaultValue={editingIngredient ? (editingIngredient.cost_per_unit_cents / 100).toFixed(2) : "0"} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Fournisseur</Label>
+                                        <Label>{t('supplier')}</Label>
                                         <input type="hidden" name="supplier_id" value={selectedSupplierId} />
                                         <div className="flex gap-2">
                                             <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
@@ -488,9 +491,9 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Annuler</Button>
+                                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>{tc('cancel')}</Button>
                                     <Button type="submit" disabled={loading}>
-                                        {loading ? "Enregistrement..." : "Enregistrer"}
+                                        {loading ? tc('saving') : tc('save')}
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -503,11 +506,11 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                     <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={resetSupplierForm}>
                                         <ChevronLeft className="h-4 w-4" />
                                     </Button>
-                                    <h3 className="font-semibold text-sm">Nouveau Fournisseur</h3>
+                                    <h3 className="font-semibold text-sm">{t('newSupplierTitle')}</h3>
                                 </div>
                                 <div className="space-y-3">
                                     <div className="grid gap-1.5">
-                                        <Label htmlFor="new_supplier_name" className="text-xs">Nom *</Label>
+                                        <Label htmlFor="new_supplier_name" className="text-xs">{tc('name')} *</Label>
                                         <Input
                                             id="new_supplier_name"
                                             autoFocus
@@ -517,7 +520,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                         />
                                     </div>
                                     <div className="grid gap-1.5">
-                                        <Label htmlFor="new_supplier_contact" className="text-xs">Nom du contact</Label>
+                                        <Label htmlFor="new_supplier_contact" className="text-xs">{t('contactName')}</Label>
                                         <Input
                                             id="new_supplier_contact"
                                             value={newSupplier.contact_name}
@@ -527,7 +530,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="grid gap-1.5">
-                                            <Label htmlFor="new_supplier_email" className="text-xs">Email</Label>
+                                            <Label htmlFor="new_supplier_email" className="text-xs">{tc('email')}</Label>
                                             <Input
                                                 id="new_supplier_email"
                                                 type="email"
@@ -537,7 +540,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                             />
                                         </div>
                                         <div className="grid gap-1.5">
-                                            <Label htmlFor="new_supplier_phone" className="text-xs">Téléphone</Label>
+                                            <Label htmlFor="new_supplier_phone" className="text-xs">{tc('phone')}</Label>
                                             <Input
                                                 id="new_supplier_phone"
                                                 type="tel"
@@ -548,7 +551,7 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                         </div>
                                     </div>
                                     <div className="grid gap-1.5">
-                                        <Label htmlFor="new_supplier_address" className="text-xs">Adresse</Label>
+                                        <Label htmlFor="new_supplier_address" className="text-xs">{tc('address')}</Label>
                                         <Textarea
                                             id="new_supplier_address"
                                             value={newSupplier.address}
@@ -558,21 +561,21 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
                                         />
                                     </div>
                                     <div className="grid gap-1.5">
-                                        <Label htmlFor="new_supplier_notes" className="text-xs">Notes</Label>
+                                        <Label htmlFor="new_supplier_notes" className="text-xs">{tc('notes')}</Label>
                                         <Textarea
                                             id="new_supplier_notes"
                                             value={newSupplier.notes}
                                             onChange={(e) => setNewSupplier(s => ({ ...s, notes: e.target.value }))}
-                                            placeholder="Conditions, délais..."
+                                            placeholder={t('conditionsPlaceholder')}
                                             className="resize-none h-14"
                                         />
                                     </div>
                                     <div className="flex gap-2 pt-2">
                                         <Button type="button" className="flex-1" onClick={handleCreateSupplierInline} disabled={savingSupplier || !newSupplier.name.trim()}>
-                                            {savingSupplier ? "Création..." : "Créer le fournisseur"}
+                                            {savingSupplier ? t('creating') : t('createSupplier')}
                                         </Button>
                                         <Button type="button" variant="outline" onClick={resetSupplierForm}>
-                                            Annuler
+                                            {tc('cancel')}
                                         </Button>
                                     </div>
                                 </div>
@@ -586,10 +589,10 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
             <ConfirmDialog
                 open={!!deletingIngredient}
                 onOpenChange={(open) => { if (!open) setDeletingIngredient(null); }}
-                title="Supprimer cet ingrédient ?"
-                description={`"${deletingIngredient?.name}" sera supprimé. Cette action est irréversible.`}
-                confirmLabel="Supprimer"
-                cancelLabel="Annuler"
+                title={t('deleteTitle')}
+                description={t('deleteDesc', { name: deletingIngredient?.name ?? '' })}
+                confirmLabel={tc('delete')}
+                cancelLabel={tc('cancel')}
                 variant="destructive"
                 onConfirm={handleDeleteConfirmed}
             />
@@ -598,10 +601,10 @@ export function IngredientsTable({ ingredients, suppliers, currency }: {
             <ConfirmDialog
                 open={isBulkDeleteOpen}
                 onOpenChange={setIsBulkDeleteOpen}
-                title={`Supprimer ${selectedIds.size} ingrédient(s) ?`}
-                description={`Ces ${selectedIds.size} ingrédients seront supprimés. Cette action est irréversible.`}
-                confirmLabel={isBulkDeleting ? "Suppression..." : `Supprimer ${selectedIds.size} ingrédient(s)`}
-                cancelLabel="Annuler"
+                title={t('bulkDeleteTitle', { count: selectedIds.size })}
+                description={t('bulkDeleteDesc', { count: selectedIds.size })}
+                confirmLabel={isBulkDeleting ? tc('deleting') : t('bulkDeleteTitle', { count: selectedIds.size })}
+                cancelLabel={tc('cancel')}
                 variant="destructive"
                 onConfirm={handleBulkDelete}
             />

@@ -6,10 +6,12 @@ import { PlanGate } from "@/components/dashboard/PlanGate";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function InboxPage(props: { searchParams: Promise<{ conversationId?: string }> }) {
+    const t = await getTranslations("dashboard.inbox");
     const searchParams = await props.searchParams;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -118,9 +120,9 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
                             <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
                             <Image src="/globe.svg" alt="Inbox" width={64} height={64} className="opacity-20 grayscale" />
                         </div>
-                        <h3 className="text-xl font-serif font-bold text-foreground mb-2">Messagerie Unifiée</h3>
+                        <h3 className="text-xl font-serif font-bold text-foreground mb-2">{t('unifiedInbox')}</h3>
                         <p className="max-w-xs mx-auto text-sm leading-relaxed">
-                            Sélectionnez une conversation pour répondre aux demandes WhatsApp, Instagram ou Email.
+                            {t('selectConversation')}
                         </p>
                     </div>
                 )}

@@ -4,8 +4,11 @@ import { IngredientsTable } from "@/components/dashboard/inventory/IngredientsTa
 import { Package, AlertTriangle } from "lucide-react";
 import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
+import { getTranslations } from "next-intl/server";
 
 export default async function InventoryPage() {
+    const t = await getTranslations("dashboard.inventory");
+    const tc = await getTranslations("common");
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -55,21 +58,21 @@ export default async function InventoryPage() {
                     <Package className="h-5 w-5 text-primary" />
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold font-serif text-foreground">Inventaire</h1>
+                            <h1 className="text-xl font-bold font-serif text-foreground">{t('title')}</h1>
                             {lowStockCount > 0 && (
                                 <Badge variant="destructive" className="gap-1">
                                     <AlertTriangle className="h-3 w-3" />
-                                    {lowStockCount} en alerte
+                                    {t('lowStockAlert', { count: lowStockCount })}
                                 </Badge>
                             )}
                         </div>
-                        <p className="text-sm text-muted-foreground">Suivez vos stocks et ingrédients.</p>
+                        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
                     </div>
                 </div>
             </header>
 
             <main className="flex-1 overflow-auto p-6">
-                <Suspense fallback={<div>Chargement...</div>}>
+                <Suspense fallback={<div>{tc('loading')}</div>}>
                     <IngredientsTable ingredients={ingredients} suppliers={suppliers} currency={currency} />
                 </Suspense>
             </main>

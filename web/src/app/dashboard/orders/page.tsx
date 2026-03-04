@@ -5,16 +5,20 @@ import { ChefHat, Plus } from "lucide-react";
 import Link from "next/link";
 import { OrdersView } from "@/components/dashboard/orders/OrdersView";
 import { DEFAULT_KANBAN_COLUMNS } from "@/components/dashboard/orders/KanbanBoard";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
+    const t = await getTranslations("dashboard.orders");
+    const tc = await getTranslations("common");
+
     const supabaseUser = await createServerClient();
     const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) return <div>Non authentifié</div>;
+    if (!user) return <div>{tc('notAuthenticated')}</div>;
 
     const { data: profile } = await supabaseUser.from("profiles").select("organization_id").eq("id", user.id).single();
-    if (!profile?.organization_id) return <div>Aucune organisation</div>;
+    if (!profile?.organization_id) return <div>{tc('noOrganization')}</div>;
     const orgId = profile.organization_id;
 
     const supabaseAdmin = createAdminClient(
@@ -54,14 +58,14 @@ export default async function OrdersPage() {
                 <div>
                     <div className="flex items-center gap-2 text-primary font-medium mb-1">
                         <ChefHat className="h-5 w-5" />
-                        <span>Gestion</span>
+                        <span>{t('management')}</span>
                     </div>
-                    <h1 className="text-3xl font-bold font-serif text-foreground">Devis & Commandes</h1>
-                    <p className="text-muted-foreground mt-1">Gérez vos événements, devis et facturations.</p>
+                    <h1 className="text-3xl font-bold font-serif text-foreground">{t('title')}</h1>
+                    <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
                 </div>
                 <Link href="/dashboard/orders/new">
                     <Button className="bg-primary hover:bg-primary/90 text-white shadow-sm font-medium gap-2">
-                        <Plus className="h-4 w-4" /> Nouveau Devis
+                        <Plus className="h-4 w-4" /> {t('newQuote')}
                     </Button>
                 </Link>
             </div>

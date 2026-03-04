@@ -17,6 +17,7 @@ import { ViewToggle, type ViewMode } from "@/components/ui/view-toggle";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { ImportSuppliersDialog } from "./ImportSuppliersDialog";
+import { useTranslations } from "next-intl";
 
 type Supplier = {
     id: string;
@@ -52,6 +53,8 @@ function avatarColor(name: string) {
 }
 
 export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
+    const t = useTranslations("dashboard.suppliers");
+    const tc = useTranslations("common");
     const router = useRouter();
     const [view, setView] = useState<ViewMode>("list");
     const [filter, setFilter] = useState("");
@@ -104,13 +107,13 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
                 formData.append("id", editingSupplier.id);
                 const result = await updateSupplierAction(formData);
                 if (result.error) toast.error(result.error);
-                else { toast.success("Fournisseur mis à jour !"); setIsDialogOpen(false); router.refresh(); }
+                else { toast.success(t('supplierUpdated')); setIsDialogOpen(false); router.refresh(); }
             } else {
                 const result = await createSupplierAction(formData);
                 if (result.error) toast.error(result.error);
-                else { toast.success("Fournisseur créé !"); setIsDialogOpen(false); router.refresh(); }
+                else { toast.success(t('supplierCreated')); setIsDialogOpen(false); router.refresh(); }
             }
-        } catch { toast.error("Erreur inattendue."); }
+        } catch { toast.error(tc('unexpectedError')); }
         finally { setLoading(false); }
     };
 
@@ -120,7 +123,7 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
         try {
             const result = await deleteSupplierAction(deletingSupplier.id);
             if (result.error) toast.error(result.error);
-            else { toast.success(`"${deletingSupplier.name}" supprimé.`); setDeletingSupplier(null); router.refresh(); }
+            else { toast.success(t('supplierDeleted', { name: deletingSupplier.name })); setDeletingSupplier(null); router.refresh(); }
         } finally { setLoading(false); }
     };
 
@@ -131,7 +134,7 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
             if (result.error) {
                 toast.error(result.error);
             } else {
-                toast.success(`${result.count} fournisseur(s) supprimé(s).`);
+                toast.success(t('bulkDeletedSuccess', { count: result.count ?? 0 }));
                 setSelectedIds(new Set());
                 setIsBulkDeleteOpen(false);
                 router.refresh();
@@ -146,7 +149,7 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
                 <div className="relative w-full md:max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Rechercher un fournisseur..."
+                        placeholder={t('searchPlaceholder')}
                         className="pl-8"
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
@@ -156,33 +159,33 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
                 <div className="flex items-center gap-2 flex-wrap">
                     {selectedIds.size > 0 && (
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-lg animate-in slide-in-from-right-4 duration-200">
-                            <span className="text-sm font-medium text-destructive">{selectedIds.size} sélectionné(s)</span>
+                            <span className="text-sm font-medium text-destructive">{tc('selected', { count: selectedIds.size })}</span>
                             <Button
                                 size="sm"
                                 variant="destructive"
                                 className="h-7 gap-1.5 text-xs"
                                 onClick={() => setIsBulkDeleteOpen(true)}
                             >
-                                <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                                <Trash2 className="h-3.5 w-3.5" /> {tc('delete')}
                             </Button>
                             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
-                                Annuler
+                                {tc('cancel')}
                             </Button>
                         </div>
                     )}
                     <ViewToggle view={view} onChange={setView} />
                     <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
-                        <FileSpreadsheet className="h-4 w-4" /> Importer Excel
+                        <FileSpreadsheet className="h-4 w-4" /> {tc('importExcel')}
                     </Button>
                     <Button onClick={handleOpenCreate}>
-                        <Plus className="mr-2 h-4 w-4" /> Nouveau Fournisseur
+                        <Plus className="mr-2 h-4 w-4" /> {t('newSupplierTitle')}
                     </Button>
                 </div>
             </div>
 
             {filteredSuppliers.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-xl">
-                    Aucun fournisseur trouvé.
+                    {t('noSupplierFound')}
                 </div>
             ) : (
                 <>
@@ -197,15 +200,15 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
                                                 <Checkbox
                                                     checked={allSelected}
                                                     onCheckedChange={toggleSelectAll}
-                                                    aria-label="Tout sélectionner"
+                                                    aria-label={tc('selectAll')}
                                                     data-state={!allSelected && someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
                                                 />
                                             </TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Nom</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Contact</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Email</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">Téléphone</TableHead>
-                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold text-right">Actions</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{tc('name')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{tc('contact')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{tc('email')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold">{tc('phone')}</TableHead>
+                                            <TableHead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm font-semibold text-right">{tc('actions')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -236,20 +239,20 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Actions</span>
+                                                                <span className="sr-only">{tc('actions')}</span>
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuLabel>{tc('actions')}</DropdownMenuLabel>
                                                             <DropdownMenuItem onClick={() => handleOpenEdit(supplier)}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Modifier
+                                                                <Edit className="mr-2 h-4 w-4" /> {tc('edit')}
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem
                                                                 onClick={() => setDeletingSupplier(supplier)}
                                                                 className="text-red-600 focus:text-red-600"
                                                             >
-                                                                <Trash className="mr-2 h-4 w-4" /> Supprimer
+                                                                <Trash className="mr-2 h-4 w-4" /> {tc('delete')}
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -338,39 +341,39 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editingSupplier ? "Modifier le Fournisseur" : "Nouveau Fournisseur"}</DialogTitle>
+                        <DialogTitle>{editingSupplier ? t('editSupplier') : t('newSupplierTitle')}</DialogTitle>
                     </DialogHeader>
                     <form action={handleSubmit} className="space-y-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Nom</Label>
-                            <Input id="name" name="name" required defaultValue={editingSupplier?.name} placeholder="Ex: Metro, Rungis Express..." />
+                            <Label htmlFor="name">{tc('name')}</Label>
+                            <Input id="name" name="name" required defaultValue={editingSupplier?.name} placeholder={t('namePlaceholder')} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="contact_name">Nom du contact</Label>
+                                <Label htmlFor="contact_name">{t('contactName')}</Label>
                                 <Input id="contact_name" name="contact_name" defaultValue={editingSupplier?.contact_name || ""} placeholder="Jean Dupont" />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">{tc('email')}</Label>
                                 <Input id="email" name="email" type="email" defaultValue={editingSupplier?.email || ""} placeholder="contact@fournisseur.com" />
                             </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="phone">Téléphone</Label>
+                            <Label htmlFor="phone">{tc('phone')}</Label>
                             <Input id="phone" name="phone" type="tel" defaultValue={editingSupplier?.phone || ""} placeholder="01 23 45 67 89" />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="address">Adresse</Label>
+                            <Label htmlFor="address">{tc('address')}</Label>
                             <Textarea id="address" name="address" defaultValue={editingSupplier?.address || ""} placeholder="123 Rue du Commerce, 75001 Paris" className="resize-none h-16" />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="notes">Notes</Label>
-                            <Textarea id="notes" name="notes" placeholder="Conditions de livraison, délais..." defaultValue={editingSupplier?.notes || ""} className="resize-none h-20" />
+                            <Label htmlFor="notes">{tc('notes')}</Label>
+                            <Textarea id="notes" name="notes" placeholder={t('deliveryNotes')} defaultValue={editingSupplier?.notes || ""} className="resize-none h-20" />
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Annuler</Button>
+                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>{tc('cancel')}</Button>
                             <Button type="submit" disabled={loading}>
-                                {loading ? "Enregistrement..." : "Enregistrer"}
+                                {loading ? tc('saving') : tc('save')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -381,10 +384,10 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
             <ConfirmDialog
                 open={!!deletingSupplier}
                 onOpenChange={(open) => { if (!open) setDeletingSupplier(null); }}
-                title="Supprimer ce fournisseur ?"
-                description={`"${deletingSupplier?.name}" sera supprimé. Cette action est irréversible.`}
-                confirmLabel="Supprimer"
-                cancelLabel="Annuler"
+                title={t('deleteTitle')}
+                description={t('deleteDesc', { name: deletingSupplier?.name ?? '' })}
+                confirmLabel={tc('delete')}
+                cancelLabel={tc('cancel')}
                 variant="destructive"
                 onConfirm={handleDeleteConfirmed}
             />
@@ -393,10 +396,10 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
             <ConfirmDialog
                 open={isBulkDeleteOpen}
                 onOpenChange={setIsBulkDeleteOpen}
-                title={`Supprimer ${selectedIds.size} fournisseur(s) ?`}
-                description={`Ces ${selectedIds.size} fournisseurs seront supprimés. Cette action est irréversible.`}
-                confirmLabel={isBulkDeleting ? "Suppression..." : `Supprimer ${selectedIds.size} fournisseur(s)`}
-                cancelLabel="Annuler"
+                title={t('bulkDeleteTitle', { count: selectedIds.size })}
+                description={t('bulkDeleteDesc', { count: selectedIds.size })}
+                confirmLabel={isBulkDeleting ? tc('deleting') : tc('confirm')}
+                cancelLabel={tc('cancel')}
                 variant="destructive"
                 onConfirm={handleBulkDelete}
             />

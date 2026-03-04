@@ -38,7 +38,7 @@ export interface UpgradeRequest {
 export interface CreateUpgradeRequestInput {
   orgId: string
   targetPlan: PlanKey
-  paymentMethod: PaymentMethod
+  paymentMethod?: PaymentMethod
   paymentReference?: string
   amountFcfa?: number
   notes?: string
@@ -106,7 +106,7 @@ export async function createUpgradeRequest(
       organization_id: input.orgId,
       requested_by: user.user.id,
       target_plan: input.targetPlan,
-      payment_method: input.paymentMethod,
+      payment_method: input.paymentMethod ?? 'other',
       payment_reference: input.paymentReference ?? null,
       amount_fcfa: input.amountFcfa ?? null,
       notes: input.notes ?? null,
@@ -255,7 +255,7 @@ export async function cancelUpgradeRequest(
 
 export const PLAN_PRICES: Record<PlanKey, { fcfa: number; eur: number; label: string }> = {
   free: { fcfa: 0, eur: 0, label: 'Gratuit' },
-  premium: { fcfa: 15000, eur: 23, label: '15 000 FCFA/mois' },
+  premium: { fcfa: 60000, eur: 100, label: '60 000 FCFA/mois' },
   enterprise: { fcfa: 0, eur: 0, label: 'Sur devis' },
 }
 

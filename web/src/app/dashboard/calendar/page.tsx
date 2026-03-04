@@ -8,19 +8,24 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Ban, Plus, LockOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getTranslations } from "next-intl/server";
 import { CalendarEvent } from "@/components/dashboard/calendar/CalendarEvent";
 import { CalendarShell } from "@/components/dashboard/calendar/CalendarShell";
+import { MobileCalendarView } from "@/components/dashboard/calendar/MobileCalendarView";
 
 export default async function CalendarPage(props: { searchParams: Promise<{ date?: string }> }) {
     const searchParams = await props.searchParams;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return <div>Non authentifié</div>;
+    const t = await getTranslations("dashboard.calendar");
+    const tc = await getTranslations("common");
+
+    if (!user) return <div>{tc('notAuthenticated')}</div>;
 
     // Get Org
     const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
-    if (!profile?.organization_id) return <div>Aucune organisation</div>;
+    if (!profile?.organization_id) return <div>{tc('noOrganization')}</div>;
     const orgId = profile.organization_id;
 
     // Get Org Currency
@@ -96,7 +101,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
 
     // 5. Build Days Array
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const weekDays = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    const weekDays = t.raw('weekDays') as string[];
 
     return (
         <CalendarShell customers={customers || []} capacityTypes={capacityTypes || []} products={products || []} currency={currency}>
@@ -109,7 +114,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                         <h1 className="text-lg md:text-2xl font-bold font-serif text-foreground capitalize flex items-center gap-2">
                             {format(viewDate, "MMMM yyyy", { locale: fr })}
                             <span className="text-xs md:text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                                {orders?.length || 0} événements
+                                {orders?.length || 0} {t('events')}
                             </span>
                         </h1>
                     </div>
@@ -119,7 +124,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                                 <Button variant="ghost" size="icon" className="h-7 w-7"><ChevronLeft className="h-4 w-4" /></Button>
                             </Link>
                             <Link href={`?date=${format(new Date(), "yyyy-MM-dd")}`}>
-                                <Button variant="ghost" size="sm" className="h-7 text-xs font-medium px-2">Auj.</Button>
+                                <Button variant="ghost" size="sm" className="h-7 text-xs font-medium px-2">{t('today')}</Button>
                             </Link>
                             <Link href={`?date=${format(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1), "yyyy-MM-dd")}`}>
                                 <Button variant="ghost" size="icon" className="h-7 w-7"><ChevronRight className="h-4 w-4" /></Button>
@@ -132,68 +137,18 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                             className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white shadow-sm font-medium text-sm h-9 px-3 md:px-4 rounded-md transition-colors"
                         >
                             <Plus className="h-4 w-4" />
-                            <span className="hidden sm:inline">Nouveau</span>
+                            <span className="hidden sm:inline">{t('newOrder')}</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Mobile: Agenda view */}
-                <div className="md:hidden flex-1 overflow-y-auto p-4 space-y-3">
-                    {(() => {
-                        const monthOrders = (orders || []).filter((o: any) =>
-                            o.event_date && isSameMonth(parseISO(o.event_date), monthStart)
-                        ).sort((a: any, b: any) => a.event_date.localeCompare(b.event_date));
-
-                        if (monthOrders.length === 0) {
-                            return (
-                                <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-                                    <p className="text-sm font-medium">Aucun événement ce mois-ci</p>
-                                </div>
-                            );
-                        }
-
-                        // Group by date
-                        const grouped: Record<string, typeof monthOrders> = {};
-                        for (const o of monthOrders) {
-                            if (!grouped[o.event_date]) grouped[o.event_date] = [];
-                            grouped[o.event_date].push(o);
-                        }
-
-                        return Object.entries(grouped).map(([date, dayOrders]) => (
-                            <div key={date} className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-                                <div className="bg-muted/40 px-4 py-2 border-b border-border">
-                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider capitalize">
-                                        {format(parseISO(date), "EEEE d MMMM", { locale: fr })}
-                                    </span>
-                                </div>
-                                <div className="divide-y divide-border/50">
-                                    {(dayOrders as any[]).map((order: any) => {
-                                        const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
-                                        const capType = Array.isArray(order.capacity_types) ? order.capacity_types[0] : order.capacity_types;
-                                        return (
-                                            <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
-                                                <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
-                                                    {capType?.color_code && (
-                                                        <div className="w-1.5 h-8 rounded-full shrink-0" style={{ backgroundColor: capType.color_code }} />
-                                                    )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-semibold text-sm text-foreground truncate">{customer?.full_name || "Client"}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {order.event_time?.slice(0, 5) || ""}
-                                                            {capType && ` · ${capType.name}`}
-                                                            {order.guest_count ? ` · ${order.guest_count} pers.` : ""}
-                                                        </p>
-                                                    </div>
-                                                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                </div>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ));
-                    })()}
-                </div>
+                {/* Mobile: Mini calendar + day events */}
+                <MobileCalendarView
+                    orders={orders || []}
+                    viewDate={format(viewDate, "yyyy-MM-dd")}
+                    calendarOverrides={calendarOverrides || []}
+                    defaults={(defaults || []) as any}
+                />
 
                 {/* Desktop: Calendar Grid Container */}
                 <div className="hidden md:flex flex-1 flex-col overflow-hidden">
@@ -250,16 +205,16 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                                         <div className="flex items-center gap-1">
                                             {isClosed && !isPast && (
                                                 <span className="text-[10px] px-1.5 rounded-full border border-red-300 dark:border-red-700 bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300 font-semibold flex items-center gap-1">
-                                                    <Ban className="h-3 w-3" /> Fermé
+                                                    <Ban className="h-3 w-3" /> {t('closed')}
                                                 </span>
                                             )}
                                             {isBlocked && !isPast && (
                                                 <button
                                                     data-calendar-reopen-date={dayString}
                                                     className="text-[10px] px-1.5 py-0.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
-                                                    title="Rouvrir cette date"
+                                                    title={t('reopenDate')}
                                                 >
-                                                    <LockOpen className="h-3 w-3" /> Rouvrir
+                                                    <LockOpen className="h-3 w-3" /> {t('reopen')}
                                                 </button>
                                             )}
                                         </div>
@@ -279,7 +234,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                                             <button
                                                 data-calendar-new-order={dayString}
                                                 className="absolute z-0 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 text-primary/50 hover:text-primary"
-                                                title="Ajouter un événement"
+                                                title={t('addEvent')}
                                             >
                                                 <span className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-colors">
                                                     <Plus className="h-4 w-4" />
@@ -292,7 +247,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ date
                                             <button
                                                 data-calendar-close-date={dayString}
                                                 className="absolute z-20 bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-200 text-muted-foreground/50 hover:text-destructive"
-                                                title="Fermer cette date"
+                                                title={t('closeDate')}
                                             >
                                                 <span className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-destructive/10 transition-colors">
                                                     <Ban className="h-3.5 w-3.5" />
