@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
     LayoutDashboard,
@@ -16,6 +16,7 @@ import {
     Truck,
     BookOpen,
     Utensils,
+    MessageSquareWarning,
     Settings,
     LogOut,
     Lock,
@@ -69,8 +70,9 @@ const secondaryItems: SecondaryItem[] = [
     { href: "/dashboard/inventory", icon: Package,  labelKey: "inventory", shortLabel: "Stock" },
     { href: "/dashboard/suppliers", icon: Truck,    labelKey: "suppliers", shortLabel: "Fourn." },
     { href: "/dashboard/recipes",   icon: BookOpen, labelKey: "recipes",   shortLabel: "Recettes" },
-    { href: "/dashboard/menu",      icon: Utensils, labelKey: "menu",      shortLabel: "Menu" },
-    { href: "/dashboard/settings",  icon: Settings, labelKey: "settings",  shortLabel: "Config" },
+    { href: "/dashboard/menu",      icon: Utensils,             labelKey: "menu",      shortLabel: "Menu" },
+    { href: "/dashboard/support",   icon: MessageSquareWarning, labelKey: "support",   shortLabel: "Support" },
+    { href: "/dashboard/settings",  icon: Settings,             labelKey: "settings",  shortLabel: "Config" },
 ];
 
 export function MobileBottomNav({ plan, isSuperAdmin }: MobileBottomNavProps) {
@@ -159,6 +161,7 @@ export function MobileBottomNav({ plan, isSuperAdmin }: MobileBottomNavProps) {
                     side="bottom"
                     className="h-auto rounded-t-2xl px-4 pb-8 pt-4 md:hidden"
                 >
+                    <SheetTitle className="sr-only">Plus</SheetTitle>
                     <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
 
                     <div className="grid grid-cols-3 gap-3 mb-6">
