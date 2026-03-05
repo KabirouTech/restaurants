@@ -363,7 +363,7 @@ export default async function LandingPage() {
                     </div>
 
                     {/* F4-F7: Secondary features grid */}
-                    <div className="mt-12 md:mt-0">
+                    <div className="mt-12 md:mt-24">
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                             {[
                                 {
@@ -511,6 +511,7 @@ export default async function LandingPage() {
                             ctaHref="/auth/signup"
                             variant="featured"
                             badge={t("pricing.premium.badge")}
+                            note={t("pricing.premium.earlyAdopter")}
                         />
 
                         {/* Enterprise */}
@@ -994,7 +995,7 @@ function MockInbox({ tr, compact }: { tr: MockInboxTr; compact?: boolean }) {
 }
 
 function PricingCard({
-    name, price, period, description, features, missing, cta, ctaHref, variant, badge
+    name, price, period, description, features, missing, cta, ctaHref, variant, badge, note
 }: {
     name: string;
     price: string;
@@ -1006,6 +1007,7 @@ function PricingCard({
     ctaHref: string;
     variant: "default" | "featured" | "enterprise";
     badge?: string;
+    note?: string;
 }) {
     const isFeatured = variant === "featured";
     return (
@@ -1040,6 +1042,11 @@ function PricingCard({
                     </li>
                 ))}
             </ul>
+            {note && (
+                <p className="text-xs text-primary/80 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 leading-relaxed">
+                    {note}
+                </p>
+            )}
             <Link href={ctaHref} className="block">
                 <Button className={cn(
                     "w-full rounded-xl font-semibold h-11",

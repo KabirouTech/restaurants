@@ -16,6 +16,7 @@ import {
     Package,
     Truck,
     BookOpen,
+    MessageSquareWarning,
     Settings,
     LogOut,
     ChevronLeft,
@@ -59,6 +60,7 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
         { name: t("inventory"), href: "/dashboard/inventory", icon: Package },
         { name: t("suppliers"), href: "/dashboard/suppliers", icon: Truck },
         { name: t("recipes"), href: "/dashboard/recipes", icon: BookOpen },
+        { name: t("support"), href: "/dashboard/support", icon: MessageSquareWarning },
     ];
 
     return (
