@@ -1,24 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Eye, EyeOff, Lock, Mail, CalendarDays, MessageSquare, BookOpen, Package } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, CalendarDays, MessageSquare, BookOpen, Package, Wand2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { InAppBrowserBanner } from "@/components/auth/InAppBrowserBanner";
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [mode, setMode] = useState<"password" | "magic_link">("password");
+    const [isInApp, setIsInApp] = useState(false);
+    const [magicLinkSent, setMagicLinkSent] = useState(false);
+    const [magicLinkEmail, setMagicLinkEmail] = useState("");
     const router = useRouter();
     const supabase = createClient();
     const t = useTranslations("auth.login");
     const tAuth = useTranslations("auth");
+
+    const handleInAppDetected = useCallback((detected: boolean) => {
+        setIsInApp(detected);
+        if (detected) setMode("magic_link");
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -26,6 +35,22 @@ export default function LoginPage() {
         setError(null);
         const formData = new FormData(e.currentTarget);
         const email = formData.get("email") as string;
+
+        if (mode === "magic_link") {
+            const { error: otpError } = await supabase.auth.signInWithOtp({
+                email,
+                options: { emailRedirectTo: `${location.origin}/auth/callback` },
+            });
+            if (otpError) {
+                setError(otpError.message);
+            } else {
+                setMagicLinkSent(true);
+                setMagicLinkEmail(email);
+            }
+            setLoading(false);
+            return;
+        }
+
         const password = formData.get("password") as string;
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
@@ -48,7 +73,7 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex bg-white">
 
-            {/* ── Left Brand Panel ───────────────────────── */}
+            {/* -- Left Brand Panel -- */}
             <div className="hidden lg:flex lg:w-[52%] xl:w-[55%] flex-col relative overflow-hidden bg-gradient-to-br from-[#1a2e1a] via-[#1e3a1e] to-[#2d1a0e]">
 
                 {/* Dot pattern overlay */}
@@ -87,8 +112,8 @@ export default function LoginPage() {
                         {/* Feature pills */}
                         <div className="flex flex-col gap-3 pt-4">
                             {[
-                                { icon: <CalendarDays className="h-4 w-4" />, label: "Calendrier & Capacité" },
-                                { icon: <MessageSquare className="h-4 w-4" />, label: "Messagerie Unifiée" },
+                                { icon: <CalendarDays className="h-4 w-4" />, label: "Calendrier & Capacit\u00e9" },
+                                { icon: <MessageSquare className="h-4 w-4" />, label: "Messagerie Unifi\u00e9e" },
                                 { icon: <BookOpen className="h-4 w-4" />, label: "Recettes & Inventaire" },
                                 { icon: <Package className="h-4 w-4" />, label: "Devis & Commandes" },
                             ].map(({ icon, label }) => (
@@ -106,19 +131,19 @@ export default function LoginPage() {
                 {/* Testimonial */}
                 <div className="relative z-10 mx-10 mb-10 p-5 rounded-2xl bg-white/8 backdrop-blur-sm border border-white/10">
                     <p className="text-white/80 text-sm italic font-serif leading-relaxed">
-                        &quot;Avant RestaurantsOS, je jonglais entre 4 applis différentes. Maintenant tout est là.&quot;
+                        &quot;Avant RestaurantsOS, je jonglais entre 4 applis diff&eacute;rentes. Maintenant tout est l&agrave;.&quot;
                     </p>
                     <div className="mt-3 flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-primary/40 flex items-center justify-center text-white font-bold text-xs">A</div>
                         <div>
                             <p className="text-white text-xs font-semibold">Aminata D.</p>
-                            <p className="text-white/50 text-xs">Traiteur · Dakar</p>
+                            <p className="text-white/50 text-xs">Traiteur &middot; Dakar</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ── Right Form Panel ───────────────────────── */}
+            {/* -- Right Form Panel -- */}
             <div className="flex-1 flex flex-col">
 
                 {/* Top bar */}
@@ -151,25 +176,47 @@ export default function LoginPage() {
                             </p>
                         </div>
 
-                        {/* Google */}
-                        <button
-                            type="button"
-                            onClick={handleGoogleLogin}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-3 h-12 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-[0.99] disabled:opacity-50"
-                        >
-                            <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 488 512">
-                                <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
-                            </svg>
-                            {t("google")}
-                        </button>
+                        {/* In-app browser banner */}
+                        <InAppBrowserBanner
+                            onInAppDetected={handleInAppDetected}
+                            namespace="auth.login"
+                            t={t}
+                        />
 
-                        {/* Divider */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex-1 h-px bg-gray-100" />
-                            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">ou</span>
-                            <div className="flex-1 h-px bg-gray-100" />
-                        </div>
+                        {/* Magic link sent success */}
+                        {magicLinkSent && (
+                            <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
+                                <Mail className="h-4 w-4 flex-shrink-0" />
+                                <div>
+                                    <p className="font-medium">{t("magicLinkSent")}</p>
+                                    <p className="text-emerald-600 text-xs mt-0.5">{magicLinkEmail}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Google - hidden in in-app browsers */}
+                        {!isInApp && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handleGoogleLogin}
+                                    disabled={loading}
+                                    className="w-full flex items-center justify-center gap-3 h-12 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-[0.99] disabled:opacity-50"
+                                >
+                                    <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 488 512">
+                                        <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
+                                    </svg>
+                                    {t("google")}
+                                </button>
+
+                                {/* Divider */}
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-1 h-px bg-gray-100" />
+                                    <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">ou</span>
+                                    <div className="flex-1 h-px bg-gray-100" />
+                                </div>
+                            </>
+                        )}
 
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -189,33 +236,40 @@ export default function LoginPage() {
                                 </div>
                             </div>
 
-                            {/* Password */}
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-sm font-semibold text-gray-700">{t("password")}</label>
-                                    <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors">
-                                        {t("forgotPassword")}
-                                    </Link>
+                            {/* Password - only in password mode */}
+                            {mode === "password" && (
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-semibold text-gray-700">{t("password")}</label>
+                                        <Link href="#" className="text-xs text-gray-400 hover:text-primary transition-colors">
+                                            {t("forgotPassword")}
+                                        </Link>
+                                    </div>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input
+                                            name="password"
+                                            type={showPassword ? "text" : "password"}
+                                            required
+                                            autoComplete="current-password"
+                                            placeholder="••••••••"
+                                            className="w-full h-12 pl-10 pr-11 rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-300 focus:outline-none focus:border-primary transition-colors"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="relative">
-                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        name="password"
-                                        type={showPassword ? "text" : "password"}
-                                        required
-                                        autoComplete="current-password"
-                                        placeholder="••••••••"
-                                        className="w-full h-12 pl-10 pr-11 rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-300 focus:outline-none focus:border-primary transition-colors"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
+                            )}
+
+                            {/* Magic link description */}
+                            {mode === "magic_link" && (
+                                <p className="text-sm text-gray-400">{t("magicLinkDesc")}</p>
+                            )}
 
                             {/* Error */}
                             {error && (
@@ -242,11 +296,36 @@ export default function LoginPage() {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                                         </svg>
-                                        {t("loading")}
+                                        {mode === "magic_link" ? t("magicLinkLoading") : t("loading")}
                                     </span>
-                                ) : t("submit")}
+                                ) : mode === "magic_link" ? t("magicLinkSubmit") : t("submit")}
                             </button>
                         </form>
+
+                        {/* Toggle mode */}
+                        {!isInApp && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMode(mode === "password" ? "magic_link" : "password");
+                                    setError(null);
+                                    setMagicLinkSent(false);
+                                }}
+                                className="w-full flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                {mode === "password" ? (
+                                    <>
+                                        <Wand2 className="h-3.5 w-3.5" />
+                                        {t("magicLink")}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Lock className="h-3.5 w-3.5" />
+                                        {t("usePassword")}
+                                    </>
+                                )}
+                            </button>
+                        )}
 
                         {/* Footer note */}
                         <p className="text-center text-xs text-gray-300">

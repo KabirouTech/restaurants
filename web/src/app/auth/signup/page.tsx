@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Check, RefreshCw } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
@@ -9,6 +9,7 @@ import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { InAppBrowserBanner } from "@/components/auth/InAppBrowserBanner";
 
 export default function SignupPage() {
     const [loading, setLoading] = useState(false);
@@ -17,6 +18,7 @@ export default function SignupPage() {
     const [email, setEmail] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
+    const [isInApp, setIsInApp] = useState(false);
     const router = useRouter();
     const supabase = createClient();
     const t = useTranslations("auth.signup");
@@ -58,6 +60,10 @@ export default function SignupPage() {
         });
         if (error) { setError(error.message); setLoading(false); }
     };
+
+    const handleInAppDetected = useCallback((detected: boolean) => {
+        setIsInApp(detected);
+    }, []);
 
     const handleResend = async () => {
         setResendCooldown(60);
@@ -240,25 +246,36 @@ export default function SignupPage() {
                             </p>
                         </div>
 
-                        {/* Google */}
-                        <button
-                            type="button"
-                            onClick={handleGoogleLogin}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-3 h-12 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-[0.99] disabled:opacity-50"
-                        >
-                            <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 488 512">
-                                <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
-                            </svg>
-                            {t("google")}
-                        </button>
+                        {/* In-app browser banner */}
+                        <InAppBrowserBanner
+                            onInAppDetected={handleInAppDetected}
+                            namespace="auth.signup"
+                            t={t}
+                        />
 
-                        {/* Divider */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex-1 h-px bg-gray-100" />
-                            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">ou</span>
-                            <div className="flex-1 h-px bg-gray-100" />
-                        </div>
+                        {/* Google - hidden in in-app browsers */}
+                        {!isInApp && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handleGoogleLogin}
+                                    disabled={loading}
+                                    className="w-full flex items-center justify-center gap-3 h-12 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-[0.99] disabled:opacity-50"
+                                >
+                                    <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 488 512">
+                                        <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
+                                    </svg>
+                                    {t("google")}
+                                </button>
+
+                                {/* Divider */}
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-1 h-px bg-gray-100" />
+                                    <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">ou</span>
+                                    <div className="flex-1 h-px bg-gray-100" />
+                                </div>
+                            </>
+                        )}
 
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="space-y-4">
