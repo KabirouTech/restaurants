@@ -156,7 +156,8 @@
         "description": "Pour les traiteurs établis qui veulent tout centraliser.",
         "cta": "Démarrer en Premium",
         "badge": "Le plus populaire",
-        "features": ["Commandes illimitées", "5 utilisateurs inclus", "Menu illimité", "Messagerie unifiée complète", "WhatsApp + Instagram + Email", "Calendrier & capacité avancés", "CRM clients illimité", "Support 24h"],
+        "features": ["Commandes illimitées", "5 utilisateurs inclus", "Menu illimité", "Messagerie unifiée (bientôt disponible)", "WhatsApp + Instagram + Messenger + Email", "Calendrier & capacité avancés", "CRM clients illimité", "Support 24h"],
+        "earlyAdopter": "La messagerie unifiée est en développement. Abonnez-vous maintenant pour y accéder en avant-première.",
         "missing": []
       },
       "enterprise": {
@@ -298,6 +299,7 @@
       "inventory": "Inventaire",
       "suppliers": "Fournisseurs",
       "recipes": "Recettes",
+      "support": "Support",
       "settings": "Paramètres",
       "logout": "Déconnexion",
       "notifications": "Activer Notifs",
@@ -649,14 +651,47 @@
       "headingOperations": "Opérations",
       "headingIntegrations": "Intégrations",
       "headingTeamPlan": "Équipe & Plan"
+    },
+    "support": {
+      "title": "Support",
+      "subtitle": "Signalez un problème et suivez sa résolution.",
+      "reportProblem": "Signaler un problème",
+      "noComplaints": "Aucun signalement pour le moment.",
+      "subject": "Objet",
+      "subjectPlaceholder": "Résumez le problème en quelques mots",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez le problème en détail...",
+      "photo": "Photo",
+      "audio": "Audio",
+      "uploadAudio": "Importer un audio",
+      "recordAudio": "Enregistrer",
+      "recording": "Enregistrement en cours...",
+      "stopRecording": "Arrêter",
+      "maxDuration": "Max 2 minutes",
+      "submit": "Envoyer",
+      "submitting": "Envoi en cours...",
+      "submitSuccess": "Signalement envoyé avec succès.",
+      "submitError": "Erreur lors de l'envoi du signalement.",
+      "statusOpen": "Ouvert",
+      "statusInProgress": "En cours",
+      "statusResolved": "Résolu",
+      "statusClosed": "Fermé",
+      "adminResponse": "Réponse de l'admin",
+      "noResponse": "Pas encore de réponse.",
+      "sentOn": "Envoyé le",
+      "all": "Tous",
+      "photoAttached": "Photo jointe",
+      "audioAttached": "Audio joint",
+      "details": "Détails",
+      "close": "Fermer"
     }
   },
   "planGate": {
     "unified_inbox": {
       "title": "Messagerie Unifiée",
-      "description": "Répondez aux messages WhatsApp, Instagram, Email et Messenger depuis une seule boîte de réception.",
-      "badge": "Fonctionnalité Premium",
-      "cta": "Passer au Premium"
+      "description": "La messagerie unifiée (WhatsApp, Instagram, Email, Messenger) est en cours de développement. Passez au Premium dès maintenant pour en bénéficier en avant-première dès son lancement.",
+      "badge": "Bientôt disponible",
+      "cta": "Devenir early adopter"
     },
     "default": {
       "title": "Fonctionnalité Premium",
