@@ -67,7 +67,7 @@
   },
   "homepage": {
     "hero": {
-      "badge": "Conçu pour les Traiteurs d'Afrique de l'Ouest",
+      "badge": "Conçu pour les traiteurs et food businesses de toute l'Afrique",
       "title1": "L'excellence culinaire",
       "title2": "sans le chaos administratif.",
       "subtitle": "Concentrez-vous sur le goût, nous gérons le reste. Devis, agenda, stock et relation client dans une application imprégnée de l'esprit de la Teranga.",
@@ -79,6 +79,9 @@
     },
     "trust": {
       "label": "Ils cuisinent avec nous"
+    },
+    "identity": {
+      "pills": ["Vision panafricaine", "Motifs culturels modernes", "Conçu pour les opérateurs locaux"]
     },
     "problem": {
       "title": "Vous vous reconnaissez ?",
@@ -123,6 +126,36 @@
       "menu": { "title": "Menu Digital", "desc": "Publiez votre carte en ligne avec photos, prix et allergènes. Partageable avec vos clients." },
       "crm": { "title": "CRM Clients", "desc": "Historique de commandes, notes, tags. Retrouvez n'importe quel client en 2 secondes." },
       "team": { "title": "Gestion d'Équipe", "desc": "Invitez vos collaborateurs avec des rôles précis : admin, manager, agent." }
+    },
+    "storefront": {
+      "nav": "Boutique",
+      "badge": "Boutique publique",
+      "title": "Montrez la boutique sur laquelle vos clients commanderont",
+      "subtitle": "Depuis votre dashboard, publiez en quelques minutes une page client à votre image. Vos plats, vos photos, vos couleurs, et un parcours de commande clair.",
+      "dashboardTitle": "Depuis votre côté admin",
+      "dashboardBody": "Créez et mettez à jour votre boutique publique sans code. Une modification dans votre menu, et la vitrine se synchronise immédiatement.",
+      "dashboardItems": ["Personnalisez les couleurs et le logo", "Créez des catégories et plats vedettes", "Définissez prix, photos et détails de préparation", "Publiez et partagez le lien de votre boutique"],
+      "publicTitle": "Ce que vos clients voient",
+      "publicBody": "Une vitrine mobile-first, propre et rapide, avec catégories, cartes plats, infos de préparation et bouton de commande.",
+      "publicItems": ["Design mobile-first", "Identité visuelle de votre marque", "CTA commande direct", "Navigation menu rapide"],
+      "mock": {
+        "name": "Chez Fatou Traiteur",
+        "nav": ["Accueil", "Menu", "À propos", "Contact"],
+        "heroTag": "Plat Signature",
+        "heroTitle": "Goûtez l'âme de la cuisine africaine",
+        "heroDescription": "Menus sur mesure pour événements, entreprises et familles. Produits frais, saveurs fortes et livraison fiable.",
+        "menuTitle": "Notre Carte",
+        "categories": ["Populaires", "Déjeuner", "Plateaux", "Boissons"],
+        "searchPlaceholder": "Rechercher un plat...",
+        "orderTitle": "Votre commande",
+        "orderCta": "Voir le détail & commander",
+        "dishes": [
+          { "name": "Thiéboudienne Royale", "price": "11 000 FCFA", "prep": "Prêt en 35 min" },
+          { "name": "Poulet Yassa Signature", "price": "9 000 FCFA", "prep": "Prêt en 30 min" },
+          { "name": "Bissap Gingembre", "price": "3 500 FCFA", "prep": "Bouteille fraîche · 1L" }
+        ],
+        "note": "Le client choisit ses plats, confirme par message, et la commande arrive directement dans RestaurantsOS."
+      }
     },
     "howItWorks": {
       "title": "Lancez-vous en 5 minutes.",
@@ -219,7 +252,7 @@
       "note": "Gratuit jusqu'à 30 commandes · Installation en 5 minutes · Support en français"
     },
     "footer": {
-      "tagline": "La plateforme tout-en-un pour les traiteurs qui veulent allier tradition et technologie. Sénégal, Côte d'Ivoire et toute l'Afrique de l'Ouest.",
+      "tagline": "La plateforme tout-en-un pour les traiteurs et food businesses qui allient tradition et technologie à l'échelle du continent africain.",
       "product": "Produit",
       "company": "Entreprise",
       "features": "Fonctionnalités",
@@ -229,7 +262,7 @@
       "about": "À propos",
       "contact": "Contact",
       "legal": "Mentions légales",
-      "copyright": "Fait avec passion pour l'Afrique de l'Ouest"
+      "copyright": "Fait avec passion pour les food businesses africains"
     }
   },
   "auth": {
@@ -314,6 +347,8 @@
       "recipes": "Recettes",
       "support": "Support",
       "settings": "Paramètres",
+      "account": "Mon Compte",
+      "accountDescription": "Gérez votre profil, email, mot de passe et sécurité.",
       "logout": "Déconnexion",
       "notifications": "Activer Notifs",
       "appearance": "Apparence",
@@ -552,7 +587,7 @@
       "namePlaceholder": "Ex : Thiéboudienne au poisson frais",
       "linkToProduct": "Lier à un plat du menu",
       "shortDescription": "Description courte",
-      "descPlaceholder": "Un plat traditionnel sénégalais...",
+      "descPlaceholder": "Un plat africain traditionnel...",
       "portions": "Portions",
       "preparation": "Préparation",
       "cooking": "Cuisson",
@@ -651,6 +686,10 @@
       "socialDesc": "Liens affichés dans le footer de votre vitrine.",
       "saveSettings": "Enregistrer les paramètres",
       "settingsUpdated": "Paramètres entreprise mis à jour !",
+      "sidebarAccount": "Mon Compte",
+      "headingAccount": "Compte",
+      "accountTitle": "Mon Compte",
+      "accountDesc": "Gérez votre profil, email, mot de passe et sécurité.",
       "sidebarShop": "Boutique & Contact",
       "sidebarSite": "Éditeur Vitrine",
       "sidebarMenu": "Carte & Allergènes",
