@@ -1,17 +1,17 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
 // --- Create Product ---
 export async function createProductAction(formData: FormData) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return { error: "Non authentifié" };
-
     // Get Organization ID
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("clerk_id", userId).single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
     const name = formData.get("name") as string;
@@ -42,9 +42,10 @@ export async function createProductAction(formData: FormData) {
 
 // --- Update Product ---
 export async function updateProductAction(formData: FormData) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
@@ -78,9 +79,10 @@ export async function updateProductAction(formData: FormData) {
 
 // --- Delete Product ---
 export async function deleteProductAction(productId: string) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const { error } = await supabase
         .from("products")
@@ -96,14 +98,14 @@ export async function deleteProductAction(productId: string) {
 export async function bulkDeleteProductsAction(ids: string[]) {
     if (!ids.length) return { error: "Aucun produit sélectionné." };
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
+    const supabase = await createClient();
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 

@@ -1,19 +1,12 @@
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { Image } from "lucide-react";
 import { BannersClient } from "./BannersClient";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function AdminBannersPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_super_admin")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
     if (!profile?.is_super_admin) redirect("/dashboard");
 
     const supabaseAdmin = createAdminClient(

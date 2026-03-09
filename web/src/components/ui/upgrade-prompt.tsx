@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Zap, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -89,6 +90,7 @@ interface UpgradeDialogProps {
 }
 
 export function UpgradeDialog({ orgId, open, onOpenChange }: UpgradeDialogProps) {
+  const { userId } = useAuth()
   const [step, setStep] = useState<Step>('form')
   const [notes, setNotes] = useState('')
   const [requestId, setRequestId] = useState<string | null>(null)
@@ -96,6 +98,7 @@ export function UpgradeDialog({ orgId, open, onOpenChange }: UpgradeDialogProps)
   const [formError, setFormError] = useState<string | null>(null)
 
   async function handleSubmit() {
+    if (!userId) { setFormError('Non authentifié'); return }
     setSubmitting(true)
     setFormError(null)
 
@@ -103,7 +106,7 @@ export function UpgradeDialog({ orgId, open, onOpenChange }: UpgradeDialogProps)
       orgId,
       targetPlan: 'premium',
       notes: notes || undefined,
-    })
+    }, userId)
 
     setSubmitting(false)
     if (result.success && result.requestId) {

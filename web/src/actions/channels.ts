@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
@@ -10,16 +11,14 @@ export async function connectChannelAction(
   providerId: string,
   credentials: Record<string, any>
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
+  const { userId } = await auth();
+  if (!userId) return { error: "Non authentifié" };
 
+  const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", user.id)
+    .eq("clerk_id", userId)
     .single();
   if (!profile?.organization_id) return { error: "Aucune organisation" };
 
@@ -67,16 +66,14 @@ export async function connectChannelAction(
 }
 
 export async function disconnectChannelAction(channelId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
+  const { userId } = await auth();
+  if (!userId) return { error: "Non authentifié" };
 
+  const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", user.id)
+    .eq("clerk_id", userId)
     .single();
   if (!profile?.organization_id) return { error: "Aucune organisation" };
 
@@ -106,16 +103,14 @@ export async function disconnectChannelAction(channelId: string) {
 }
 
 export async function testWhatsAppConnectionAction(channelId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
+  const { userId } = await auth();
+  if (!userId) return { error: "Non authentifié" };
 
+  const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", user.id)
+    .eq("clerk_id", userId)
     .single();
   if (!profile?.organization_id) return { error: "Aucune organisation" };
 
@@ -156,16 +151,14 @@ export async function testWhatsAppConnectionAction(channelId: string) {
 }
 
 export async function fetchChannelsAction() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
+  const { userId } = await auth();
+  if (!userId) return { error: "Non authentifié" };
 
+  const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", user.id)
+    .eq("clerk_id", userId)
     .single();
   if (!profile?.organization_id) return { error: "Aucune organisation" };
 

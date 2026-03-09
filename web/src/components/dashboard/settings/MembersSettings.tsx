@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Users, UserPlus, Mail, MoreHorizontal, Shield, Loader2, RefreshCw, Clock } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -69,6 +70,7 @@ function initials(name: string | null, email?: string): string {
 }
 
 export function MembersSettings({ orgId, currentUserProfileId }: MembersSettingsProps) {
+  const { userId } = useAuth()
   const [members, setMembers] = useState<Member[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,7 +101,7 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
     setInviteError(null)
     setUpgradeRequired(false)
 
-    const result = await inviteMember(orgId, email.trim(), role)
+    const result = await inviteMember(orgId, email.trim(), role, userId!)
     setInviting(false)
 
     if (result.success) {

@@ -1,19 +1,12 @@
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { CreditCard, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { PaymentsClient } from "./PaymentsClient";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function AdminPaymentsPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_super_admin")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
     if (!profile?.is_super_admin) redirect("/dashboard");
 
     const admin = createAdminClient(
@@ -41,21 +34,21 @@ export default async function AdminPaymentsPage() {
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             {/* Header */}
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center px-8 shrink-0">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center px-4 md:px-8 shrink-0">
                 <div>
-                    <h1 className="text-2xl font-bold font-serif flex items-center gap-2">
-                        <CreditCard className="h-6 w-6 text-green-500" />
+                    <h1 className="text-xl md:text-2xl font-bold font-serif flex items-center gap-2">
+                        <CreditCard className="h-5 w-5 md:h-6 md:w-6 text-green-500" />
                         Paiements & Upgrades
                     </h1>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm text-muted-foreground">
                         {pending + processing} en attente · {completed} traités
                     </p>
                 </div>
             </header>
 
-            <div className="p-6 md:p-8 space-y-6">
+            <div className="p-4 md:p-8 space-y-4 md:space-y-6">
                 {/* Stats */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     <MiniStat icon={<Clock className="h-4 w-4" />} color="text-amber-500 bg-amber-50" label="En attente" value={pending} />
                     <MiniStat icon={<AlertCircle className="h-4 w-4" />} color="text-blue-500 bg-blue-50" label="En cours" value={processing} />
                     <MiniStat icon={<CheckCircle2 className="h-4 w-4" />} color="text-green-500 bg-green-50" label="Approuvés" value={completed} />

@@ -62,12 +62,12 @@ export interface Invitation {
 export async function inviteMember(
   orgId: string,
   email: string,
-  role: MemberRole
+  role: MemberRole,
+  userId: string
 ): Promise<{ success: boolean; invitation?: Invitation; error?: string; upgradeRequired?: boolean }> {
-  const supabase = createClient()
+  if (!userId) return { success: false, error: 'Non authentifié' }
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { success: false, error: 'Non authentifié' }
+  const supabase = createClient()
 
   // 1. Vérifier la limite de membres du plan
   const limitCheck = await checkPlanLimit(orgId, 'members')
@@ -92,7 +92,7 @@ export async function inviteMember(
     .upsert(
       {
         organization_id: orgId,
-        invited_by: user.user.id,
+        invited_by: userId,
         email: email.toLowerCase().trim(),
         role,
         status: 'pending',
@@ -148,16 +148,16 @@ async function sendInvitationEmail(
  * Appelle la fonction PostgreSQL `accept_invitation`.
  */
 export async function acceptInvitation(
-  token: string
+  token: string,
+  userId: string
 ): Promise<{ success: boolean; organizationId?: string; role?: MemberRole; error?: string; upgradeRequired?: boolean }> {
-  const supabase = createClient()
+  if (!userId) return { success: false, error: 'Vous devez être connecté pour accepter une invitation.' }
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { success: false, error: 'Vous devez être connecté pour accepter une invitation.' }
+  const supabase = createClient()
 
   const { data, error } = await supabase.rpc('accept_invitation', {
     p_token: token,
-    p_user_id: user.user.id,
+    p_user_id: userId,
   })
 
   if (error) {

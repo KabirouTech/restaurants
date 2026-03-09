@@ -2,7 +2,7 @@ export default function BannersLoading() {
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans animate-in fade-in duration-500">
             {/* Header Skeleton */}
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-4 md:px-8 z-10 shrink-0">
                 <div>
                     <div className="flex items-center gap-3">
                         <div className="h-7 w-7 bg-orange-500/20 animate-pulse rounded" />

@@ -1,22 +1,16 @@
-import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { MessageSquareWarning } from "lucide-react";
 import { SupportClient } from "@/components/dashboard/support/SupportClient";
 import { getTranslations } from "next-intl/server";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export const dynamic = "force-dynamic";
 
 export default async function SupportPage() {
     const t = await getTranslations("dashboard.support");
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return <div>Non authentifié</div>;
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return <div>Non authentifié</div>;
 
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
     if (!profile?.organization_id) return <div>Aucune organisation</div>;
 
     const orgId = profile.organization_id;

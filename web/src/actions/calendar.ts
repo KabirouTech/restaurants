@@ -1,19 +1,12 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 async function getOrgContext() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Non authentifié");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) throw new Error("Non authentifié");
 
     if (!profile?.organization_id) throw new Error("Aucune organisation");
 

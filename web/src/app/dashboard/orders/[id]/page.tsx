@@ -1,4 +1,3 @@
-import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -9,20 +8,12 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OrderActions } from "@/components/dashboard/orders/OrderActions";
 import { formatPrice } from "@/lib/currencies";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    // Get Org Info for Invoice Header
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("*, organizations(name, settings)")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
 
     // @ts-ignore
     const org = profile?.organizations;

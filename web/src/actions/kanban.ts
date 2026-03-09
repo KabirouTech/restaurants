@@ -1,15 +1,12 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export async function updateOrderStatusAction(orderId: string, newStatus: string) {
-    const supabaseUser = await createClient();
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabaseUser.from("profiles").select("organization_id").eq("id", user.id).single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return { error: "Non authentifié" };
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
     const supabase = createServiceClient(
@@ -30,11 +27,8 @@ export async function updateOrderStatusAction(orderId: string, newStatus: string
 }
 
 export async function updateKanbanColumnsAction(columns: { id: string; label: string; color: string }[]) {
-    const supabaseUser = await createClient();
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabaseUser.from("profiles").select("organization_id").eq("id", user.id).single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return { error: "Non authentifié" };
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
     const supabase = createServiceClient(

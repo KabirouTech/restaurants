@@ -87,21 +87,21 @@ export function OrganizationsClient({
     };
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans">
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
+        <div className="flex flex-col h-full overflow-hidden bg-background text-foreground font-sans">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-4 md:px-8 z-10 shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold font-serif text-foreground flex items-center gap-3">
-                        <Building2 className="h-7 w-7 text-orange-500" />
+                    <h1 className="text-xl md:text-3xl font-bold font-serif text-foreground flex items-center gap-2 md:gap-3">
+                        <Building2 className="h-5 w-5 md:h-7 md:w-7 text-orange-500" />
                         Organisations
                     </h1>
-                    <p className="text-sm text-muted-foreground font-light">{organizations.length} organisation{organizations.length > 1 ? "s" : ""}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground font-light">{organizations.length} organisation{organizations.length > 1 ? "s" : ""}</p>
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-6 md:p-8">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 {/* Filters */}
-                <form className="flex flex-wrap items-center gap-3 mb-6">
-                    <div className="relative flex-1 min-w-[200px] max-w-md">
+                <form className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-6">
+                    <div className="relative flex-1 min-w-[160px] max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
                             name="search"
@@ -140,8 +140,8 @@ export function OrganizationsClient({
 
                 {/* Bulk action bar */}
                 {selected.size > 0 && (
-                    <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                        <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                    <div className="mb-4 flex flex-wrap items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                        <span className="text-xs md:text-sm font-medium text-orange-700 dark:text-orange-300">
                             {selected.size} sélectionnée{selected.size > 1 ? "s" : ""}
                         </span>
                         <div className="flex-1" />
@@ -149,33 +149,78 @@ export function OrganizationsClient({
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelected(new Set())}
-                            className="text-muted-foreground"
+                            className="text-muted-foreground text-xs h-7"
                         >
                             Désélectionner
                         </Button>
                         <Button
                             size="sm"
-                            className="bg-green-500 hover:bg-green-600 text-white"
+                            className="bg-green-500 hover:bg-green-600 text-white text-xs h-7"
                             onClick={() => handleBulkToggle("activate")}
                             disabled={isPending}
                         >
                             {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Power className="h-3.5 w-3.5 mr-1" />}
-                            Activer ({selected.size})
+                            Activer
                         </Button>
                         <Button
                             size="sm"
-                            className="bg-red-500 hover:bg-red-600 text-white"
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs h-7"
                             onClick={() => handleBulkToggle("deactivate")}
                             disabled={isPending}
                         >
                             {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <PowerOff className="h-3.5 w-3.5 mr-1" />}
-                            Désactiver ({selected.size})
+                            Désactiver
                         </Button>
                     </div>
                 )}
 
-                {/* Table */}
-                <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                {/* ── MOBILE: Compact list ──────────────────────── */}
+                <div className="md:hidden bg-card rounded-xl border border-border overflow-hidden">
+                    {organizations.length === 0 ? (
+                        <div className="py-12 text-center text-muted-foreground text-sm">
+                            Aucune organisation trouvée.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-border">
+                            {organizations.map((org) => (
+                                <div
+                                    key={org.id}
+                                    className={`flex items-center gap-2.5 px-3 py-2.5 ${selected.has(org.id) ? "bg-orange-50/50 dark:bg-orange-950/10" : ""}`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={selected.has(org.id)}
+                                        onChange={() => toggleSelect(org.id)}
+                                        className="h-3.5 w-3.5 rounded border-border accent-orange-500 shrink-0"
+                                    />
+                                    <Link href={`/admin/organizations/${org.id}`} className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-sm font-semibold truncate hover:text-orange-500 transition-colors">{org.name}</span>
+                                            <span className={`px-1.5 py-0 rounded-full text-[9px] font-semibold shrink-0 ${planBadge(org.subscription_plan || "free")}`}>
+                                                {org.subscription_plan || "free"}
+                                            </span>
+                                            <span className={`px-1.5 py-0 rounded-full text-[9px] font-semibold shrink-0 ${org.is_active !== false
+                                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                }`}>
+                                                {org.is_active !== false ? "Actif" : "Inactif"}
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground truncate">
+                                            /{org.slug} · {orderCountMap[org.id] || 0} cmd
+                                        </p>
+                                    </Link>
+                                    <span className="text-[10px] text-muted-foreground shrink-0">
+                                        {org.created_at ? format(new Date(org.created_at), "d MMM yy", { locale: fr }) : "-"}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* ── DESKTOP: Table layout ─────────────────────── */}
+                <div className="hidden md:block bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>

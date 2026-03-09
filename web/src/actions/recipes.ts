@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -24,9 +25,10 @@ export type RecipeUpsertInput = {
 };
 
 export async function upsertRecipeAction(input: RecipeUpsertInput) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const payload = {
         organization_id:    input.organizationId,
@@ -70,9 +72,10 @@ export async function upsertRecipeAction(input: RecipeUpsertInput) {
 }
 
 export async function deleteRecipeAction(id: string) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const { error } = await supabase.from("recipes").delete().eq("id", id);
     if (error) return { error: error.message };
@@ -95,9 +98,10 @@ export type RecipeImportRow = {
 };
 
 export async function importRecipesAction(organizationId: string, rows: RecipeImportRow[]) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const payload = rows.map(r => ({
         organization_id:   organizationId,
@@ -122,9 +126,10 @@ export async function importRecipesAction(organizationId: string, rows: RecipeIm
 }
 
 export async function moveRecipeToFolderAction(recipeId: string, folderId: string | null) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const { error } = await supabase
         .from("recipes")
@@ -137,9 +142,10 @@ export async function moveRecipeToFolderAction(recipeId: string, folderId: strin
 }
 
 export async function createFolderAction(organizationId: string, name: string, color: string) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const { data, error } = await supabase
         .from("recipe_folders")
@@ -153,9 +159,10 @@ export async function createFolderAction(organizationId: string, name: string, c
 }
 
 export async function renameFolderAction(folderId: string, name: string) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const { error } = await supabase
         .from("recipe_folders")
@@ -168,9 +175,10 @@ export async function renameFolderAction(folderId: string, name: string) {
 }
 
 export async function deleteFolderAction(folderId: string) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const { error } = await supabase
         .from("recipe_folders")
@@ -183,9 +191,10 @@ export async function deleteFolderAction(folderId: string) {
 }
 
 export async function saveTranscriptAction(recipeId: string, transcript: string, language: 'fr' | 'en') {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     const { error } = await supabase
         .from("recipes")

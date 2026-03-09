@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { format, addDays, addWeeks, subWeeks, startOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getTranslations } from "next-intl/server";
@@ -29,22 +29,14 @@ export default async function DashboardPage({
   searchParams: Promise<{ capacityRange?: string; revenueRange?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient(); // Standard client for auth
-  const { data: { user } } = await supabase.auth.getUser();
+  const { userId, profile } = await getCurrentProfile();
 
-  if (!user) {
-    redirect("/auth/login");
+  if (!userId) {
+    redirect("/sign-in");
   }
 
   const t = await getTranslations("dashboard.home");
   const tc = await getTranslations("common");
-
-  // Fetch Profile & Organization (User Context)
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*, organizations(name, slug, subscription_plan)")
-    .eq("id", user.id)
-    .single();
 
   if (!profile || !profile.organization_id) {
     redirect("/dashboard/onboarding");
@@ -54,7 +46,6 @@ export default async function DashboardPage({
   // @ts-ignore
   const orgName = profile.organizations?.name || "Votre Restaurant";
 
-  // --- Secure Data Fetching (Service Role) ---
   const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,

@@ -136,7 +136,7 @@ export function ImportSuppliersDialog({ open, onOpenChange }: {
 
     return (
         <Dialog open={open} onOpenChange={close}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-[95vw] sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <FileSpreadsheet className="h-5 w-5 text-primary" />

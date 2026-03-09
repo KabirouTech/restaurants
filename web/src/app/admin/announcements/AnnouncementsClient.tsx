@@ -175,9 +175,9 @@ export function AnnouncementsClient({ announcements }: { announcements: Announce
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans">
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-4 md:px-8 z-10 shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold font-serif text-foreground flex items-center gap-3">
+                    <h1 className="text-xl md:text-3xl font-bold font-serif text-foreground flex items-center gap-2 md:gap-3">
                         <Megaphone className="h-7 w-7 text-orange-500" />
                         Annonces
                     </h1>

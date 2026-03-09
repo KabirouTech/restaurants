@@ -1,9 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Crown, Users, Zap, Building2, CalendarDays, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 const PLAN_META: Record<string, { label: string; color: string; bg: string }> = {
     free:       { label: "Gratuit",    color: "text-slate-700",  bg: "bg-slate-100" },
@@ -12,15 +12,8 @@ const PLAN_META: Record<string, { label: string; color: string; bg: string }> = 
 };
 
 export default async function AdminSubscriptionsPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_super_admin")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
     if (!profile?.is_super_admin) redirect("/dashboard");
 
     const admin = createAdminClient(

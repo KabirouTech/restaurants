@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
@@ -12,9 +13,10 @@ export async function updateMenuInfoAction(input: {
     labels: string[]
     allergensPresent: string[]
 }) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     try {
         const { data: existingOrg } = await supabase
@@ -58,9 +60,10 @@ export async function updateMenuInfoAction(input: {
 }
 
 export async function updateSettingsAction(formData: FormData) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
 
     try {
         const orgId = formData.get("orgId") as string;

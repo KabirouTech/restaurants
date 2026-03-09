@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
@@ -36,9 +37,8 @@ interface SiteSettingsPayload {
 }
 
 export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
     try {
         const supabaseAdmin = createAdminClient(

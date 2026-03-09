@@ -1,8 +1,8 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { Resend } from "resend";
-import { createClient as createServerClient } from "@/utils/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js"; // Import Admin Client
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { formatPrice } from "@/lib/currencies";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -12,10 +12,8 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
         return { error: "ID de commande et email requis" };
     }
 
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    const { userId } = await auth();
+    if (!userId) {
         return { error: "Non authentifié" };
     }
 

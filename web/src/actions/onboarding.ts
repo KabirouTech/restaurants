@@ -1,15 +1,14 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
 export async function createOrganizationAction(formData: FormData) {
-    // 1. Verify User Authentication (Standard Client)
-    const supabaseAuth = await createClient();
-    const { data: { user } } = await supabaseAuth.auth.getUser();
+    // 1. Verify User Authentication (Clerk)
+    const { userId } = await auth();
 
-    if (!user) {
+    if (!userId) {
         return { error: "Non authentifié" };
     }
 
@@ -63,12 +62,15 @@ export async function createOrganizationAction(formData: FormData) {
     // because RLS might be blocking 'INSERT' if not configured.
     const { error: profileError } = await adminClient
         .from("profiles")
-        .upsert({
-            id: user.id,
-            organization_id: org.id,
-            full_name: fullName,
-            role: "admin",
-        });
+        .upsert(
+            {
+                clerk_id: userId,
+                organization_id: org.id,
+                full_name: fullName,
+                role: "admin",
+            },
+            { onConflict: "clerk_id" }
+        );
 
     if (profileError) {
         console.error("Profile Error:", profileError);
@@ -119,6 +121,6 @@ export async function createOrganizationAction(formData: FormData) {
     }));
     await adminClient.from("defaults_calendar").insert(defaultCalendar);
 
-    revalidatePath("/dashboard");
+    revalidatePath("/", "layout");
     return { success: true, orgId: org.id };
 }

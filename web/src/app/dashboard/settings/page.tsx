@@ -14,23 +14,33 @@ import { MenuInfoSettings } from "@/components/dashboard/settings/MenuInfoSettin
 import { SettingsSidebar } from "@/components/dashboard/settings/SettingsSidebar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ tab?: string }>;
+}) {
+    const params = await searchParams;
     const t = await getTranslations("dashboard.settings");
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("*, organizations(*)")
-        .eq("id", user.id)
-        .single();
-
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
-    const org = profile.organizations;
+    let org = profile.organizations as Record<string, any> | null | undefined;
+    if (!org) {
+        const { data: orgData } = await supabase
+            .from("organizations")
+            .select("*")
+            .eq("id", profile.organization_id)
+            .single();
+        org = orgData;
+    }
+
+    if (!org) redirect("/dashboard/onboarding");
+
     const settings = (org.settings || {}) as Record<string, any>;
 
     const { data: capacityTypes } = await supabase
@@ -47,6 +57,17 @@ export default async function SettingsPage() {
         .eq("is_active", true);
 
     const kanbanColumns = settings.kanban_columns || DEFAULT_KANBAN_COLUMNS;
+    const allowedTabs = new Set([
+        "general",
+        "site",
+        "menu",
+        "capacity",
+        "kanban",
+        "channels",
+        "members",
+        "billing",
+    ]);
+    const initialTab = allowedTabs.has(params.tab || "") ? (params.tab as string) : "general";
 
     return (
         <div className="min-h-screen animate-in fade-in duration-500 pb-24">
@@ -71,7 +92,7 @@ export default async function SettingsPage() {
             </div>
 
             <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
-                <Tabs defaultValue="general" className="flex flex-col gap-0 md:flex-row md:gap-8 w-full items-start">
+                <Tabs defaultValue={initialTab} className="flex flex-col gap-0 md:flex-row md:gap-8 w-full items-start">
 
                     {/* Sidebar — sticky on mobile (top scroll), sticky on desktop */}
                     <div className="shrink-0 z-10 w-full md:w-auto md:self-stretch -mx-4 md:mx-0 mb-4 md:mb-0">

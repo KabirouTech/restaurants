@@ -7,4 +7,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  global: {
+    fetch: async (url, options = {}) => {
+      let clerkToken = null;
+      try {
+        // @ts-ignore
+        clerkToken = typeof window !== 'undefined' ? await window.Clerk?.session?.getToken({ template: 'supabase' }) : null;
+      } catch (error) {
+        console.warn('Clerk: Supabase JWT template not found.');
+      }
+
+      const headers = new Headers(options?.headers)
+      if (clerkToken) {
+        headers.set('Authorization', `Bearer ${clerkToken}`)
+      }
+
+      return fetch(url, {
+        ...options,
+        headers,
+      })
+    },
+  },
+})

@@ -2,7 +2,7 @@ export default function OrgDetailLoading() {
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans animate-in fade-in duration-500">
             {/* Header Skeleton */}
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center px-8 z-10 shrink-0">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center px-4 md:px-8 z-10 shrink-0">
                 <div className="flex items-center gap-4">
                     <div className="h-5 w-5 bg-muted animate-pulse rounded" />
                     <div>

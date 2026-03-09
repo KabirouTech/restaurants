@@ -1,18 +1,19 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
 export async function uploadComplaintFileAction(formData: FormData) {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
+    const supabase = await createServerClient();
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
@@ -64,15 +65,14 @@ export async function createComplaintAction(data: {
     photo_url?: string | null;
     audio_url?: string | null;
 }) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createServerClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
@@ -82,7 +82,7 @@ export async function createComplaintAction(data: {
 
     const { error } = await supabase.from("complaints").insert({
         organization_id: profile.organization_id,
-        submitted_by: user.id,
+        submitted_by: userId,
         subject: data.subject.trim(),
         description: data.description.trim(),
         photo_url: data.photo_url || null,

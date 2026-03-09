@@ -1,21 +1,10 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { getSuperAdminUserIdOrNull } from '@/lib/auth/super-admin'
 
-async function getAdminUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_super_admin')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.is_super_admin) return null
-  return user
+async function getAdminUserId() {
+  return getSuperAdminUserIdOrNull()
 }
 
 export async function approveUpgradeRequest(
@@ -26,8 +15,8 @@ export async function approveUpgradeRequest(
   paymentReference: string | null,
   adminNotes: string | null,
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getAdminUser()
-  if (!user) return { success: false, error: 'Non autorisé' }
+  const adminUserId = await getAdminUserId()
+  if (!adminUserId) return { success: false, error: 'Non autorisé' }
 
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,7 +30,7 @@ export async function approveUpgradeRequest(
     {
       p_org_id: orgId,
       p_new_plan: targetPlan,
-      p_triggered_by: user.id,
+      p_triggered_by: adminUserId,
       p_payment_reference: paymentReference,
       p_payment_provider: paymentMethod,
     }
@@ -60,7 +49,7 @@ export async function approveUpgradeRequest(
     .update({
       status: 'completed',
       processed_at: new Date().toISOString(),
-      processed_by: user.id,
+      processed_by: adminUserId,
       admin_notes: adminNotes,
     })
     .eq('id', requestId)
@@ -76,8 +65,8 @@ export async function rejectUpgradeRequest(
   requestId: string,
   adminNotes: string | null,
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getAdminUser()
-  if (!user) return { success: false, error: 'Non autorisé' }
+  const adminUserId = await getAdminUserId()
+  if (!adminUserId) return { success: false, error: 'Non autorisé' }
 
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -90,7 +79,7 @@ export async function rejectUpgradeRequest(
     .update({
       status: 'rejected',
       processed_at: new Date().toISOString(),
-      processed_by: user.id,
+      processed_by: adminUserId,
       admin_notes: adminNotes,
     })
     .eq('id', requestId)

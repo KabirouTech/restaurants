@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -13,12 +14,11 @@ function normalizeCategory(raw: any): string {
 export async function importMenuAction(items: any[]) {
     if (!items || items.length === 0) return { error: "Aucun élément à importer" };
 
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("clerk_id", userId).single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
     try {

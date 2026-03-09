@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Check, CheckCircle2, Lock, Loader2, MessageSquare, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -166,6 +167,7 @@ export function PlanGate({ feature }: PlanGateProps) {
 // ─── UpgradeDialog ────────────────────────────────────────────────────────────
 
 function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () => void; feature: GatedFeature }) {
+    const { userId } = useAuth();
     const { organization } = useOrganization();
     const meta = FEATURE_META[feature];
     const [step, setStep] = useState<"form" | "done">("form");
@@ -173,14 +175,14 @@ function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () 
     const [loading, setLoading] = useState(false);
 
     async function handleSubmit() {
-        if (!organization?.id) return;
+        if (!organization?.id || !userId) return;
         setLoading(true);
         try {
             const result = await createUpgradeRequest({
                 orgId: organization.id,
                 targetPlan: meta.plan,
                 notes: notes || undefined,
-            });
+            }, userId);
             if (result.success) {
                 setStep("done");
             } else {

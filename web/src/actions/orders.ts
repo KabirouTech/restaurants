@@ -3,17 +3,13 @@
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 // --- Create Order + Customer + Items ---
 export async function createOrderAction(formData: any) {
-    // 1. Verify User with Cookie Client
-    const supabaseUser = await createServerClient();
-    const { data: { user } } = await supabaseUser.auth.getUser();
-
-    if (!user) return { error: "Non authentifié" };
-
-    // Get Org
-    const { data: profile } = await supabaseUser.from("profiles").select("organization_id").eq("id", user.id).single();
+    // 1. Verify User with Clerk
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return { error: "Non authentifié" };
     const orgId = profile?.organization_id;
     if (!orgId) return { error: "Organisation introuvable" };
 
@@ -94,11 +90,10 @@ export async function createOrderAction(formData: any) {
 
 // --- Search Customers ---
 export async function searchCustomersAction(query: string) {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return [];
 
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
+    const supabase = await createServerClient();
     const orgId = profile?.organization_id;
 
     if (!orgId) return [];
@@ -117,15 +112,9 @@ export async function searchCustomersAction(query: string) {
 export async function bulkDeleteOrdersAction(ids: string[]) {
     if (!ids.length) return { error: "Aucune commande sélectionnée." };
 
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return { error: "Non authentifié" };
     const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
     // Delete order_items first (FK constraint)

@@ -2,29 +2,28 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { MobileHeader } from "@/components/dashboard/MobileHeader";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { AnnouncementBar } from "@/components/dashboard/AnnouncementBar";
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import type { PlanKey } from "@/lib/plans/plan-limits";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { userId, profile } = await getCurrentProfile();
 
     // Check super admin status, onboarding and plan
     let isSuperAdmin = false;
     let hasOrganization = true;
     let plan: PlanKey = "free";
-    if (user) {
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_super_admin, organization_id")
-            .eq("id", user.id)
-            .single();
-        isSuperAdmin = profile?.is_super_admin === true;
-        hasOrganization = !!profile?.organization_id;
+    if (userId && profile) {
+        isSuperAdmin = profile.is_super_admin === true;
+        hasOrganization = !!profile.organization_id;
 
-        if (profile?.organization_id) {
-            const { data: org } = await supabase
+        if (profile.organization_id) {
+            const supabaseAdmin = createAdminClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!,
+                { auth: { persistSession: false } }
+            );
+            const { data: org } = await supabaseAdmin
                 .from("organizations")
                 .select("subscription_plan")
                 .eq("id", profile.organization_id)
@@ -35,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
     // No organization: render children only (no sidebar/announcement bar)
     // page.tsx handles the redirect to onboarding
-    if (user && !hasOrganization) {
+    if (userId && !hasOrganization) {
         return <>{children}</>;
     }
 

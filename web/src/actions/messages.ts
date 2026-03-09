@@ -1,19 +1,20 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { sendExternalMessage } from "@/lib/channels/index";
 
 export async function fetchMessagesAction(conversationId: string) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
+    const supabase = await createClient();
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Aucune organisation" };
 
@@ -49,14 +50,14 @@ export async function fetchMessagesAction(conversationId: string) {
 }
 
 export async function sendMessageAction(conversationId: string, content: string) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
+    const supabase = await createClient();
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Aucune organisation" };
 

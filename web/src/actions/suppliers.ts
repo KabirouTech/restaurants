@@ -1,18 +1,18 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function createSupplierAction(formData: FormData) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createServerClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
@@ -56,15 +56,14 @@ export async function quickCreateSupplierAction(input: {
     address?: string;
     notes?: string;
 }) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createServerClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
@@ -95,10 +94,10 @@ export async function quickCreateSupplierAction(input: {
 }
 
 export async function updateSupplierAction(formData: FormData) {
-    const supabase = await createServerClient();
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const supabase = await createServerClient();
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
@@ -135,10 +134,10 @@ export async function updateSupplierAction(formData: FormData) {
 }
 
 export async function deleteSupplierAction(id: string) {
-    const supabase = await createServerClient();
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const supabase = await createServerClient();
 
     try {
         const { error } = await supabase
@@ -161,14 +160,14 @@ export async function deleteSupplierAction(id: string) {
 export async function bulkDeleteSuppliersAction(ids: string[]) {
     if (!ids.length) return { error: "Aucun fournisseur sélectionné." };
 
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
+    const supabase = await createServerClient();
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
@@ -192,15 +191,14 @@ export async function importSuppliersAction(rows: {
     address?: string;
     notes?: string;
 }[]) {
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
+
     const supabase = await createServerClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
     const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 

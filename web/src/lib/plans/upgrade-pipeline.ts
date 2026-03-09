@@ -66,12 +66,12 @@ export interface SubscriptionInfo {
  * Une notification sera envoyée par email/WhatsApp une fois validée.
  */
 export async function createUpgradeRequest(
-  input: CreateUpgradeRequestInput
+  input: CreateUpgradeRequestInput,
+  userId: string
 ): Promise<{ success: boolean; requestId?: string; error?: string }> {
-  const supabase = createClient()
+  if (!userId) return { success: false, error: 'Non authentifié' }
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { success: false, error: 'Non authentifié' }
+  const supabase = createClient()
 
   // Récupérer le plan actuel pour vérifier que c'est bien un upgrade
   const { data: org } = await supabase
@@ -104,7 +104,7 @@ export async function createUpgradeRequest(
     .from('upgrade_requests')
     .insert({
       organization_id: input.orgId,
-      requested_by: user.user.id,
+      requested_by: userId,
       target_plan: input.targetPlan,
       payment_method: input.paymentMethod ?? 'other',
       payment_reference: input.paymentReference ?? null,
@@ -133,12 +133,12 @@ export async function createUpgradeRequest(
  */
 export async function approveUpgradeRequest(
   requestId: string,
+  userId: string,
   adminNotes?: string
 ): Promise<{ success: boolean; error?: string; result?: Record<string, unknown> }> {
-  const supabase = createClient()
+  if (!userId) return { success: false, error: 'Non authentifié' }
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { success: false, error: 'Non authentifié' }
+  const supabase = createClient()
 
   // Récupérer la demande
   const { data: req, error: reqErr } = await supabase
@@ -158,7 +158,7 @@ export async function approveUpgradeRequest(
     {
       p_org_id: req.organization_id,
       p_new_plan: req.target_plan,
-      p_triggered_by: user.user.id,
+      p_triggered_by: userId,
       p_payment_reference: req.payment_reference,
       p_payment_provider: req.payment_method,
     }
@@ -177,7 +177,7 @@ export async function approveUpgradeRequest(
     .update({
       status: 'completed',
       processed_at: new Date().toISOString(),
-      processed_by: user.user.id,
+      processed_by: userId,
       admin_notes: adminNotes ?? null,
     })
     .eq('id', requestId)

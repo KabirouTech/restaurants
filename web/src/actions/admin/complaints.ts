@@ -1,21 +1,11 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { requireSuperAdminAction } from "@/lib/auth/super-admin";
 
 async function verifySuperAdmin() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Non authentifié");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_super_admin")
-        .eq("id", user.id)
-        .single();
-
-    if (!profile?.is_super_admin) throw new Error("Accès refusé");
+    const { userId } = await requireSuperAdminAction();
 
     return {
         admin: createAdminClient(
@@ -23,7 +13,7 @@ async function verifySuperAdmin() {
             process.env.SUPABASE_SERVICE_ROLE_KEY!,
             { auth: { persistSession: false } }
         ),
-        userId: user.id,
+        userId,
     };
 }
 
