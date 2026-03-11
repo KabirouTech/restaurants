@@ -5,6 +5,7 @@ import { Plus, Minus, ShoppingBag, Trash2, ChevronRight, X, Search } from "lucid
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/context/CartContext";
 import { cn } from "@/lib/utils";
+import type { StorefrontTemplate } from "@/lib/storefront-templates";
 
 interface Product {
     id: string;
@@ -182,7 +183,15 @@ function OrderSummary({
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
-export function MenuSection({ products, currency }: { products: Product[], currency: string }) {
+export function MenuSection({
+    products,
+    currency,
+    template = "classic",
+}: {
+    products: Product[];
+    currency: string;
+    template?: StorefrontTemplate;
+}) {
     const categories = ["Tous", ...Array.from(new Set(products.map((p) => p.category))).sort()];
     const [activeCategory, setActiveCategory] = useState("Tous");
     const [search, setSearch] = useState("");
@@ -207,6 +216,72 @@ export function MenuSection({ products, currency }: { products: Product[], curre
                 (p.description || "").toLowerCase().includes(q)
             );
         });
+
+    if (template === "catering") {
+        const featuredProducts = products;
+        return (
+            <section id="menu" className="scroll-mt-24 py-16 lg:py-20">
+                <div className="text-center mb-10 space-y-3">
+                    <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-500">In digital documentary</p>
+                    <h2 className="text-4xl lg:text-5xl font-outfit font-bold text-zinc-900">Taly Feedback</h2>
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-700" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-500/40" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-500/40" />
+                    </div>
+                </div>
+
+                {featuredProducts.length === 0 ? (
+                    <div className="rounded-3xl border border-emerald-100 bg-[#f8fbf8] px-8 py-12 text-center text-zinc-600">
+                        Ajoutez vos plats dans le menu pour voir les cartes ici.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {featuredProducts.map((product) => (
+                            <article key={product.id} className="rounded-[22px] overflow-hidden border border-zinc-200/90 bg-white shadow-[0_16px_36px_-28px_rgba(15,23,42,0.7)]">
+                                <div className="relative h-56">
+                                    <img
+                                        src={product.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&h=700&fit=crop"}
+                                        alt={product.name}
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&h=700&fit=crop"; }}
+                                    />
+                                </div>
+                                <div className="p-5">
+                                    <h3 className="font-outfit font-semibold text-[1.35rem] leading-tight text-zinc-900">{product.name}</h3>
+                                    <p className="text-sm text-zinc-600 mt-2 min-h-[2.75rem]">
+                                        {product.description || "Une specialite maison preparee avec des ingredients frais."}
+                                    </p>
+                                    <div className="mt-4 flex items-center justify-between gap-2">
+                                        <span className="font-semibold text-emerald-700 text-[15px]">{formatPrice(product.price_cents, currency)}</span>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                className="rounded-full border-zinc-300 bg-white"
+                                                onClick={openCart}
+                                            >
+                                                Panier
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                className="rounded-full bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
+                                                onClick={() => handleAdd(product)}
+                                            >
+                                                Ajouter
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </section>
+        );
+    }
 
     return (
         <section id="menu" className="scroll-mt-24 py-16 lg:py-24">

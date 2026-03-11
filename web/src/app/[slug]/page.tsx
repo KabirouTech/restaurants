@@ -16,6 +16,8 @@ import { CartDrawer } from "@/components/storefront/CartDrawer";
 import { CartFloatingButton } from "@/components/storefront/CartFloatingButton";
 import { DEFAULT_SECTIONS } from "@/lib/storefront-types";
 import type { StorefrontSection } from "@/lib/storefront-types";
+import { cn } from "@/lib/utils";
+import { resolveStorefrontTemplate } from "@/lib/storefront-templates";
 
 export const dynamic = "force-dynamic";
 
@@ -110,6 +112,32 @@ function hexToHsl(hex: string): string | null {
     return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
+function getStorefrontContainerClass(template: string): string {
+    if (template === "bistro") {
+        return "storefront-template-bistro bg-zinc-950 text-zinc-100";
+    }
+    if (template === "catering") {
+        return "storefront-template-catering bg-[#f8fbf7]";
+    }
+    if (template === "restaurant") {
+        return "storefront-template-restaurant bg-stone-50";
+    }
+    return "storefront-template-classic bg-background text-foreground";
+}
+
+function getStorefrontMainContainerClass(template: string): string {
+    if (template === "bistro") {
+        return "max-w-7xl";
+    }
+    if (template === "catering") {
+        return "max-w-7xl";
+    }
+    if (template === "restaurant") {
+        return "max-w-7xl";
+    }
+    return "max-w-6xl";
+}
+
 const SECTION_COMPONENTS: Record<string, React.ComponentType<{ settings: any; products?: any[] }>> = {
     about: AbouWrap,
     services: ServicesWrap,
@@ -137,6 +165,7 @@ export default async function StorefrontPage({ params }: Props) {
     const s = (org.settings || {}) as Record<string, any>;
     const primaryHsl = s.primary_color ? hexToHsl(s.primary_color) : null;
     const currency = s.currency || "EUR";
+    const storefrontTemplate = resolveStorefrontTemplate(s.storefront_template, org.subscription_plan);
 
     // Resolve sections: merge saved config with defaults so new defaults appear
     const savedSections: StorefrontSection[] = s.sections || [];
@@ -146,36 +175,69 @@ export default async function StorefrontPage({ params }: Props) {
     });
 
     const enabledSections = sections.filter((sec) => sec.enabled);
+    const cateringSectionOrder: Record<string, number> = {
+        services: 0,
+        menu: 1,
+        about: 2,
+        testimonials: 3,
+        gallery: 4,
+        contact: 5,
+    };
+    const orderedEnabledSections = storefrontTemplate === "catering"
+        ? [...enabledSections].sort((a, b) => (cateringSectionOrder[a.id] ?? 99) - (cateringSectionOrder[b.id] ?? 99))
+        : enabledSections;
 
     // Enrich settings with org_id and closed dates so client components can use them
-    const settingsWithOrgId = { ...(org.settings || {}), org_id: org.id, closedDatesInfo };
+    const settingsWithOrgId = {
+        ...(org.settings || {}),
+        org_id: org.id,
+        closedDatesInfo,
+        storefront_template: storefrontTemplate,
+    };
 
 
     return (
         <CartProvider>
             <div
-                className="min-h-screen flex flex-col font-sans bg-background text-foreground selection:bg-primary/30"
+                className={cn(
+                    "min-h-screen flex flex-col font-sans selection:bg-primary/30",
+                    getStorefrontContainerClass(storefrontTemplate)
+                )}
                 style={primaryHsl ? { "--primary": primaryHsl } as React.CSSProperties : {}}
             >
-                <StorefrontHeader orgName={org.name} settings={org.settings} sections={sections} />
+                <StorefrontHeader
+                    orgName={org.name}
+                    settings={settingsWithOrgId}
+                    sections={sections}
+                    template={storefrontTemplate}
+                />
 
                 {/* Hero — constrained with side margins, not full-bleed */}
-                <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-28 pb-4">
-                    <Hero orgName={org.name} settings={org.settings} />
+                <div className={cn(
+                    "mx-auto w-full px-4 sm:px-6 lg:px-8 pt-28 pb-4",
+                    getStorefrontMainContainerClass(storefrontTemplate)
+                )}>
+                    <Hero orgName={org.name} settings={settingsWithOrgId} template={storefrontTemplate} />
                 </div>
 
 
                 {/* Dynamic sections */}
-                <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-0 divide-y divide-border/30">
-                    {/* Menu is always present */}
-                    <div className="py-0">
-                        <MenuSection products={products} currency={currency} />
-                    </div>
-
-                    {/* Remaining enabled sections */}
-                    {enabledSections
-                        .filter((sec) => sec.id !== "menu")
-                        .map((sec) => {
+                <main className={cn(
+                    "flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8",
+                    storefrontTemplate === "catering"
+                        ? "space-y-0"
+                        : "space-y-0 divide-y divide-border/30",
+                    getStorefrontMainContainerClass(storefrontTemplate)
+                )}>
+                    {storefrontTemplate === "catering" ? (
+                        orderedEnabledSections.map((sec) => {
+                            if (sec.id === "menu") {
+                                return (
+                                    <div key={sec.id} className="py-0">
+                                        <MenuSection products={products} currency={currency} template={storefrontTemplate} />
+                                    </div>
+                                );
+                            }
                             const Component = SECTION_COMPONENTS[sec.id];
                             if (!Component) return null;
                             return (
@@ -184,11 +246,32 @@ export default async function StorefrontPage({ params }: Props) {
                                 </div>
                             );
                         })
-                    }
+                    ) : (
+                        <>
+                            {/* Menu is always present */}
+                            <div className="py-0">
+                                <MenuSection products={products} currency={currency} template={storefrontTemplate} />
+                            </div>
+
+                            {/* Remaining enabled sections */}
+                            {enabledSections
+                                .filter((sec) => sec.id !== "menu")
+                                .map((sec) => {
+                                    const Component = SECTION_COMPONENTS[sec.id];
+                                    if (!Component) return null;
+                                    return (
+                                        <div key={sec.id}>
+                                            <Component settings={settingsWithOrgId} products={products} />
+                                        </div>
+                                    );
+                                })
+                            }
+                        </>
+                    )}
 
                 </main>
 
-                <StorefrontFooter orgName={org.name} settings={org.settings} />
+                <StorefrontFooter orgName={org.name} settings={settingsWithOrgId} template={storefrontTemplate} />
                 <CartDrawer orgId={org.id} currency={currency} closedDatesInfo={closedDatesInfo} />
                 <CartFloatingButton />
             </div>

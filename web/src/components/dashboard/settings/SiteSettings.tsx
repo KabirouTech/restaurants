@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     Save, Loader2, GripVertical, Plus, Trash2,
-    LayoutList, BookOpen, CalendarDays, Image as ImageIcon, Star, MessageCircle, Palette, Sparkles
+    LayoutList, BookOpen, CalendarDays, Image as ImageIcon, Star, MessageCircle, Palette, Sparkles, Lock, CheckCircle2, Zap, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -26,12 +26,18 @@ import { TestimonialsSection } from "@/components/storefront/TestimonialsSection
 import { SettingsSavePortal } from "./SettingsSavePortal";
 import { ContactSection } from "@/components/storefront/ContactSection";
 import { CartProvider } from "@/context/CartContext";
-import { Smartphone } from "lucide-react";
+import { UpgradeDialog } from "@/components/ui/upgrade-prompt";
+import {
+    STOREFRONT_TEMPLATE_OPTIONS,
+    type StorefrontTemplate,
+    resolveStorefrontTemplate,
+} from "@/lib/storefront-templates";
 
 interface SiteSettingsProps {
     org: any;
     settings: any;
     products: any[];
+    currentPlan: "free" | "premium" | "enterprise";
 }
 
 
@@ -59,6 +65,45 @@ function hexToHsl(hex: string): string | null {
         h /= 6;
     }
     return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+function getTemplateCanvasClass(template: StorefrontTemplate): string {
+    if (template === "bistro") {
+        return "storefront-template-bistro bg-zinc-950 text-zinc-100";
+    }
+    if (template === "catering") {
+        return "storefront-template-catering bg-[#f8fbf7]";
+    }
+    if (template === "restaurant") {
+        return "storefront-template-restaurant bg-stone-50";
+    }
+    return "storefront-template-classic bg-background text-foreground";
+}
+
+function getPreviewNavClass(template: StorefrontTemplate): string {
+    if (template === "bistro") {
+        return "sticky top-0 z-50 bg-zinc-900/90 backdrop-blur-md border-b border-white/10 h-16 flex items-center justify-between px-12 text-zinc-100";
+    }
+    if (template === "catering") {
+        return "sticky top-4 z-50 mx-8 rounded-[18px] bg-white/95 backdrop-blur-md border border-emerald-100 shadow-md h-14 flex items-center justify-between px-8 text-slate-900";
+    }
+    if (template === "restaurant") {
+        return "sticky top-0 z-50 bg-gradient-to-r from-rose-50 to-orange-50 border-b border-rose-100 h-16 flex items-center justify-between px-12 text-rose-950";
+    }
+    return "sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50 h-16 flex items-center justify-between px-12";
+}
+
+function getPreviewFooterClass(template: StorefrontTemplate): string {
+    if (template === "bistro") {
+        return "bg-black text-zinc-100 py-12 px-12 mt-12";
+    }
+    if (template === "catering") {
+        return "bg-slate-900 text-slate-100 py-12 px-12 mt-12";
+    }
+    if (template === "restaurant") {
+        return "bg-rose-950 text-rose-50 py-12 px-12 mt-12";
+    }
+    return "bg-zinc-950 text-white py-12 px-12 mt-12";
 }
 
 // ── Section toggle manager ────────────────────────────────────────────────────
@@ -261,9 +306,16 @@ function Block({ title, icon: Icon, children }: { title: string; icon: any; chil
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
+export function SiteSettings({ org, settings, products, currentPlan }: SiteSettingsProps) {
     const [loading, startTransition] = useTransition();
     const router = useRouter();
+    const [upgradeOpen, setUpgradeOpen] = useState(false);
+    const [storefrontTemplate, setStorefrontTemplate] = useState<StorefrontTemplate>(() =>
+        resolveStorefrontTemplate(settings?.storefront_template, currentPlan)
+    );
+    const [previewTemplate, setPreviewTemplate] = useState<StorefrontTemplate>(() =>
+        resolveStorefrontTemplate(settings?.storefront_template, currentPlan)
+    );
 
     // Sections
     const [sections, setSections] = useState<StorefrontSection[]>(
@@ -313,10 +365,32 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
     const [metaTitle, setMetaTitle] = useState(settings?.meta_title || "");
     const [metaDescription, setMetaDescription] = useState(settings?.meta_description || "");
 
+    const canUsePremiumTemplate = currentPlan !== "free";
+    const activePreviewTemplate = previewTemplate;
+    const isPreviewingUnlockedTemplate = activePreviewTemplate !== storefrontTemplate;
+    const previewTemplateMeta = STOREFRONT_TEMPLATE_OPTIONS.find((option) => option.id === activePreviewTemplate);
+    const isPreviewingPremiumTemplate = previewTemplateMeta?.premiumOnly === true;
+    const activeTemplateMeta = STOREFRONT_TEMPLATE_OPTIONS.find((option) => option.id === storefrontTemplate);
+
+    const previewDesign = (templateId: StorefrontTemplate) => {
+        setPreviewTemplate(templateId);
+    };
+
+    const activateDesign = (templateId: StorefrontTemplate, premiumOnly: boolean) => {
+        setPreviewTemplate(templateId);
+        if (premiumOnly && !canUsePremiumTemplate) {
+            setUpgradeOpen(true);
+            return;
+        }
+        setStorefrontTemplate(templateId);
+        toast.success("Design activé pour votre boutique.");
+    };
+
     // ── Preview derivation ──
     const previewSettings = {
         ...settings,
         sections,
+        storefront_template: activePreviewTemplate,
         primary_color: primaryColor,
         hero_title: heroTitle, hero_subtitle: heroSubtitle, description: heroDescription, hero_image: heroImage,
         about_title: aboutTitle, about_subtitle: aboutSubtitle, about_text1: aboutText1, about_text2: aboutText2, about_image: aboutImage,
@@ -330,7 +404,7 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
 
     const PreviewComponent = ({ section }: { section: StorefrontSection }) => {
         switch (section.id) {
-            case 'menu': return <MenuSection products={products} currency={previewSettings.currency || "EUR"} />;
+            case 'menu': return <MenuSection products={products} currency={previewSettings.currency || "EUR"} template={activePreviewTemplate} />;
             case 'about': return <AboutSection settings={previewSettings} />;
             case 'services': return <ServicesSection settings={previewSettings} />;
             case 'gallery': return <GallerySection settings={previewSettings} />;
@@ -339,12 +413,26 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
             default: return null;
         }
     };
+    const previewSectionOrder: Record<string, number> = {
+        services: 0,
+        menu: 1,
+        about: 2,
+        testimonials: 3,
+        gallery: 4,
+        contact: 5,
+    };
+    const orderedPreviewSections = activePreviewTemplate === "catering"
+        ? [...sections.filter((section) => section.enabled)].sort(
+            (a, b) => (previewSectionOrder[a.id] ?? 99) - (previewSectionOrder[b.id] ?? 99)
+        )
+        : sections.filter((section) => section.enabled);
 
     const handleSubmit = () => {
         startTransition(async () => {
             const payload = {
                 orgId: org.id,
                 sections,
+                storefrontTemplate,
                 primaryColor, metaTitle, metaDescription,
                 heroTitle, heroSubtitle, description: heroDescription, heroImage,
                 aboutTitle, aboutSubtitle, aboutText1, aboutText2, aboutImage,
@@ -356,7 +444,13 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
             };
             const result = await updateSiteSettingsAction(payload);
             if (result?.error) toast.error(result.error);
-            else { toast.success("Site mis à jour !"); router.refresh(); }
+            else {
+                toast.success("Site mis à jour !");
+                if (!canUsePremiumTemplate && isPreviewingUnlockedTemplate && isPreviewingPremiumTemplate) {
+                    toast("Aperçu premium actif en prévisualisation. Le design publié reste celui du plan Free.");
+                }
+                router.refresh();
+            }
         });
     };
 
@@ -364,6 +458,188 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
         <div className="flex flex-col xl:flex-row gap-8 items-start relative pb-12">
             {/* ── Left: Editors ── */}
             <div className="w-full xl:w-1/2 space-y-5">
+                {/* Storefront template manager */}
+                <Card>
+                    <CardContent className="pt-6 space-y-4">
+                        <div className="flex items-center justify-between gap-4 pb-3 border-b border-border mb-1">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 rounded-lg"><Palette className="h-4 w-4 text-primary" /></div>
+                                <div>
+                                    <p className="font-semibold text-sm">Shop des designs</p>
+                                    <p className="text-xs text-muted-foreground">Prévisualisez chaque design avec vos vraies données.</p>
+                                </div>
+                            </div>
+                            <span className={cn(
+                                "text-xs font-semibold px-2.5 py-1 rounded-full border",
+                                currentPlan === "free"
+                                    ? "bg-slate-100 text-slate-700 border-slate-200"
+                                    : "bg-amber-100 text-amber-700 border-amber-200"
+                            )}>
+                                {currentPlan === "free" ? "Plan Free" : "Plan Premium"}
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="rounded-xl border border-border bg-muted/20 p-3">
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Design publié</p>
+                                <p className="text-sm font-semibold mt-1">{activeTemplateMeta?.name || "Starter Fresh"}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Visible actuellement sur votre boutique publique.</p>
+                            </div>
+                            <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Design en aperçu</p>
+                                <p className="text-sm font-semibold mt-1">{previewTemplateMeta?.name || "Starter Fresh"}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Le grand écran à droite montre ce rendu en direct.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {STOREFRONT_TEMPLATE_OPTIONS.map((template) => {
+                                const selected = storefrontTemplate === template.id;
+                                const previewed = activePreviewTemplate === template.id;
+                                const locked = template.premiumOnly && !canUsePremiumTemplate;
+                                return (
+                                    <div
+                                        key={template.id}
+                                        className={cn(
+                                            "relative text-left rounded-xl border p-3 transition-all",
+                                            selected
+                                                ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                                                : previewed
+                                                    ? "border-primary/50 bg-primary/5"
+                                                    : "border-border hover:border-primary/40 hover:bg-muted/30",
+                                            locked && "border-amber-300 bg-amber-50/50"
+                                        )}
+                                    >
+                                        <div className={cn("h-28 rounded-lg bg-gradient-to-br mb-3 border p-2.5", template.previewClassName)}>
+                                            <div className={cn("h-full rounded-md border border-black/10 overflow-hidden shadow-sm", template.previewSurfaceClassName)}>
+                                                <div className="h-5 border-b border-black/10 bg-black/5 px-2 flex items-center gap-1">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-black/30" />
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-black/30" />
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-black/30" />
+                                                </div>
+                                                <div className="p-2 space-y-1.5">
+                                                    <div className={cn("h-4 rounded-md", template.previewPrimaryClassName)} />
+                                                    <div className="grid grid-cols-3 gap-1">
+                                                        <div className={cn("h-3 rounded", template.previewSecondaryClassName)} />
+                                                        <div className={cn("h-3 rounded", template.previewSecondaryClassName)} />
+                                                        <div className={cn("h-3 rounded", template.previewSecondaryClassName)} />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-1">
+                                                        <div className="h-6 rounded bg-black/10" />
+                                                        <div className="h-6 rounded bg-black/10" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold">{template.name}</p>
+                                                    <span className={cn(
+                                                        "text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                        template.premiumOnly
+                                                            ? "bg-amber-100 text-amber-700 border-amber-200"
+                                                            : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                                    )}>
+                                                        {template.badge}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">{template.summary}</p>
+                                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                                    <span>{template.audience}</span>
+                                                    <span>•</span>
+                                                    <span>{template.priceLabel}</span>
+                                                </div>
+                                            </div>
+                                            {selected && (
+                                                <span className="inline-flex items-center gap-1 text-primary text-xs font-semibold">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                                    Active
+                                                </span>
+                                            )}
+                                            {!selected && previewed && (
+                                                <span className="inline-flex items-center gap-1 text-primary text-xs font-semibold">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                                    Aperçu
+                                                </span>
+                                            )}
+                                        </div>
+                                        {locked && (
+                                            <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-1">
+                                                <Lock className="h-3 w-3" />
+                                                Premium
+                                            </span>
+                                        )}
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant={previewed ? "default" : "outline"}
+                                                className="flex-1"
+                                                onClick={() => previewDesign(template.id)}
+                                            >
+                                                <Eye className="h-3.5 w-3.5 mr-1.5" />
+                                                {previewed ? "En aperçu" : "Aperçu"}
+                                            </Button>
+                                            {selected ? (
+                                                <Button type="button" size="sm" disabled className="flex-1">
+                                                    Actif
+                                                </Button>
+                                            ) : locked ? (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+                                                    onClick={() => activateDesign(template.id, template.premiumOnly)}
+                                                >
+                                                    Premium
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    className="flex-1"
+                                                    onClick={() => activateDesign(template.id, template.premiumOnly)}
+                                                >
+                                                    Utiliser
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                            Tous les designs sont prévisualisables. Les designs Premium sont publiables uniquement avec un plan Premium.
+                        </p>
+
+                        {!canUsePremiumTemplate && isPreviewingUnlockedTemplate && isPreviewingPremiumTemplate && (
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                                Vous visualisez un design premium en mode apercu. Passez au Premium pour l&apos;appliquer.
+                            </div>
+                        )}
+
+                        {!canUsePremiumTemplate && (
+                            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-amber-900">Debloquez 3 designs premium</p>
+                                    <p className="text-xs text-amber-700">Donnez un style unique a la boutique de chaque client.</p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    className="bg-amber-500 hover:bg-amber-600 text-white shrink-0"
+                                    onClick={() => setUpgradeOpen(true)}
+                                >
+                                    <Zap className="h-3.5 w-3.5 mr-1.5" />
+                                    Passer au Premium
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Sections manager */}
                 <Card>
                     <CardContent className="pt-6 space-y-4">
@@ -594,29 +870,68 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                                 <div className="w-[200%] h-[200%] origin-top-left transform scale-[0.5] overflow-y-auto no-scrollbar">
                                     <CartProvider>
                                         <div
-                                            className="min-h-full bg-background font-sans text-foreground pb-20 selection:bg-primary/30"
+                                            className={cn(
+                                                "min-h-full font-sans pb-20 selection:bg-primary/30 transition-colors",
+                                                getTemplateCanvasClass(activePreviewTemplate)
+                                            )}
                                             style={primaryColor ? { "--primary": hexToHsl(primaryColor) } as React.CSSProperties : {}}
                                         >
                                             {/* Scaling Wrapper for Font Sizing if needed, or just let it be natural desktop size */}
 
                                             {/* Navbar Desktop */}
-                                            <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50 h-16 flex items-center justify-between px-12">
-                                                <span className="font-bold text-xl">{org.name}</span>
+                                            <div className={getPreviewNavClass(activePreviewTemplate)}>
+                                                <span className={cn(
+                                                    "font-bold text-xl",
+                                                    activePreviewTemplate === "catering" && "text-emerald-900 font-outfit"
+                                                )}>
+                                                    {org.name}
+                                                </span>
                                                 <div className="flex gap-6 items-center">
-                                                    <span className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors">Accueil</span>
-                                                    <span className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors">Notre Menu</span>
-                                                    <span className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors">Le Chef</span>
-                                                    <Button size="sm" className="rounded-full px-6">Réserver</Button>
+                                                    <span className={cn(
+                                                        "text-sm font-medium cursor-pointer transition-colors",
+                                                        activePreviewTemplate === "bistro"
+                                                            ? "text-zinc-300 hover:text-white"
+                                                            : activePreviewTemplate === "catering"
+                                                                ? "text-zinc-600 hover:text-emerald-700"
+                                                                : "text-muted-foreground hover:text-primary"
+                                                    )}>Accueil</span>
+                                                    <span className={cn(
+                                                        "text-sm font-medium cursor-pointer transition-colors",
+                                                        activePreviewTemplate === "bistro"
+                                                            ? "text-zinc-300 hover:text-white"
+                                                            : activePreviewTemplate === "catering"
+                                                                ? "text-zinc-600 hover:text-emerald-700"
+                                                                : "text-muted-foreground hover:text-primary"
+                                                    )}>Notre Menu</span>
+                                                    <span className={cn(
+                                                        "text-sm font-medium cursor-pointer transition-colors",
+                                                        activePreviewTemplate === "bistro"
+                                                            ? "text-zinc-300 hover:text-white"
+                                                            : activePreviewTemplate === "catering"
+                                                                ? "text-zinc-600 hover:text-emerald-700"
+                                                                : "text-muted-foreground hover:text-primary"
+                                                    )}>Le Chef</span>
+                                                    <Button
+                                                        size="sm"
+                                                        className={cn(
+                                                            "rounded-full px-6",
+                                                            activePreviewTemplate === "catering"
+                                                                ? "bg-emerald-700 hover:bg-emerald-800 text-white"
+                                                                : ""
+                                                        )}
+                                                    >
+                                                        {activePreviewTemplate === "catering" ? "Pantry" : "Reserver"}
+                                                    </Button>
                                                 </div>
                                             </div>
 
                                             <div className="p-12 pb-0 max-w-7xl mx-auto">
                                                 {/* Hero */}
-                                                <Hero orgName={org.name} settings={previewSettings} />
+                                                <Hero orgName={org.name} settings={previewSettings} template={activePreviewTemplate} />
                                             </div>
 
                                             <div className="space-y-0 divide-y divide-border/30 px-12 pb-20 max-w-7xl mx-auto">
-                                                {sections.filter(s => s.enabled).map(sec => (
+                                                {orderedPreviewSections.map(sec => (
                                                     <div key={sec.id} className="py-0">
                                                         <PreviewComponent section={sec} />
                                                     </div>
@@ -624,7 +939,7 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                                             </div>
 
                                             {/* Footer Mockup */}
-                                            <div className="bg-zinc-950 text-white py-12 px-12 mt-12">
+                                            <div className={getPreviewFooterClass(activePreviewTemplate)}>
                                                 <div className="grid grid-cols-4 gap-8 max-w-7xl mx-auto">
                                                     <div className="space-y-4">
                                                         <h3 className="font-bold text-lg">{org.name}</h3>
@@ -657,6 +972,8 @@ export function SiteSettings({ org, settings, products }: SiteSettingsProps) {
                     </div>
                 </div>
             </div>
+
+            <UpgradeDialog orgId={org.id} open={upgradeOpen} onOpenChange={setUpgradeOpen} />
         </div>
     );
 }

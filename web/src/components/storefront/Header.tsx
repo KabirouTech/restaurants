@@ -5,20 +5,22 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 
 import { useState, useEffect } from "react";
-import { Instagram, Facebook, Twitter, Menu, X, ShoppingCart, Sun, Moon } from "lucide-react";
+import { Instagram, Facebook, Menu, X, ShoppingCart, Sun, Moon } from "lucide-react";
 import { LogoMark } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import type { StorefrontSection } from "@/lib/storefront-types";
 import { useCart } from "@/context/CartContext";
 import { useTheme } from "next-themes";
+import type { StorefrontTemplate } from "@/lib/storefront-templates";
 
 interface StorefrontHeaderProps {
     orgName: string;
     settings?: any;
     sections: StorefrontSection[];
+    template?: StorefrontTemplate;
 }
 
-export function StorefrontHeader({ orgName, settings, sections }: StorefrontHeaderProps) {
+export function StorefrontHeader({ orgName, settings, sections, template = "classic" }: StorefrontHeaderProps) {
     const logoUrl = settings?.logo_url;
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -29,7 +31,19 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
 
     const cartCount = items.reduce((s, i) => s + i.quantity, 0);
 
-    const enabledSections = sections.filter((s) => s.enabled);
+    const cateringSectionOrder: Record<string, number> = {
+        services: 0,
+        menu: 1,
+        about: 2,
+        testimonials: 3,
+        gallery: 4,
+        contact: 5,
+    };
+    const enabledSections = template === "catering"
+        ? [...sections.filter((s) => s.enabled)].sort(
+            (a, b) => (cateringSectionOrder[a.id] ?? 99) - (cateringSectionOrder[b.id] ?? 99)
+        )
+        : sections.filter((s) => s.enabled);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 20);
@@ -65,7 +79,11 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
     return (
         <>
             <header className={cn(
-                "fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background/95 backdrop-blur-md border-b border-border",
+                "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+                template === "classic" && "bg-background/95 backdrop-blur-md border-b border-border",
+                template === "bistro" && "bg-zinc-950/90 backdrop-blur-md border-b border-white/10 text-zinc-100",
+                template === "catering" && "bg-white/95 backdrop-blur-md border-b border-emerald-100 shadow-sm",
+                template === "restaurant" && "bg-gradient-to-r from-rose-50/95 to-orange-50/95 backdrop-blur-md border-b border-rose-100",
                 scrolled ? "shadow-sm" : ""
             )}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -85,7 +103,10 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
                         ) : (
                             <LogoMark size="md" />
                         )}
-                        <span className="font-serif font-bold text-xl tracking-tight text-foreground transition-colors">
+                        <span className={cn(
+                            "font-serif font-bold text-xl tracking-tight transition-colors",
+                            template === "bistro" ? "text-zinc-100" : "text-foreground"
+                        )}>
                             {orgName}<span className="text-primary">.</span>
                         </span>
                     </Link>
@@ -99,8 +120,14 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
                                 className={cn(
                                     "px-4 py-2 rounded-full text-sm font-medium transition-all",
                                     activeSection === anchor
-                                        ? "bg-primary text-primary-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                        ? template === "catering"
+                                            ? "bg-emerald-700 text-white shadow-sm"
+                                            : "bg-primary text-primary-foreground shadow-sm"
+                                        : template === "bistro"
+                                            ? "text-zinc-300 hover:text-white hover:bg-white/10"
+                                            : template === "catering"
+                                                ? "text-zinc-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                 )}
                             >
                                 {label}
@@ -110,15 +137,35 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
 
                     {/* Right actions */}
                     <div className="flex items-center gap-2">
+                        {template === "catering" && (
+                            <button
+                                onClick={openCart}
+                                className="hidden md:inline-flex items-center gap-2 rounded-full bg-emerald-700 text-white px-5 py-2 text-sm font-semibold hover:bg-emerald-800 transition-colors"
+                            >
+                                Pantry
+                                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-[11px] font-bold">
+                                    {cartCount}
+                                </span>
+                            </button>
+                        )}
+
                         {settings?.social_instagram && (
                             <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer"
-                                className="p-2 transition-colors hidden md:block text-muted-foreground hover:text-primary">
+                                className={cn(
+                                    "p-2 transition-colors hidden md:block hover:text-primary",
+                                    template === "bistro" ? "text-zinc-300" : "text-muted-foreground",
+                                    template === "catering" && "hidden"
+                                )}>
                                 <Instagram className="h-4 w-4" />
                             </a>
                         )}
                         {settings?.social_facebook && (
                             <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer"
-                                className="p-2 transition-colors hidden md:block text-muted-foreground hover:text-primary">
+                                className={cn(
+                                    "p-2 transition-colors hidden md:block hover:text-primary",
+                                    template === "bistro" ? "text-zinc-300" : "text-muted-foreground",
+                                    template === "catering" && "hidden"
+                                )}>
                                 <Facebook className="h-4 w-4" />
                             </a>
                         )}
@@ -126,7 +173,11 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
                         {/* Theme toggle */}
                         <button
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="relative p-2 transition-colors text-muted-foreground hover:text-primary"
+                            className={cn(
+                                "relative p-2 transition-colors hover:text-primary",
+                                template === "bistro" ? "text-zinc-300" : "text-muted-foreground",
+                                template === "catering" && "hidden"
+                            )}
                             aria-label="Changer le thème"
                         >
                             <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -136,7 +187,11 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
                         {/* Cart icon */}
                         <button
                             onClick={openCart}
-                            className="relative p-2 transition-colors text-muted-foreground hover:text-primary"
+                            className={cn(
+                                "relative p-2 transition-colors hover:text-primary",
+                                template === "bistro" ? "text-zinc-300" : "text-muted-foreground",
+                                template === "catering" && "md:hidden text-emerald-700"
+                            )}
                         >
                             <ShoppingCart className="h-5 w-5" />
                             {cartCount > 0 && (
@@ -149,7 +204,10 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
                         {/* Mobile hamburger */}
                         <button
                             onClick={() => setMobileOpen((o) => !o)}
-                            className="md:hidden p-2 transition-colors text-foreground"
+                            className={cn(
+                                "md:hidden p-2 transition-colors",
+                                template === "bistro" ? "text-zinc-100" : "text-foreground"
+                            )}
                         >
                             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                         </button>
@@ -159,12 +217,24 @@ export function StorefrontHeader({ orgName, settings, sections }: StorefrontHead
 
             {/* Mobile menu */}
             {mobileOpen && (
-                <div className="fixed inset-0 z-40 bg-background flex flex-col pt-20 px-6 animate-in slide-in-from-top-2 duration-200">
+                <div className={cn(
+                    "fixed inset-0 z-40 flex flex-col pt-20 px-6 animate-in slide-in-from-top-2 duration-200",
+                    template === "bistro"
+                        ? "bg-zinc-950 text-zinc-100"
+                        : template === "catering"
+                            ? "bg-[#f4f8f3]"
+                            : "bg-background"
+                )}>
                     {enabledSections.map(({ anchor, label }) => (
                         <button
                             key={anchor}
                             onClick={() => scrollTo(anchor)}
-                            className="py-4 text-left text-lg font-medium border-b border-border text-foreground hover:text-primary transition-colors"
+                            className={cn(
+                                "py-4 text-left text-lg font-medium border-b transition-colors",
+                                template === "bistro"
+                                    ? "border-white/10 text-zinc-100 hover:text-primary"
+                                    : "border-border text-foreground hover:text-primary"
+                            )}
                         >
                             {label}
                         </button>

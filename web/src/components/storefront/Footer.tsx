@@ -1,8 +1,18 @@
 import { Mail, Phone, MapPin, Instagram, Facebook, Twitter } from "lucide-react";
 import Link from "next/link";
 import { LogoMark } from "@/components/Logo";
+import { cn } from "@/lib/utils";
+import type { StorefrontTemplate } from "@/lib/storefront-templates";
 
-export function StorefrontFooter({ orgName, settings }: { orgName: string; settings?: any }) {
+export function StorefrontFooter({
+    orgName,
+    settings,
+    template = "classic",
+}: {
+    orgName: string;
+    settings?: any;
+    template?: StorefrontTemplate;
+}) {
     const description = settings?.description || "Célébrez vos moments importants avec une cuisine faite maison.";
     const email = settings?.contact_email;
     const phone = settings?.contact_phone;
@@ -14,7 +24,16 @@ export function StorefrontFooter({ orgName, settings }: { orgName: string; setti
     const hasContact = email || phone || address;
 
     return (
-        <footer id="footer" className="bg-secondary text-secondary-foreground py-16">
+        <footer
+            id="footer"
+            className={cn(
+                "py-16",
+                template === "classic" && "bg-secondary text-secondary-foreground",
+                template === "bistro" && "bg-zinc-950 text-zinc-100",
+                template === "catering" && "bg-slate-900 text-slate-100",
+                template === "restaurant" && "bg-rose-950 text-rose-50"
+            )}
+        >
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
@@ -30,19 +49,34 @@ export function StorefrontFooter({ orgName, settings }: { orgName: string; setti
                             <div className="flex gap-3 pt-2">
                                 {instagram && (
                                     <a href={instagram} target="_blank" rel="noopener noreferrer"
-                                        className="p-2 rounded-lg bg-white/10 hover:bg-primary/80 transition-colors">
+                                        className={cn(
+                                            "p-2 rounded-lg transition-colors",
+                                            template === "catering"
+                                                ? "bg-slate-800 hover:bg-primary/80"
+                                                : "bg-white/10 hover:bg-primary/80"
+                                        )}>
                                         <Instagram className="h-4 w-4" />
                                     </a>
                                 )}
                                 {facebook && (
                                     <a href={facebook} target="_blank" rel="noopener noreferrer"
-                                        className="p-2 rounded-lg bg-white/10 hover:bg-primary/80 transition-colors">
+                                        className={cn(
+                                            "p-2 rounded-lg transition-colors",
+                                            template === "catering"
+                                                ? "bg-slate-800 hover:bg-primary/80"
+                                                : "bg-white/10 hover:bg-primary/80"
+                                        )}>
                                         <Facebook className="h-4 w-4" />
                                     </a>
                                 )}
                                 {twitter && (
                                     <a href={twitter} target="_blank" rel="noopener noreferrer"
-                                        className="p-2 rounded-lg bg-white/10 hover:bg-primary/80 transition-colors">
+                                        className={cn(
+                                            "p-2 rounded-lg transition-colors",
+                                            template === "catering"
+                                                ? "bg-slate-800 hover:bg-primary/80"
+                                                : "bg-white/10 hover:bg-primary/80"
+                                        )}>
                                         <Twitter className="h-4 w-4" />
                                     </a>
                                 )}
@@ -88,7 +122,10 @@ export function StorefrontFooter({ orgName, settings }: { orgName: string; setti
                     </div>
                 </div>
 
-                <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs opacity-50 gap-4">
+                <div className={cn(
+                    "pt-8 border-t flex flex-col md:flex-row justify-between items-center text-xs opacity-50 gap-4",
+                    template === "catering" ? "border-slate-700" : "border-white/10"
+                )}>
                     <p>&copy; {new Date().getFullYear()} {orgName}. Tous droits réservés.</p>
                     <p className="flex items-center gap-1.5">
                         Propulsé par
