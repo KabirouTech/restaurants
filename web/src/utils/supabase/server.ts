@@ -5,17 +5,22 @@ import { auth } from '@clerk/nextjs/server'
 export async function createClient() {
     const cookieStore = await cookies()
     const { userId, getToken } = await auth()
+    const supabaseJwtTemplate = process.env.NEXT_PUBLIC_CLERK_SUPABASE_TEMPLATE
 
     let clerkToken = null
-    if (userId) {
+    if (userId && supabaseJwtTemplate) {
         try {
-            clerkToken = await getToken({ template: 'supabase' })
+            clerkToken = await getToken({ template: supabaseJwtTemplate })
         } catch (error) {
-            console.warn('Clerk: Supabase JWT template not found. Please create it in the Clerk Dashboard.')
+            const message = error instanceof Error ? error.message : String(error)
+            console.warn(
+                `[supabase] Clerk token template "${supabaseJwtTemplate}" unavailable (${message}). Falling back to service role key.`
+            )
         }
     }
 
-    // Use service role key when no Clerk JWT is available (JWT template not configured)
+    // Use service role key when no Clerk JWT is available.
+    // To enable Clerk JWT for Supabase RLS, set NEXT_PUBLIC_CLERK_SUPABASE_TEMPLATE.
     // This bypasses RLS but auth is already handled by Clerk middleware
     const supabaseKey = clerkToken
         ? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!

@@ -22,11 +22,16 @@ export async function syncClerkProfile(clerkUserId: string) {
         .from("profiles")
         .select("*, organizations(name, slug, subscription_plan)")
         .eq("clerk_id", clerkUserId)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
     if (existing) return existing;
 
-    console.log("[clerk-sync] No profile found for clerk_id:", clerkUserId, existingErr?.message);
+    if (existingErr) {
+        console.warn("[clerk-sync] Profile lookup error for clerk_id:", clerkUserId, existingErr.message);
+    } else {
+        console.log("[clerk-sync] No profile found for clerk_id:", clerkUserId);
+    }
 
     // 2. Get Clerk user's email
     const clerkUser = await currentUser();
@@ -40,7 +45,12 @@ export async function syncClerkProfile(clerkUserId: string) {
     if (!email) return null;
 
     // 3. Find matching Supabase auth user by email
-    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const { data: authUsers, error: authUsersErr } = await supabase.auth.admin.listUsers();
+    if (authUsersErr) {
+        console.warn("[clerk-sync] Unable to list Supabase auth users:", authUsersErr.message);
+        return null;
+    }
+
     const matchingAuthUser = authUsers?.users?.find(
         (u) => u.email?.toLowerCase() === email.toLowerCase()
     );
@@ -59,7 +69,8 @@ export async function syncClerkProfile(clerkUserId: string) {
         .from("profiles")
         .select("*, organizations(name, slug, subscription_plan)")
         .eq("id", matchingAuthUser.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
     console.log("[clerk-sync] Old profile:", oldProfile?.id, oldProfile?.organization_id, oldProfileErr?.message);
 

@@ -13,7 +13,7 @@ export type CurrentProfile = {
         name?: string | null;
         slug?: string | null;
         subscription_plan?: string | null;
-        settings?: Record<string, any> | null;
+        settings?: Record<string, unknown> | null;
     } | null;
 };
 
@@ -38,6 +38,7 @@ export async function getCurrentProfile() {
         .from("profiles")
         .select("*, organizations(*)")
         .eq("clerk_id", userId)
+        .limit(1)
         .maybeSingle();
 
     return { userId, profile: (profile as CurrentProfile | null) ?? null };
