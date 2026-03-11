@@ -1,18 +1,16 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 // --- Create Capacity Type ---
 export async function createCapacityTypeAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createClient();
-    // Get Organization ID
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("clerk_id", userId).single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     const name = formData.get("name") as string;
     const loadCostStr = formData.get("loadCost") as string;
@@ -27,7 +25,7 @@ export async function createCapacityTypeAction(formData: FormData) {
     const { error } = await supabase
         .from("capacity_types")
         .insert({
-            organization_id: profile.organization_id,
+            organization_id: organizationId,
             name,
             load_cost: loadCost,
             color_code: colorCode,
@@ -43,10 +41,11 @@ export async function createCapacityTypeAction(formData: FormData) {
 
 // --- Update Capacity Type ---
 export async function updateCapacityTypeAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createClient();
+    const { organizationId } = orgContext.context;
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
@@ -66,7 +65,8 @@ export async function updateCapacityTypeAction(formData: FormData) {
             load_cost: loadCost,
             color_code: colorCode,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organizationId);
 
     if (error) {
         return { error: error.message };
@@ -78,15 +78,17 @@ export async function updateCapacityTypeAction(formData: FormData) {
 
 // --- Delete Capacity Type ---
 export async function deleteCapacityTypeAction(id: string) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createClient();
+    const { organizationId } = orgContext.context;
 
     const { error } = await supabase
         .from("capacity_types")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organizationId);
 
     if (error) {
         return { error: error.message };

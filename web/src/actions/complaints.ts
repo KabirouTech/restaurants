@@ -1,21 +1,14 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function uploadComplaintFileAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
-
-    const supabase = await createServerClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
 
     const file = formData.get("file") as File | null;
     if (!file) return { error: "Aucun fichier fourni." };
@@ -34,7 +27,7 @@ export async function uploadComplaintFileAction(formData: FormData) {
     const timestamp = Date.now();
     const ext = file.name.split(".").pop() || (isImage ? "jpg" : "webm");
     const prefix = isImage ? "photo" : "audio";
-    const path = `${profile.organization_id}/${prefix}_${timestamp}.${ext}`;
+    const path = `${organizationId}/${prefix}_${timestamp}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -65,24 +58,19 @@ export async function createComplaintAction(data: {
     photo_url?: string | null;
     audio_url?: string | null;
 }) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { profileId, organizationId } = orgContext.context;
 
     const supabase = await createServerClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
     if (!data.subject?.trim() || !data.description?.trim()) {
         return { error: "L'objet et la description sont requis." };
     }
 
     const { error } = await supabase.from("complaints").insert({
-        organization_id: profile.organization_id,
-        submitted_by: userId,
+        organization_id: organizationId,
+        submitted_by: profileId,
         subject: data.subject.trim(),
         description: data.description.trim(),
         photo_url: data.photo_url || null,

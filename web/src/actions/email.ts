@@ -1,19 +1,18 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { formatPrice } from "@/lib/currencies";
 import { sendMail } from "@/lib/mailer";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function sendOrderEmailAction(orderId: string, email: string, message?: string) {
     if (!orderId || !email) {
         return { error: "ID de commande et email requis" };
     }
 
-    const { userId } = await auth();
-    if (!userId) {
-        return { error: "Non authentifié" };
-    }
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
 
     try {
         // Use Admin Client to Bypass RLS for Order Fetching
@@ -38,6 +37,7 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
 
             `)
             .eq("id", orderId)
+            .eq("organization_id", organizationId)
             .single();
 
         if (error || !order) {

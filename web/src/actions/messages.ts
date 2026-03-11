@@ -1,22 +1,14 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { sendExternalMessage } from "@/lib/channels/index";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function fetchMessagesAction(conversationId: string) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
-
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Aucune organisation" };
+    const orgContext = await getRequiredOrganizationContext("Aucune organisation");
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
 
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,7 +21,7 @@ export async function fetchMessagesAction(conversationId: string) {
         .from("conversations")
         .select("id")
         .eq("id", conversationId)
-        .eq("organization_id", profile.organization_id)
+        .eq("organization_id", organizationId)
         .single();
 
     if (!conv) return { error: "Conversation introuvable" };
@@ -44,22 +36,16 @@ export async function fetchMessagesAction(conversationId: string) {
     await supabaseAdmin
         .from("conversations")
         .update({ unread_count: 0 })
-        .eq("id", conversationId);
+        .eq("id", conversationId)
+        .eq("organization_id", organizationId);
 
     return { messages: messages || [] };
 }
 
 export async function sendMessageAction(conversationId: string, content: string) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
-
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Aucune organisation" };
+    const orgContext = await getRequiredOrganizationContext("Aucune organisation");
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
 
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,7 +58,7 @@ export async function sendMessageAction(conversationId: string, content: string)
         .from("conversations")
         .select("id, external_thread_id, channels(platform, credentials)")
         .eq("id", conversationId)
-        .eq("organization_id", profile.organization_id)
+        .eq("organization_id", organizationId)
         .single();
 
     if (!conv) return { error: "Conversation introuvable" };
@@ -93,7 +79,8 @@ export async function sendMessageAction(conversationId: string, content: string)
     await supabaseAdmin
         .from("conversations")
         .update({ last_message_at: new Date().toISOString() })
-        .eq("id", conversationId);
+        .eq("id", conversationId)
+        .eq("organization_id", organizationId);
 
     // Route to external channel if applicable
     const channel = (conv as any).channels;

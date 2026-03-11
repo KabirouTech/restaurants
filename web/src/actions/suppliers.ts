@@ -1,20 +1,15 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function createSupplierAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createServerClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     const name = formData.get("name") as string;
     const contact_name = formData.get("contact_name") as string;
@@ -27,7 +22,7 @@ export async function createSupplierAction(formData: FormData) {
         const { error } = await supabase
             .from("suppliers")
             .insert({
-                organization_id: profile.organization_id,
+                organization_id: organizationId,
                 name,
                 contact_name: contact_name || null,
                 email: email || null,
@@ -56,23 +51,18 @@ export async function quickCreateSupplierAction(input: {
     address?: string;
     notes?: string;
 }) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createServerClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     if (!input.name?.trim()) return { error: "Le nom est requis." };
 
     const { data, error } = await supabase
         .from("suppliers")
         .insert({
-            organization_id: profile.organization_id,
+            organization_id: organizationId,
             name: input.name.trim(),
             contact_name: input.contact_name?.trim() || null,
             email: input.email?.trim() || null,
@@ -94,10 +84,11 @@ export async function quickCreateSupplierAction(input: {
 }
 
 export async function updateSupplierAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
@@ -119,7 +110,8 @@ export async function updateSupplierAction(formData: FormData) {
                 notes: notes || null,
                 updated_at: new Date().toISOString(),
             })
-            .eq("id", id);
+            .eq("id", id)
+            .eq("organization_id", organizationId);
 
         if (error) {
             console.error("Update Supplier Error:", error);
@@ -134,16 +126,18 @@ export async function updateSupplierAction(formData: FormData) {
 }
 
 export async function deleteSupplierAction(id: string) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     try {
         const { error } = await supabase
             .from("suppliers")
             .update({ is_active: false, updated_at: new Date().toISOString() })
-            .eq("id", id);
+            .eq("id", id)
+            .eq("organization_id", organizationId);
 
         if (error) {
             console.error("Delete Supplier Error:", error);
@@ -160,22 +154,17 @@ export async function deleteSupplierAction(id: string) {
 export async function bulkDeleteSuppliersAction(ids: string[]) {
     if (!ids.length) return { error: "Aucun fournisseur sélectionné." };
 
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createServerClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     const { error } = await supabase
         .from("suppliers")
         .update({ is_active: false, updated_at: new Date().toISOString() })
         .in("id", ids)
-        .eq("organization_id", profile.organization_id);
+        .eq("organization_id", organizationId);
 
     if (error) return { error: "Erreur lors de la suppression : " + error.message };
 
@@ -191,16 +180,11 @@ export async function importSuppliersAction(rows: {
     address?: string;
     notes?: string;
 }[]) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createServerClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     if (!rows.length) return { error: "Aucune ligne à importer." };
 
@@ -208,7 +192,7 @@ export async function importSuppliersAction(rows: {
     if (!valid.length) return { error: "Aucun fournisseur valide trouvé (colonne 'Nom' manquante)." };
 
     const payload = valid.map(r => ({
-        organization_id: profile.organization_id,
+        organization_id: organizationId,
         name: r.name.trim(),
         contact_name: r.contact_name?.trim() || null,
         email: r.email?.trim() || null,

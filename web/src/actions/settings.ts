@@ -1,9 +1,9 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function updateMenuInfoAction(input: {
     orgId: string
@@ -13,8 +13,13 @@ export async function updateMenuInfoAction(input: {
     labels: string[]
     allergensPresent: string[]
 }) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
+
+    if (input.orgId !== organizationId) {
+        return { error: "Organisation non autorisée" };
+    }
 
     const supabase = await createClient();
 
@@ -60,13 +65,17 @@ export async function updateMenuInfoAction(input: {
 }
 
 export async function updateSettingsAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
 
     const supabase = await createClient();
 
     try {
         const orgId = formData.get("orgId") as string;
+        if (orgId !== organizationId) {
+            return { error: "Organisation non autorisée" };
+        }
         const name = formData.get("name") as string;
         const rawSlug = formData.get("slug") as string;
         const description = formData.get("description") as string;

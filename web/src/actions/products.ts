@@ -1,18 +1,16 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 // --- Create Product ---
 export async function createProductAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createClient();
-    // Get Organization ID
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("clerk_id", userId).single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
@@ -23,7 +21,7 @@ export async function createProductAction(formData: FormData) {
     const priceCents = Math.round(parseFloat(priceStr) * 100);
 
     const { error } = await supabase.from("products").insert({
-        organization_id: profile.organization_id,
+        organization_id: organizationId,
         name,
         description,
         price_cents: priceCents,
@@ -42,10 +40,11 @@ export async function createProductAction(formData: FormData) {
 
 // --- Update Product ---
 export async function updateProductAction(formData: FormData) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createClient();
+    const { organizationId } = orgContext.context;
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
@@ -69,7 +68,8 @@ export async function updateProductAction(formData: FormData) {
     const { error } = await supabase
         .from("products")
         .update(updateData)
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", organizationId);
 
     if (error) return { error: error.message };
 
@@ -79,15 +79,17 @@ export async function updateProductAction(formData: FormData) {
 
 // --- Delete Product ---
 export async function deleteProductAction(productId: string) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createClient();
+    const { organizationId } = orgContext.context;
 
     const { error } = await supabase
         .from("products")
         .update({ is_active: false }) // Soft Delete
-        .eq("id", productId);
+        .eq("id", productId)
+        .eq("organization_id", organizationId);
 
     if (error) return { error: error.message };
 
@@ -98,22 +100,17 @@ export async function deleteProductAction(productId: string) {
 export async function bulkDeleteProductsAction(ids: string[]) {
     if (!ids.length) return { error: "Aucun produit sélectionné." };
 
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
     const supabase = await createClient();
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("clerk_id", userId)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     const { error } = await supabase
         .from("products")
         .update({ is_active: false }) // Soft delete
         .in("id", ids)
-        .eq("organization_id", profile.organization_id); // safety scope
+        .eq("organization_id", organizationId); // safety scope
 
     if (error) return { error: "Erreur lors de la suppression : " + error.message };
 
