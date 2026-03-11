@@ -14,6 +14,7 @@ import { StorefrontFooter } from "@/components/storefront/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { CartDrawer } from "@/components/storefront/CartDrawer";
 import { CartFloatingButton } from "@/components/storefront/CartFloatingButton";
+import { MobileBottomNav } from "@/components/storefront/MobileBottomNav";
 import { DEFAULT_SECTIONS } from "@/lib/storefront-types";
 import type { StorefrontSection } from "@/lib/storefront-types";
 import { cn } from "@/lib/utils";
@@ -122,6 +123,18 @@ function getStorefrontContainerClass(template: string): string {
     if (template === "restaurant") {
         return "storefront-template-restaurant bg-stone-50";
     }
+    if (template === "foodiedash") {
+        return "storefront-template-foodiedash bg-[#f8f7f5] text-slate-900";
+    }
+    if (template === "elite") {
+        return "storefront-template-elite bg-[#120d0b] text-slate-100";
+    }
+    if (template === "aromabrew") {
+        return "storefront-template-aromabrew bg-[#221e10] text-slate-100";
+    }
+    if (template === "culina") {
+        return "storefront-template-culina bg-[#10221d] text-slate-100";
+    }
     return "storefront-template-classic bg-background text-foreground";
 }
 
@@ -133,6 +146,18 @@ function getStorefrontMainContainerClass(template: string): string {
         return "max-w-7xl";
     }
     if (template === "restaurant") {
+        return "max-w-7xl";
+    }
+    if (template === "foodiedash") {
+        return "max-w-7xl";
+    }
+    if (template === "elite") {
+        return "max-w-7xl";
+    }
+    if (template === "aromabrew") {
+        return "max-w-[1200px]";
+    }
+    if (template === "culina") {
         return "max-w-7xl";
     }
     return "max-w-6xl";
@@ -175,16 +200,46 @@ export default async function StorefrontPage({ params }: Props) {
     });
 
     const enabledSections = sections.filter((sec) => sec.enabled);
-    const cateringSectionOrder: Record<string, number> = {
-        services: 0,
-        menu: 1,
-        about: 2,
-        testimonials: 3,
-        gallery: 4,
-        contact: 5,
+    const templateSectionOrders: Record<string, Record<string, number>> = {
+        catering: {
+            services: 0,
+            menu: 1,
+            about: 2,
+            testimonials: 3,
+            gallery: 4,
+            contact: 5,
+        },
+        foodiedash: {
+            services: 0,
+            menu: 1,
+            about: 2,
+            testimonials: 3,
+            contact: 4,
+        },
+        elite: {
+            menu: 0,
+            about: 1,
+            testimonials: 2,
+            contact: 3,
+        },
+        aromabrew: {
+            menu: 0,
+            services: 1,
+            about: 2,
+            testimonials: 3,
+            contact: 4,
+        },
+        culina: {
+            menu: 0,
+            about: 1,
+            services: 2,
+            testimonials: 3,
+            contact: 4,
+        },
     };
-    const orderedEnabledSections = storefrontTemplate === "catering"
-        ? [...enabledSections].sort((a, b) => (cateringSectionOrder[a.id] ?? 99) - (cateringSectionOrder[b.id] ?? 99))
+    const sectionOrder = templateSectionOrders[storefrontTemplate];
+    const orderedEnabledSections = sectionOrder
+        ? [...enabledSections].sort((a, b) => (sectionOrder[a.id] ?? 99) - (sectionOrder[b.id] ?? 99))
         : enabledSections;
 
     // Enrich settings with org_id and closed dates so client components can use them
@@ -224,12 +279,12 @@ export default async function StorefrontPage({ params }: Props) {
                 {/* Dynamic sections */}
                 <main className={cn(
                     "flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8",
-                    storefrontTemplate === "catering"
+                    ["catering", "foodiedash", "elite", "aromabrew", "culina"].includes(storefrontTemplate)
                         ? "space-y-0"
                         : "space-y-0 divide-y divide-border/30",
                     getStorefrontMainContainerClass(storefrontTemplate)
                 )}>
-                    {storefrontTemplate === "catering" ? (
+                    {sectionOrder ? (
                         orderedEnabledSections.map((sec) => {
                             if (sec.id === "menu") {
                                 return (
@@ -272,8 +327,11 @@ export default async function StorefrontPage({ params }: Props) {
                 </main>
 
                 <StorefrontFooter orgName={org.name} settings={settingsWithOrgId} template={storefrontTemplate} />
+                {/* Bottom padding for mobile nav */}
+                <div className="md:hidden h-20" />
                 <CartDrawer orgId={org.id} currency={currency} closedDatesInfo={closedDatesInfo} />
                 <CartFloatingButton />
+                <MobileBottomNav template={storefrontTemplate} />
             </div>
         </CartProvider>
     );

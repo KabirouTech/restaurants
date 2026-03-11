@@ -28,7 +28,7 @@ export async function updateUserAction(id: string, formData: FormData) {
         .from("profiles")
         .update({
             full_name,
-            role: role || "staff",
+            role: role || "member",
             organization_id: organization_id || null,
             is_super_admin,
         })
