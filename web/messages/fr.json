@@ -340,6 +340,7 @@
       "orders": "Devis & Commandes",
       "calendar": "Calendrier",
       "menu": "Carte & Menu",
+      "boutique": "Boutique",
       "messages": "Messages",
       "customers": "Clients",
       "inventory": "Inventaire",
@@ -649,7 +650,7 @@
       "title": "Paramètres",
       "configuration": "Configuration",
       "pageTitle": "Paramètres de la Boutique",
-      "pageSubtitle": "Gérez votre identité, votre site vitrine et vos opérations.",
+      "pageSubtitle": "Gérez votre identité et vos opérations internes.",
       "shopAndContact": "Boutique & Contact",
       "shopAndContactDesc": "Informations légales, devise et coordonnées de l'établissement.",
       "siteEditor": "Éditeur Vitrine",
@@ -703,6 +704,13 @@
       "headingOperations": "Opérations",
       "headingIntegrations": "Intégrations",
       "headingTeamPlan": "Équipe & Plan"
+    },
+    "boutique": {
+      "badge": "Boutique",
+      "title": "Design & Vitrine de la boutique",
+      "subtitle": "Personnalisez le style de la boutique publique et choisissez un template premium si besoin.",
+      "settingsLink": "Paramètres",
+      "viewPublic": "Voir la boutique"
     },
     "support": {
       "title": "Support",

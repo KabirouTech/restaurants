@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { importRecipesAction, type RecipeImportRow } from "@/actions/recipes";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Download, Pencil } from "lucide-react";
+import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Download, Pencil, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ColumnMapper, ExpectedColumn } from "@/components/ui/column-mapper";
+import { ImportProgressSteps, type ImportProgressPhase } from "@/components/ui/import-progress-steps";
 
 // ─── Parse helpers ────────────────────────────────────────────────────────────
 
@@ -52,6 +53,7 @@ function parseNumber(raw: string | number): number | null {
 
 type ParsedRow = RecipeImportRow & { _valid: boolean };
 type EditTarget = { row: number; field: string } | null;
+const IMPORT_BATCH_SIZE = 50;
 
 const EXPECTED_COLUMNS: ExpectedColumn[] = [
     { key: "name",               label: "Nom",                 required: true, aliases: ["nom","name","recette","titre","plat"] },
@@ -85,6 +87,9 @@ export function ImportRecipesDialog({
     const [rows, setRows] = useState<ParsedRow[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
+    const [importPhase, setImportPhase] = useState<ImportProgressPhase>("idle");
+    const [processedCount, setProcessedCount] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
     const [isPending, startTransition] = useTransition();
 
     // ── Inline editing ──
@@ -132,7 +137,8 @@ export function ImportRecipesDialog({
 
     const reset = () => {
         setRows([]); setFileName(null); setStatus("upload");
-        setRawRows([]); setFileHeaders([]); setEditing(null);
+        setRawRows([]); setFileHeaders([]); setEditing(null); setImportPhase("idle");
+        setProcessedCount(0); setTotalCount(0);
     };
     const close = () => { reset(); onOpenChange(false); };
 
@@ -154,6 +160,7 @@ export function ImportRecipesDialog({
                 setRawRows(jsonRows);
                 setFileName(file.name);
                 setStatus("mapping");
+                setImportPhase("idle");
             } catch {
                 toast.error("Impossible de lire le fichier. Vérifiez le format.");
             }
@@ -187,18 +194,41 @@ export function ImportRecipesDialog({
         }).filter(r => Object.values(r).some(v => v));
         setRows(parsed);
         setStatus("preview");
+        setImportPhase("idle");
     };
 
     const handleImport = () => {
         const valid = rows.filter(r => r._valid);
+        if (!valid.length) {
+            toast.error("Aucune ligne valide à importer.");
+            return;
+        }
+
+        setImportPhase("running");
+        setProcessedCount(0);
+        setTotalCount(valid.length);
         startTransition(async () => {
-            const res = await importRecipesAction(orgId, valid.map(({ _valid, ...r }) => r));
-            if (res.error) { toast.error(res.error); }
-            else {
-                toast.success(`${res.count} recette(s) importée(s) avec succès !`);
-                router.refresh();
-                close();
+            let importedTotal = 0;
+
+            for (let i = 0; i < valid.length; i += IMPORT_BATCH_SIZE) {
+                const chunk = valid.slice(i, i + IMPORT_BATCH_SIZE);
+                const payload = chunk.map(({ _valid, ...row }) => row);
+                const res = await importRecipesAction(orgId, payload);
+
+                if (res.error) {
+                    setImportPhase("error");
+                    toast.error(res.error);
+                    return;
+                }
+
+                importedTotal += res.count ?? 0;
+                setProcessedCount(Math.min(i + chunk.length, valid.length));
             }
+
+            setImportPhase("success");
+            toast.success(`${importedTotal} recette(s) importée(s) avec succès !`);
+            router.refresh();
+            close();
         });
     };
 
@@ -217,6 +247,7 @@ export function ImportRecipesDialog({
 
     const validCount = rows.filter(r => r._valid).length;
     const invalidCount = rows.length - validCount;
+    const progressStep = status === "mapping" ? 1 : status === "preview" ? 2 : 0;
 
     // ── Editable cell renderer ──────────────────────────────────────────────
 
@@ -276,6 +307,14 @@ export function ImportRecipesDialog({
                         Colonne requise : <strong>Nom</strong>. Toutes les autres sont optionnelles.
                     </DialogDescription>
                 </DialogHeader>
+
+                <ImportProgressSteps
+                    steps={["Charger le fichier", "Mapper les colonnes", "Importer"]}
+                    currentStep={progressStep}
+                    phase={importPhase}
+                    processedCount={processedCount}
+                    totalCount={totalCount}
+                />
 
                 {/* ── Étape 1 : Upload ── */}
                 {status === "upload" && (
@@ -475,7 +514,12 @@ export function ImportRecipesDialog({
                             disabled={status !== "preview" || validCount === 0 || isPending}
                             className="gap-2"
                         >
-                            {isPending ? "Import en cours..." : `Importer ${validCount} recette(s)`}
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    {`Import ${processedCount}/${totalCount}`}
+                                </>
+                            ) : `Importer ${validCount} recette(s)`}
                         </Button>
                     </DialogFooter>
                 )}

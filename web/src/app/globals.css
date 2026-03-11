@@ -126,6 +126,43 @@
     background-image: radial-gradient(var(--border) 1px, transparent 1px);
     background-size: 24px 24px;
   }
+
+  .storefront-template-bistro #menu,
+  .storefront-template-bistro #about,
+  .storefront-template-bistro #services,
+  .storefront-template-bistro #gallery,
+  .storefront-template-bistro #testimonials,
+  .storefront-template-bistro #contact {
+    background: linear-gradient(180deg, rgba(24, 24, 27, 0.55) 0%, rgba(24, 24, 27, 0.25) 100%);
+    border-radius: 1.25rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .storefront-template-catering #menu,
+  .storefront-template-catering #about,
+  .storefront-template-catering #services,
+  .storefront-template-catering #gallery,
+  .storefront-template-catering #testimonials,
+  .storefront-template-catering #contact {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+    box-shadow: none;
+  }
+
+  .storefront-template-restaurant #menu,
+  .storefront-template-restaurant #about,
+  .storefront-template-restaurant #services,
+  .storefront-template-restaurant #gallery,
+  .storefront-template-restaurant #testimonials,
+  .storefront-template-restaurant #contact {
+    border-top: 1px solid rgba(159, 18, 57, 0.12);
+    border-bottom: 1px solid rgba(159, 18, 57, 0.12);
+    background: linear-gradient(180deg, rgba(255, 251, 242, 0.72) 0%, rgba(255, 255, 255, 0.94) 100%);
+  }
 }
 
 /* ── Onboarding Animations ──────────────────────────────────────────── */

@@ -16,6 +16,7 @@ import {
     Truck,
     BookOpen,
     Utensils,
+    Store,
     MessageSquareWarning,
     Settings,
     LogOut,
@@ -72,6 +73,7 @@ const secondaryItems: SecondaryItem[] = [
     { href: "/dashboard/suppliers", icon: Truck,    labelKey: "suppliers", shortLabel: "Fourn." },
     { href: "/dashboard/recipes",   icon: BookOpen, labelKey: "recipes",   shortLabel: "Recettes" },
     { href: "/dashboard/menu",      icon: Utensils,             labelKey: "menu",      shortLabel: "Menu" },
+    { href: "/dashboard/boutique",  icon: Store,                labelKey: "boutique",  shortLabel: "Boutique" },
     { href: "/dashboard/support",   icon: MessageSquareWarning, labelKey: "support",   shortLabel: "Support" },
     { href: "/dashboard/settings",  icon: Settings,             labelKey: "settings",  shortLabel: "Config" },
 ];

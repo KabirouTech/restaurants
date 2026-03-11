@@ -340,6 +340,7 @@
       "orders": "Quotes & Orders",
       "calendar": "Calendar",
       "menu": "Menu & Dishes",
+      "boutique": "Boutique",
       "messages": "Messages",
       "customers": "Clients",
       "inventory": "Inventory",
@@ -649,7 +650,7 @@
       "title": "Settings",
       "configuration": "Configuration",
       "pageTitle": "Store Settings",
-      "pageSubtitle": "Manage your identity, storefront and operations.",
+      "pageSubtitle": "Manage your identity and internal operations.",
       "shopAndContact": "Store & Contact",
       "shopAndContactDesc": "Legal information, currency and establishment contact details.",
       "siteEditor": "Storefront Editor",
@@ -703,6 +704,13 @@
       "headingOperations": "Operations",
       "headingIntegrations": "Integrations",
       "headingTeamPlan": "Team & Plan"
+    },
+    "boutique": {
+      "badge": "Boutique",
+      "title": "Boutique Design & Storefront",
+      "subtitle": "Customize your public boutique style and unlock premium templates when needed.",
+      "settingsLink": "Settings",
+      "viewPublic": "View boutique"
     },
     "support": {
       "title": "Support",

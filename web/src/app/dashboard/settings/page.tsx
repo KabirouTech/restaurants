@@ -1,9 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Store, Utensils, CalendarDays, Info, Kanban, Globe, MessageCircle } from "lucide-react";
+import { Store } from "lucide-react";
 import { SettingsForm } from "@/components/dashboard/settings/SettingsForm";
-import { SiteSettings } from "@/components/dashboard/settings/SiteSettings";
 import { CapacitySettings } from "@/components/settings/CapacitySettings";
 import { KanbanSettings } from "@/components/dashboard/orders/KanbanSettings";
 import { DEFAULT_KANBAN_COLUMNS } from "@/components/dashboard/orders/KanbanBoard";
@@ -13,7 +12,7 @@ import { MembersSettings } from "@/components/dashboard/settings/MembersSettings
 import { MenuInfoSettings } from "@/components/dashboard/settings/MenuInfoSettings";
 import { SettingsSidebar } from "@/components/dashboard/settings/SettingsSidebar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function SettingsPage({
@@ -43,6 +42,10 @@ export default async function SettingsPage({
 
     const settings = (org.settings || {}) as Record<string, any>;
 
+    if (params.tab === "site") {
+        redirect("/dashboard/boutique");
+    }
+
     const { data: capacityTypes } = await supabase
         .from("capacity_types")
         .select("*")
@@ -50,16 +53,9 @@ export default async function SettingsPage({
         .eq("organization_id", org.id)
         .order("load_cost", { ascending: true });
 
-    const { data: products } = await supabase
-        .from("products")
-        .select("*")
-        .eq("organization_id", org.id)
-        .eq("is_active", true);
-
     const kanbanColumns = settings.kanban_columns || DEFAULT_KANBAN_COLUMNS;
     const allowedTabs = new Set([
         "general",
-        "site",
         "menu",
         "capacity",
         "kanban",
@@ -109,17 +105,6 @@ export default async function SettingsPage({
                                 </p>
                             </div>
                             <SettingsForm org={org} settings={settings} />
-                        </TabsContent>
-
-                        {/* ── Site Web ────────────────────────────────── */}
-                        <TabsContent value="site" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
-                            <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">{t('siteEditor')}</h2>
-                                <p className="text-sm text-muted-foreground">
-                                    {t('siteEditorDesc')}
-                                </p>
-                            </div>
-                            <SiteSettings org={org} settings={settings} products={products || []} />
                         </TabsContent>
 
                         {/* ── Menu & Infos ─────────────────────────────── */}
