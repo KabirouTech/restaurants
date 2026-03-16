@@ -1,12 +1,17 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/utils/supabase/server";
+import {
+    DEFAULT_STOREFRONT_TEMPLATE,
+    resolveStorefrontTemplate,
+} from "@/lib/storefront-templates";
 
 interface SiteSettingsPayload {
     orgId: string;
     sections: any[];
+    storefrontTemplate?: string;
     primaryColor?: string;
     metaTitle?: string;
     metaDescription?: string;
@@ -36,9 +41,8 @@ interface SiteSettingsPayload {
 }
 
 export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const { userId } = await auth();
+    if (!userId) return { error: "Non authentifié" };
 
     try {
         const supabaseAdmin = createAdminClient(
@@ -47,18 +51,33 @@ export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
             { auth: { persistSession: false } }
         );
 
+        const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("organization_id")
+            .eq("clerk_id", userId)
+            .maybeSingle();
+
+        if (!profile?.organization_id || profile.organization_id !== payload.orgId) {
+            return { error: "Organisation non autorisée" };
+        }
+
         // Fetch existing settings to merge
         const { data: org } = await supabaseAdmin
             .from("organizations")
-            .select("settings, slug")
+            .select("settings, slug, subscription_plan")
             .eq("id", payload.orgId)
             .single();
 
         const current = (org?.settings || {}) as Record<string, any>;
+        const storefrontTemplate = resolveStorefrontTemplate(
+            payload.storefrontTemplate || current.storefront_template || DEFAULT_STOREFRONT_TEMPLATE,
+            org?.subscription_plan
+        );
 
         const newSettings: Record<string, any> = {
             ...current,
             sections: payload.sections,
+            storefront_template: storefrontTemplate,
             primary_color: payload.primaryColor || "#f4af25",
             meta_title: payload.metaTitle || null,
             meta_description: payload.metaDescription || null,
@@ -99,6 +118,7 @@ export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
         if (error) return { error: "Erreur: " + error.message };
 
         revalidatePath("/dashboard/settings");
+        revalidatePath("/dashboard/boutique");
         if (org?.slug) revalidatePath(`/${org.slug}`);
 
         return { success: true };

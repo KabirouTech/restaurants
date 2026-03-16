@@ -40,7 +40,7 @@ export interface Database {
                     id: string
                     organization_id: string
                     full_name: string | null
-                    role: 'admin' | 'staff' | 'driver' | null
+                    role: 'superadmin' | 'admin' | 'member' | null
                     avatar_url: string | null
                     created_at: string
                 }

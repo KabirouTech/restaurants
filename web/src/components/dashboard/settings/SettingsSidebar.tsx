@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Store, Globe, Utensils, CalendarDays, Kanban, MessageCircle, ChevronLeft, Users, CreditCard } from "lucide-react";
+import { Store, Utensils, CalendarDays, Kanban, MessageCircle, ChevronLeft, Users, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
@@ -13,7 +13,6 @@ export function SettingsSidebar() {
 
     const TABS = [
         { value: "general",  icon: Store,         label: t('sidebarShop') },
-        { value: "site",     icon: Globe,         label: t('sidebarSite') },
         { value: "menu",     icon: Utensils,      label: t('sidebarMenu') },
         { value: "capacity", icon: CalendarDays,  label: t('sidebarCapacity') },
         { value: "kanban",   icon: Kanban,        label: t('sidebarKanban') },
@@ -24,7 +23,6 @@ export function SettingsSidebar() {
 
     const getSectionHeading = (value: string): string | null => {
         if (value === "general")  return t('headingCompany');
-        if (value === "site")     return t('headingPublicSite');
         if (value === "capacity") return t('headingOperations');
         if (value === "channels") return t('headingIntegrations');
         if (value === "members")  return t('headingTeamPlan');

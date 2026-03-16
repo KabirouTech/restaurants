@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 // Normalize a category string from Excel — accept anything as-is, just clean it up
 function normalizeCategory(raw: any): string {
@@ -13,13 +14,11 @@ function normalizeCategory(raw: any): string {
 export async function importMenuAction(items: any[]) {
     if (!items || items.length === 0) return { error: "Aucun élément à importer" };
 
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     try {
         // Map Excel columns to DB columns — accept any category value
@@ -36,7 +35,7 @@ export async function importMenuAction(items: any[]) {
             );
 
             return {
-                organization_id: profile.organization_id,
+                organization_id: organizationId,
                 name: (item['Nom du Plat'] || item['Nom'] || item['Name'] || item['name'] || "").toString().trim(),
                 description: (item['Description'] || item['description'] || "").toString().trim(),
                 price_cents: Math.round(price * 100),

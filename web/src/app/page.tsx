@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import {
     ArrowRight, BookOpen, CalendarDays, Check, ChefHat,
     FileText, MessageSquare, Package, ShoppingCart,
-    Truck, Users, Mic, FolderOpen, Download, X,
-    Star, AlertTriangle, Clock, Layers, Zap
+    Truck, Users, Download, X, Store, Globe,
+    Star, AlertTriangle, Clock, Layers, Zap, Smartphone
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { HomepageLightMode } from "@/components/HomepageLightMode";
 
 export const metadata: Metadata = {
-    title: "RestaurantsOS — La plateforme des traiteurs d'Afrique de l'Ouest",
+    title: "RestaurantsOS — La plateforme des traiteurs et food businesses d'Afrique",
     description: "Devis, calendrier, messagerie unifiée, recettes et inventaire dans une seule app. Arrêtez de gérer votre business sur WhatsApp.",
 };
 
@@ -53,6 +53,7 @@ export default async function LandingPage() {
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
                         <Link href="#probleme" className="hover:text-foreground transition-colors">{tNav("why")}</Link>
                         <Link href="#fonctionnalites" className="hover:text-foreground transition-colors">{tNav("features")}</Link>
+                        <Link href="#boutique" className="hover:text-foreground transition-colors">{t("storefront.nav")}</Link>
                         <Link href="#tarifs" className="hover:text-foreground transition-colors">{tNav("pricing")}</Link>
                         <Link href="/tutoriels" className="hover:text-foreground transition-colors">{tNav("tutorials")}</Link>
                     </nav>
@@ -61,10 +62,10 @@ export default async function LandingPage() {
                             <LanguageSwitcher />
                             <ModeToggle />
                         </div>
-                        <Link href="/auth/login" className="hidden md:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2">
+                        <Link href="/sign-in" className="hidden md:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2">
                             {tNav("login")}
                         </Link>
-                        <Link href="/auth/signup">
+                        <Link href="/sign-up">
                             <Button className="rounded-full bg-primary hover:bg-primary/90 text-white font-semibold px-4 md:px-5 py-2 shadow-md shadow-primary/20 text-sm">
                                 {tNav("freeTrial")}
                             </Button>
@@ -78,11 +79,33 @@ export default async function LandingPage() {
                 {/* Background accents */}
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-50/80 via-background to-amber-50/30 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900 -z-10" />
                 <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/8 rounded-full blur-[140px] -z-10 translate-x-1/3 -translate-y-1/3" />
+                <div className="absolute inset-0 text-primary/60 opacity-[0.08] pointer-events-none -z-10 [mask-image:linear-gradient(to_bottom,black,transparent_75%)]">
+                    <WeavePatternOverlay />
+                </div>
+                <div className="hidden xl:block absolute left-[6%] top-36 text-primary/20 -z-10">
+                    <AfricaOutlineMark className="h-40 w-32" />
+                </div>
+                <div className="hidden xl:block absolute right-[8%] top-44 text-primary/20 -z-10">
+                    <VodunGlyph className="h-20 w-14" />
+                </div>
 
-                <div className="container mx-auto max-w-4xl text-center space-y-4 md:space-y-7">
+                <div className="container mx-auto max-w-6xl text-center space-y-4 md:space-y-7">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest border border-primary/20">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         {t("hero.badge")}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-2.5">
+                        {(t.raw("identity.pills") as string[]).map((pill, idx) => (
+                            <span
+                                key={pill}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border bg-background/80 backdrop-blur-sm text-[11px] font-medium text-muted-foreground"
+                            >
+                                {idx === 0 && <AfricaOutlineMark className="h-3.5 w-3 text-primary" />}
+                                {idx === 1 && <KenteGlyph className="h-3.5 w-3.5 text-primary" />}
+                                {idx === 2 && <VodunGlyph className="h-3.5 w-2.5 text-primary" />}
+                                {pill}
+                            </span>
+                        ))}
                     </div>
 
                     <h1 className="text-[36px] md:text-[68px] font-bold tracking-tight text-secondary font-serif leading-[1.1] md:leading-[1.08]">
@@ -97,13 +120,13 @@ export default async function LandingPage() {
                     </p>
 
                     <div className="hidden sm:flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
-                        <Link href="/auth/signup">
-                            <Button size="lg" className="h-13 px-8 rounded-full text-base bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/25 transition-all hover:scale-[1.03] font-semibold">
-                                {t("hero.cta")} <ArrowRight className="ml-2 h-4 w-4" />
+                        <Link href="/sign-up">
+                            <Button size="lg" className="h-14 md:h-16 min-w-[250px] md:min-w-[310px] px-8 md:px-10 rounded-full text-lg md:text-2xl bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/25 transition-all hover:scale-[1.03] font-semibold">
+                                {t("hero.cta")} <ArrowRight className="ml-2 md:ml-3 h-5 w-5 md:h-6 md:w-6" />
                             </Button>
                         </Link>
                         <Link href="/dashboard">
-                            <Button variant="outline" size="lg" className="h-13 px-8 rounded-full text-base border-2 font-semibold hover:border-secondary hover:text-secondary transition-all">
+                            <Button variant="outline" size="lg" className="h-14 md:h-16 min-w-[235px] md:min-w-[285px] px-8 md:px-10 rounded-full text-lg md:text-2xl border-2 font-semibold hover:border-secondary hover:text-secondary transition-all">
                                 {t("hero.demo")}
                             </Button>
                         </Link>
@@ -121,7 +144,7 @@ export default async function LandingPage() {
                     </div>
 
                     {/* Arcade embed */}
-                    <div className="pt-4 md:pt-20 w-full max-w-5xl mx-auto">
+                    <div className="pt-6 md:pt-14 w-full max-w-[1220px] mx-auto">
                         <div className="relative rounded-xl md:rounded-2xl border-2 border-border/60 bg-card shadow-[0_30px_80px_-20px_rgba(234,88,12,0.18)] overflow-hidden">
                             <div dangerouslySetInnerHTML={{ __html: heroEmbed }} />
                         </div>
@@ -416,6 +439,69 @@ export default async function LandingPage() {
                 </div>
             </section>
 
+            {/* ── Public storefront ────────────────── */}
+            <section id="boutique" className="py-12 md:py-24 px-4 md:px-6">
+                <div className="container mx-auto max-w-6xl">
+                    <div className="text-center mb-8 md:mb-14 space-y-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wide border border-primary/20">
+                            <Globe className="h-3.5 w-3.5" />
+                            {t("storefront.badge")}
+                        </div>
+                        <h2 className="text-2xl md:text-4xl font-bold font-serif text-secondary">
+                            {t("storefront.title")}
+                        </h2>
+                        <p className="text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                            {t("storefront.subtitle")}
+                        </p>
+                    </div>
+
+                    <div className="grid lg:grid-cols-[1.03fr_1fr] gap-6 md:gap-10 items-start">
+                        <div className="space-y-5">
+                            <div className="rounded-2xl border border-border bg-card p-6 md:p-7 shadow-sm">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                        <Store className="h-5 w-5" />
+                                    </div>
+                                    <h3 className="text-lg md:text-xl font-bold text-foreground font-serif">{t("storefront.dashboardTitle")}</h3>
+                                </div>
+                                <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-5">
+                                    {t("storefront.dashboardBody")}
+                                </p>
+                                <ul className="space-y-3">
+                                    {(t.raw("storefront.dashboardItems") as string[]).map((item: string) => (
+                                        <li key={item} className="flex items-center gap-3 text-sm text-foreground">
+                                            <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-7">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="h-10 w-10 rounded-xl bg-white text-primary border border-primary/20 flex items-center justify-center">
+                                        <Smartphone className="h-5 w-5" />
+                                    </div>
+                                    <h3 className="text-lg md:text-xl font-bold text-foreground font-serif">{t("storefront.publicTitle")}</h3>
+                                </div>
+                                <p className="text-sm md:text-base text-muted-foreground leading-relaxed mb-5">
+                                    {t("storefront.publicBody")}
+                                </p>
+                                <div className="flex flex-wrap gap-2.5">
+                                    {(t.raw("storefront.publicItems") as string[]).map((item: string) => (
+                                        <span key={item} className="px-3 py-1.5 rounded-full bg-white border border-border text-xs md:text-sm font-medium text-foreground">
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <StorefrontPreview tr={t.raw("storefront.mock") as StorefrontMockTr} />
+                    </div>
+                </div>
+            </section>
+
             {/* ── How it works ──────────────────────── */}
             <section className="py-12 md:py-24 px-4 md:px-6">
                 <div className="container mx-auto max-w-3xl text-center space-y-16">
@@ -495,7 +581,7 @@ export default async function LandingPage() {
                             features={t.raw("pricing.free.features") as string[]}
                             missing={t.raw("pricing.free.missing") as string[]}
                             cta={t("pricing.free.cta")}
-                            ctaHref="/auth/signup"
+                            ctaHref="/sign-up"
                             variant="default"
                         />
 
@@ -508,7 +594,7 @@ export default async function LandingPage() {
                             features={t.raw("pricing.premium.features") as string[]}
                             missing={t.raw("pricing.premium.missing") as string[]}
                             cta={t("pricing.premium.cta")}
-                            ctaHref="/auth/signup"
+                            ctaHref="/sign-up"
                             variant="featured"
                             badge={t("pricing.premium.badge")}
                             note={t("pricing.premium.earlyAdopter")}
@@ -569,7 +655,7 @@ export default async function LandingPage() {
                     <p className="text-sm md:text-lg text-muted-foreground">
                         {t("cta.subtitle")}
                     </p>
-                    <Link href="/auth/signup">
+                    <Link href="/sign-up">
                         <Button size="lg" className="h-14 px-10 rounded-full text-lg bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/25 transition-all hover:scale-105 font-semibold">
                             {t("cta.button")} <ArrowRight className="ml-2 h-5 w-5" />
                         </Button>
@@ -582,7 +668,7 @@ export default async function LandingPage() {
 
             {/* ── Floating CTA (mobile only) ─────────── */}
             <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-md border-t border-border shadow-2xl px-4 py-3">
-                <Link href="/auth/signup" className="block">
+                <Link href="/sign-up" className="block">
                     <Button className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-base shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
                         {tNav("freeTrial")} <ArrowRight className="h-4 w-4" />
                     </Button>
@@ -605,7 +691,7 @@ export default async function LandingPage() {
                             <li><Link href="#fonctionnalites" className="hover:text-primary transition-colors">{t("footer.features")}</Link></li>
                             <li><Link href="#tarifs" className="hover:text-primary transition-colors">{t("footer.pricing")}</Link></li>
                             <li><Link href="/tutoriels" className="hover:text-primary transition-colors">{t("footer.tutorials")}</Link></li>
-                            <li><Link href="/auth/signup" className="hover:text-primary transition-colors">{t("footer.freeTrial")}</Link></li>
+                            <li><Link href="/sign-up" className="hover:text-primary transition-colors">{t("footer.freeTrial")}</Link></li>
                         </ul>
                     </div>
                     <div>
@@ -641,6 +727,20 @@ type MockCalendarTr = {
 type MockInboxTr = {
     title: string;
     conversations: { name: string; msg: string; time: string }[];
+};
+type StorefrontMockTr = {
+    name: string;
+    nav: string[];
+    heroTag: string;
+    heroTitle: string;
+    heroDescription: string;
+    menuTitle: string;
+    categories: string[];
+    searchPlaceholder: string;
+    orderTitle: string;
+    orderCta: string;
+    dishes: { name: string; price: string; prep: string }[];
+    note: string;
 };
 
 /* ── Sub-components ─────────────────────────── */
@@ -991,6 +1091,189 @@ function MockInbox({ tr, compact }: { tr: MockInboxTr; compact?: boolean }) {
                 })}
             </div>
         </div>
+    );
+}
+
+function StorefrontPreview({ tr }: { tr: StorefrontMockTr }) {
+    return (
+        <div className="rounded-3xl border border-border bg-card shadow-[0_28px_80px_-30px_rgba(230,126,34,0.45)] overflow-hidden">
+            {/* Storefront header (same spirit as real /[slug]) */}
+            <div className="h-14 px-4 border-b border-border/70 bg-background/95 flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-7 w-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center flex-shrink-0">
+                        <Store className="h-3.5 w-3.5" />
+                    </div>
+                    <p className="font-serif font-bold text-sm md:text-base text-foreground truncate">
+                        {tr.name}
+                    </p>
+                </div>
+                <div className="hidden md:flex items-center gap-1">
+                    {tr.nav.map((item, idx) => (
+                        <span
+                            key={item}
+                            className={cn(
+                                "px-2.5 py-1 rounded-full text-[11px] font-medium border",
+                                idx === 0
+                                    ? "bg-primary text-white border-primary"
+                                    : "bg-background text-muted-foreground border-border"
+                            )}
+                        >
+                            {item}
+                        </span>
+                    ))}
+                </div>
+                <div className="h-7 w-7 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                    2
+                </div>
+            </div>
+
+            <div className="p-4 md:p-5 space-y-5">
+                {/* Hero block (same structure as real storefront Hero) */}
+                <div className="relative rounded-2xl overflow-hidden border border-border h-44 md:h-48">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-200 via-orange-300 to-orange-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
+                    <div className="absolute top-3 right-3 text-white/45">
+                        <VodunGlyph className="h-8 w-6" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 p-4 md:p-5 text-white">
+                        <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-primary/90 text-white mb-2.5">
+                            {tr.heroTag}
+                        </span>
+                        <p className="font-serif font-bold text-lg md:text-xl leading-tight">
+                            {tr.heroTitle}
+                        </p>
+                        <p className="text-[11px] md:text-xs text-white/90 mt-1.5 max-w-md">
+                            {tr.heroDescription}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Menu section (same structure as real MenuSection) */}
+                <div className="rounded-2xl border border-border bg-background p-3.5 md:p-4">
+                    <div className="text-center mb-4">
+                        <p className="text-[10px] uppercase tracking-[0.24em] text-primary font-semibold">
+                            {tr.menuTitle}
+                        </p>
+                        <div className="h-1 w-14 rounded-full bg-primary/60 mx-auto mt-2" />
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-1">
+                            {tr.categories.map((cat, idx) => (
+                                <span
+                                    key={cat}
+                                    className={cn(
+                                        "px-2.5 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap",
+                                        idx === 0
+                                            ? "bg-primary text-white border-primary"
+                                            : "bg-background text-muted-foreground border-border"
+                                    )}
+                                >
+                                    {cat}
+                                </span>
+                            ))}
+                        </div>
+                        <span className="hidden md:inline-flex text-[11px] px-3 py-1 rounded-full border border-border text-muted-foreground">
+                            {tr.searchPlaceholder}
+                        </span>
+                    </div>
+
+                    <div className="grid md:grid-cols-[1.55fr_1fr] gap-3">
+                        <div className="space-y-2">
+                            {tr.dishes.map(({ name, price, prep }, idx) => (
+                                <div key={name} className="rounded-xl border border-border p-2.5 flex items-center gap-2.5">
+                                    <div className={cn(
+                                        "h-10 w-10 rounded-lg flex-shrink-0",
+                                        idx % 3 === 0 && "bg-gradient-to-br from-amber-200 to-orange-300",
+                                        idx % 3 === 1 && "bg-gradient-to-br from-orange-200 to-rose-200",
+                                        idx % 3 === 2 && "bg-gradient-to-br from-yellow-100 to-orange-200"
+                                    )} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs md:text-sm font-semibold text-foreground truncate">{name}</p>
+                                        <p className="text-[11px] text-muted-foreground truncate">{prep}</p>
+                                    </div>
+                                    <p className="text-xs md:text-sm font-bold text-primary flex-shrink-0">{price}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="rounded-xl border border-border bg-card p-3 flex flex-col">
+                            <p className="text-sm font-bold text-foreground mb-2.5">{tr.orderTitle}</p>
+                            <div className="space-y-2 text-xs mb-3">
+                                {tr.dishes.slice(0, 2).map(({ name, price }) => (
+                                    <div key={name} className="flex items-center justify-between">
+                                        <span className="text-muted-foreground truncate pr-2">1 × {name}</span>
+                                        <span className="font-semibold text-foreground">{price}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-auto pt-2.5 border-t border-border flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Total</span>
+                                <span className="text-base font-bold text-primary">{tr.dishes[0]?.price || ""}</span>
+                            </div>
+                            <button className="mt-3 w-full rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-semibold py-2 transition-colors">
+                                {tr.orderCta}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="rounded-xl bg-primary/10 border border-primary/15 px-4 py-3">
+                    <p className="text-sm text-foreground font-medium">{tr.note}</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function AfricaOutlineMark({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 96 132" className={className} aria-hidden="true" fill="none">
+            <path
+                d="M38 6l14 8 6 12 12 10 6 16-4 13 7 13-11 18-5 24-12 6-8-12-11-8-7-14-8-11-4-16 5-14-4-14 7-12 9-9z"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinejoin="round"
+            />
+            <path d="M66 106l10 6-6 10-8-4z" fill="currentColor" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function VodunGlyph({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 48 80" className={className} aria-hidden="true" fill="none">
+            <rect x="8" y="6" width="32" height="52" rx="14" stroke="currentColor" strokeWidth="3" />
+            <circle cx="18" cy="28" r="2.8" fill="currentColor" />
+            <circle cx="30" cy="28" r="2.8" fill="currentColor" />
+            <path d="M24 30v10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <path d="M18 46c2 2 4 3 6 3s4-1 6-3" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <path d="M24 58v14M15 70h18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+    );
+}
+
+function KenteGlyph({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 36 36" className={className} aria-hidden="true" fill="none">
+            <path d="M2 8h32M2 18h32M2 28h32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <path d="M8 2v32M18 2v32M28 2v32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+    );
+}
+
+function WeavePatternOverlay() {
+    return (
+        <svg className="h-full w-full" aria-hidden="true">
+            <defs>
+                <pattern id="africa-weave-pattern" width="34" height="34" patternUnits="userSpaceOnUse">
+                    <path d="M0 17h34M17 0v34M0 0l34 34M34 0L0 34" stroke="currentColor" strokeWidth="0.9" />
+                    <circle cx="17" cy="17" r="1.4" fill="currentColor" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#africa-weave-pattern)" />
+        </svg>
     );
 }
 

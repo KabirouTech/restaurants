@@ -33,15 +33,6 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import {
-  listMembers,
-  listInvitations,
-  inviteMember,
-  cancelInvitation,
-  resendInvitation,
-  changeMemberRole,
-  suspendMember,
-  reactivateMember,
-  removeMember,
   ROLE_LABELS,
   ROLE_COLORS,
   STATUS_LABELS,
@@ -49,6 +40,17 @@ import {
   type Invitation,
   type MemberRole,
 } from '@/lib/members/member-management'
+import {
+  inviteMemberAction,
+  listMembersAction,
+  listInvitationsAction,
+  cancelInvitationAction,
+  resendInvitationAction,
+  changeMemberRoleAction,
+  suspendMemberAction,
+  reactivateMemberAction,
+  removeMemberAction,
+} from '@/actions/members'
 import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 
 interface MembersSettingsProps {
@@ -58,8 +60,7 @@ interface MembersSettingsProps {
 
 const ROLE_OPTIONS: { value: MemberRole; label: string }[] = [
   { value: 'admin', label: 'Administrateur' },
-  { value: 'staff', label: 'Employé' },
-  { value: 'driver', label: 'Livreur' },
+  { value: 'member', label: 'Membre' },
 ]
 
 function initials(name: string | null, email?: string): string {
@@ -73,21 +74,20 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [limitError, setLimitError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   // Invite form state
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<MemberRole>('staff')
+  const [role, setRole] = useState<MemberRole>('member')
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [upgradeRequired, setUpgradeRequired] = useState(false)
 
   async function refresh() {
     setLoading(true)
-    const [m, i] = await Promise.all([listMembers(orgId), listInvitations(orgId)])
-    setMembers(m)
-    setInvitations(i)
+    const [m, i] = await Promise.all([listMembersAction(), listInvitationsAction()])
+    setMembers(m as Member[])
+    setInvitations(i as Invitation[])
     setLoading(false)
   }
 
@@ -99,13 +99,13 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
     setInviteError(null)
     setUpgradeRequired(false)
 
-    const result = await inviteMember(orgId, email.trim(), role)
+    const result = await inviteMemberAction(email.trim(), role)
     setInviting(false)
 
     if (result.success) {
       setInviteOpen(false)
       setEmail('')
-      setRole('staff')
+      setRole('member')
       refresh()
     } else {
       setInviteError(result.error || 'Erreur inconnue.')
@@ -198,7 +198,7 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {ROLE_OPTIONS.filter((r) => r.value !== member.role).map((r) => (
-                          <DropdownMenuItem key={r.value} onClick={() => handleAction(() => changeMemberRole(member.id, r.value), member.id)}>
+                          <DropdownMenuItem key={r.value} onClick={() => handleAction(() => changeMemberRoleAction(member.id, r.value), member.id)}>
                             <Shield className="h-3.5 w-3.5 mr-2" />
                             Rôle : {r.label}
                           </DropdownMenuItem>
@@ -207,21 +207,21 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                         {member.status === 'active' ? (
                           <DropdownMenuItem
                             className="text-amber-600"
-                            onClick={() => handleAction(() => suspendMember(member.id), member.id)}
+                            onClick={() => handleAction(() => suspendMemberAction(member.id), member.id)}
                           >
                             Suspendre
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             className="text-green-600"
-                            onClick={() => handleAction(() => reactivateMember(member.id), member.id)}
+                            onClick={() => handleAction(() => reactivateMemberAction(member.id), member.id)}
                           >
                             Réactiver
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleAction(() => removeMember(member.id), member.id)}
+                          onClick={() => handleAction(() => removeMemberAction(member.id), member.id)}
                         >
                           Retirer de l'organisation
                         </DropdownMenuItem>
@@ -260,7 +260,7 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                     size="sm"
                     className="h-7 text-xs"
                     disabled={actionLoading === inv.id}
-                    onClick={() => handleAction(() => resendInvitation(inv.id), inv.id)}
+                    onClick={() => handleAction(() => resendInvitationAction(inv.id), inv.id)}
                   >
                     <RefreshCw className="h-3 w-3 mr-1" />
                     Renvoyer
@@ -270,7 +270,7 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                     size="sm"
                     className="h-7 text-xs text-red-600 hover:text-red-700"
                     disabled={actionLoading === inv.id}
-                    onClick={() => handleAction(() => cancelInvitation(inv.id), inv.id)}
+                    onClick={() => handleAction(() => cancelInvitationAction(inv.id), inv.id)}
                   >
                     Annuler
                   </Button>

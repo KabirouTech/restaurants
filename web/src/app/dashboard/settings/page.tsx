@@ -1,9 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Store, Utensils, CalendarDays, Info, Kanban, Globe, MessageCircle } from "lucide-react";
+import { Store } from "lucide-react";
 import { SettingsForm } from "@/components/dashboard/settings/SettingsForm";
-import { SiteSettings } from "@/components/dashboard/settings/SiteSettings";
 import { CapacitySettings } from "@/components/settings/CapacitySettings";
 import { KanbanSettings } from "@/components/dashboard/orders/KanbanSettings";
 import { DEFAULT_KANBAN_COLUMNS } from "@/components/dashboard/orders/KanbanBoard";
@@ -13,25 +12,39 @@ import { MembersSettings } from "@/components/dashboard/settings/MembersSettings
 import { MenuInfoSettings } from "@/components/dashboard/settings/MenuInfoSettings";
 import { SettingsSidebar } from "@/components/dashboard/settings/SettingsSidebar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ tab?: string }>;
+}) {
+    const params = await searchParams;
     const t = await getTranslations("dashboard.settings");
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("*, organizations(*)")
-        .eq("id", user.id)
-        .single();
-
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
-    const org = profile.organizations;
+    let org = profile.organizations as Record<string, any> | null | undefined;
+    if (!org) {
+        const { data: orgData } = await supabase
+            .from("organizations")
+            .select("*")
+            .eq("id", profile.organization_id)
+            .single();
+        org = orgData;
+    }
+
+    if (!org) redirect("/dashboard/onboarding");
+
     const settings = (org.settings || {}) as Record<string, any>;
+
+    if (params.tab === "site") {
+        redirect("/dashboard/boutique");
+    }
 
     const { data: capacityTypes } = await supabase
         .from("capacity_types")
@@ -40,13 +53,17 @@ export default async function SettingsPage() {
         .eq("organization_id", org.id)
         .order("load_cost", { ascending: true });
 
-    const { data: products } = await supabase
-        .from("products")
-        .select("*")
-        .eq("organization_id", org.id)
-        .eq("is_active", true);
-
     const kanbanColumns = settings.kanban_columns || DEFAULT_KANBAN_COLUMNS;
+    const allowedTabs = new Set([
+        "general",
+        "menu",
+        "capacity",
+        "kanban",
+        "channels",
+        "members",
+        "billing",
+    ]);
+    const initialTab = allowedTabs.has(params.tab || "") ? (params.tab as string) : "general";
 
     return (
         <div className="min-h-screen animate-in fade-in duration-500 pb-24">
@@ -71,7 +88,7 @@ export default async function SettingsPage() {
             </div>
 
             <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
-                <Tabs defaultValue="general" className="flex flex-col gap-0 md:flex-row md:gap-8 w-full items-start">
+                <Tabs defaultValue={initialTab} className="flex flex-col gap-0 md:flex-row md:gap-8 w-full items-start">
 
                     {/* Sidebar — sticky on mobile (top scroll), sticky on desktop */}
                     <div className="shrink-0 z-10 w-full md:w-auto md:self-stretch -mx-4 md:mx-0 mb-4 md:mb-0">
@@ -88,17 +105,6 @@ export default async function SettingsPage() {
                                 </p>
                             </div>
                             <SettingsForm org={org} settings={settings} />
-                        </TabsContent>
-
-                        {/* ── Site Web ────────────────────────────────── */}
-                        <TabsContent value="site" className="mt-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
-                            <div className="flex flex-col gap-1 pb-4">
-                                <h2 className="text-xl font-bold text-foreground">{t('siteEditor')}</h2>
-                                <p className="text-sm text-muted-foreground">
-                                    {t('siteEditorDesc')}
-                                </p>
-                            </div>
-                            <SiteSettings org={org} settings={settings} products={products || []} />
                         </TabsContent>
 
                         {/* ── Menu & Infos ─────────────────────────────── */}

@@ -67,7 +67,7 @@
   },
   "homepage": {
     "hero": {
-      "badge": "Built for West African Caterers",
+      "badge": "Built for Caterers and Food Businesses Across Africa",
       "title1": "Culinary excellence",
       "title2": "without the admin chaos.",
       "subtitle": "Focus on the taste, we handle the rest. Quotes, calendar, inventory and customer relations in one app infused with the spirit of Teranga.",
@@ -79,6 +79,9 @@
     },
     "trust": {
       "label": "They cook with us"
+    },
+    "identity": {
+      "pills": ["Pan-African vision", "Modern cultural motifs", "Built for local operators"]
     },
     "problem": {
       "title": "Sound familiar?",
@@ -123,6 +126,36 @@
       "menu": { "title": "Digital Menu", "desc": "Publish your menu online with photos, prices and allergens. Shareable with your clients." },
       "crm": { "title": "Client CRM", "desc": "Order history, notes, tags. Find any client in 2 seconds." },
       "team": { "title": "Team Management", "desc": "Invite collaborators with specific roles: admin, manager, agent." }
+    },
+    "storefront": {
+      "nav": "Storefront",
+      "badge": "Public boutique",
+      "title": "Show the boutique your customers will order from",
+      "subtitle": "From your dashboard, publish a branded customer page in minutes. Your dishes, your photos, your colors, and a direct checkout flow.",
+      "dashboardTitle": "From your admin side",
+      "dashboardBody": "Build and update your public boutique without code. One update in your menu, and the storefront stays synced instantly.",
+      "dashboardItems": ["Customize colors and logo", "Create categories and featured dishes", "Set pricing, photos and prep details", "Publish and share your boutique link"],
+      "publicTitle": "What your customers see",
+      "publicBody": "A clean mobile-first storefront with categories, dish cards, prep information and a clear order button.",
+      "publicItems": ["Mobile-first design", "Branded visual identity", "Direct order CTA", "Fast menu browsing"],
+      "mock": {
+        "name": "Chez Fatou Traiteur",
+        "nav": ["Home", "Menu", "About", "Contact"],
+        "heroTag": "Signature Dish",
+        "heroTitle": "Taste the soul of African cuisine",
+        "heroDescription": "Handcrafted menus for events, teams and families. Fresh ingredients, bold flavors, reliable delivery.",
+        "menuTitle": "Our Menu",
+        "categories": ["Popular", "Lunch", "Platters", "Drinks"],
+        "searchPlaceholder": "Search dishes...",
+        "orderTitle": "Your order",
+        "orderCta": "View details & order",
+        "dishes": [
+          { "name": "Thiéboudienne Royale", "price": "$18", "prep": "Ready in 35 min" },
+          { "name": "Poulet Yassa Signature", "price": "$15", "prep": "Ready in 30 min" },
+          { "name": "Bissap Gingembre", "price": "$6", "prep": "Fresh bottle · 1L" }
+        ],
+        "note": "Your customer picks dishes, confirms by message, and the order lands directly in RestaurantsOS."
+      }
     },
     "howItWorks": {
       "title": "Up and running in 5 minutes.",
@@ -219,7 +252,7 @@
       "note": "Free up to 30 orders · 5-minute setup · French & English support"
     },
     "footer": {
-      "tagline": "The all-in-one platform for caterers who want to blend tradition and technology. Senegal, Côte d'Ivoire and all of West Africa.",
+      "tagline": "The all-in-one platform for caterers and food businesses blending tradition and technology across the African continent.",
       "product": "Product",
       "company": "Company",
       "features": "Features",
@@ -229,7 +262,7 @@
       "about": "About",
       "contact": "Contact",
       "legal": "Legal",
-      "copyright": "Made with passion for West Africa"
+      "copyright": "Made with passion for African food businesses"
     }
   },
   "auth": {
@@ -307,6 +340,7 @@
       "orders": "Quotes & Orders",
       "calendar": "Calendar",
       "menu": "Menu & Dishes",
+      "boutique": "Boutique",
       "messages": "Messages",
       "customers": "Clients",
       "inventory": "Inventory",
@@ -314,6 +348,8 @@
       "recipes": "Recipes",
       "support": "Support",
       "settings": "Settings",
+      "account": "My Account",
+      "accountDescription": "Manage your profile, email, password, and security.",
       "logout": "Sign out",
       "notifications": "Enable Notifs",
       "appearance": "Appearance",
@@ -552,7 +588,7 @@
       "namePlaceholder": "E.g.: Thiéboudienne with fresh fish",
       "linkToProduct": "Link to a menu item",
       "shortDescription": "Short description",
-      "descPlaceholder": "A traditional Senegalese dish...",
+      "descPlaceholder": "A traditional African dish...",
       "portions": "Servings",
       "preparation": "Preparation",
       "cooking": "Cooking",
@@ -614,7 +650,7 @@
       "title": "Settings",
       "configuration": "Configuration",
       "pageTitle": "Store Settings",
-      "pageSubtitle": "Manage your identity, storefront and operations.",
+      "pageSubtitle": "Manage your identity and internal operations.",
       "shopAndContact": "Store & Contact",
       "shopAndContactDesc": "Legal information, currency and establishment contact details.",
       "siteEditor": "Storefront Editor",
@@ -651,6 +687,10 @@
       "socialDesc": "Links displayed in the footer of your storefront.",
       "saveSettings": "Save settings",
       "settingsUpdated": "Company settings updated!",
+      "sidebarAccount": "My Account",
+      "headingAccount": "Account",
+      "accountTitle": "My Account",
+      "accountDesc": "Manage your profile, email, password, and security.",
       "sidebarShop": "Store & Contact",
       "sidebarSite": "Storefront Editor",
       "sidebarMenu": "Menu & Allergens",
@@ -664,6 +704,13 @@
       "headingOperations": "Operations",
       "headingIntegrations": "Integrations",
       "headingTeamPlan": "Team & Plan"
+    },
+    "boutique": {
+      "badge": "Boutique",
+      "title": "Boutique Design & Storefront",
+      "subtitle": "Customize your public boutique style and unlock premium templates when needed.",
+      "settingsLink": "Settings",
+      "viewPublic": "View boutique"
     },
     "support": {
       "title": "Support",

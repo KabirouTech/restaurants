@@ -1,21 +1,14 @@
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { MessageSquareWarning, Clock, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { ComplaintsClient } from "@/components/admin/ComplaintsClient";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminComplaintsPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_super_admin")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
     if (!profile?.is_super_admin) redirect("/dashboard");
 
     const admin = createAdminClient(

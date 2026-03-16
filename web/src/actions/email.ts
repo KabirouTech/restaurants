@@ -1,23 +1,18 @@
 "use server";
 
-import { Resend } from "resend";
-import { createClient as createServerClient } from "@/utils/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js"; // Import Admin Client
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { formatPrice } from "@/lib/currencies";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendMail } from "@/lib/mailer";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function sendOrderEmailAction(orderId: string, email: string, message?: string) {
     if (!orderId || !email) {
         return { error: "ID de commande et email requis" };
     }
 
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return { error: "Non authentifié" };
-    }
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
 
     try {
         // Use Admin Client to Bypass RLS for Order Fetching
@@ -42,6 +37,7 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
 
             `)
             .eq("id", orderId)
+            .eq("organization_id", organizationId)
             .single();
 
         if (error || !order) {
@@ -52,18 +48,23 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
         // Calculate Totals
         const totalCents = order.total_amount_cents || 0;
         const orgName = order.organizations?.name || "Restaurant";
-        const settings = (order.organizations?.settings as any) || {};
+        const settings =
+            (order.organizations?.settings as { currency?: string } | null) || {};
         const currency = settings.currency || "EUR";
         // TODO: Get brand color from organization settings if available
         const brandColor = "#d97706"; // Default Amber-600
 
         // Construct Email HTML (Basic for now, can be a React Email template later)
         // Construct Email HTML with better styling
-        const itemsHtml = order.order_items.map((item: any) => `
+        const itemsHtml = (order.order_items || []).map((item: {
+            quantity: number | null;
+            unit_price_cents: number | null;
+            products: { name: string | null } | null;
+        }) => `
             <tr style="border-bottom: 1px solid #e5e7eb;">
                 <td style="padding: 12px; color: #111827;">${item.products?.name}</td>
                 <td style="padding: 12px; text-align: center; color: #6b7280;">${item.quantity}</td>
-                <td style="padding: 12px; text-align: right; color: #111827; font-family: monospace;">${formatPrice(item.unit_price_cents * item.quantity, currency)}</td>
+                <td style="padding: 12px; text-align: right; color: #111827; font-family: monospace;">${formatPrice((item.unit_price_cents || 0) * (item.quantity || 0), currency)}</td>
             </tr>
         `).join("");
 
@@ -131,23 +132,21 @@ export async function sendOrderEmailAction(orderId: string, email: string, messa
             </html>
         `;
 
-        // Send Email
-        const { data, error: resendError } = await resend.emails.send({
-            from: "Restaurant OS <orders@resend.dev>", // TODO: Update with user's domain eventually
-            to: [email],
+        await sendMail({
+            to: email,
             subject: `Votre commande #${order.id.slice(0, 8)} - ${orgName}`,
             html: emailHtml,
         });
 
-        if (resendError) {
-            console.error("Resend Error:", resendError);
-            return { error: "Erreur lors de l'envoi de l'email" };
-        }
-
         return { success: true };
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Send Email Logic Error:", err);
-        return { error: err.message };
+        return {
+            error:
+                err instanceof Error
+                    ? err.message
+                    : "Erreur lors de l'envoi de l'email",
+        };
     }
 }

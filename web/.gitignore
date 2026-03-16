@@ -4,3 +4,6 @@ node_modules
 .env.local
 scripts/
 supabase/.temp/
+
+# clerk configuration (can include secrets)
+/.clerk/

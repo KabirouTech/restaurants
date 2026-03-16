@@ -5,16 +5,14 @@ import { ImportMenuDialog } from "@/components/dashboard/menu/ImportMenuDialog";
 import { redirect } from "next/navigation";
 import { ChefHat } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function MenuPage() {
     const t = await getTranslations("dashboard.menu");
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    // Fetch Profile Org ID
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
     // Fetch Products (Active Only)

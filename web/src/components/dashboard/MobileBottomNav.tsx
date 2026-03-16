@@ -16,6 +16,7 @@ import {
     Truck,
     BookOpen,
     Utensils,
+    Store,
     MessageSquareWarning,
     Settings,
     LogOut,
@@ -27,6 +28,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { PlanKey } from "@/lib/plans/plan-limits";
+import { SignOutButton } from "@clerk/nextjs";
 
 type RequiredPlan = "premium" | "enterprise";
 
@@ -71,6 +73,7 @@ const secondaryItems: SecondaryItem[] = [
     { href: "/dashboard/suppliers", icon: Truck,    labelKey: "suppliers", shortLabel: "Fourn." },
     { href: "/dashboard/recipes",   icon: BookOpen, labelKey: "recipes",   shortLabel: "Recettes" },
     { href: "/dashboard/menu",      icon: Utensils,             labelKey: "menu",      shortLabel: "Menu" },
+    { href: "/dashboard/boutique",  icon: Store,                labelKey: "boutique",  shortLabel: "Boutique" },
     { href: "/dashboard/support",   icon: MessageSquareWarning, labelKey: "support",   shortLabel: "Support" },
     { href: "/dashboard/settings",  icon: Settings,             labelKey: "settings",  shortLabel: "Config" },
 ];
@@ -216,12 +219,12 @@ export function MobileBottomNav({ plan, isSuperAdmin }: MobileBottomNavProps) {
                     )}
 
                     <div className="border-t border-border pt-4 flex items-center justify-between gap-3">
-                        <form action="/auth/signout" method="post" className="flex-1">
-                            <button className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors w-full">
+                        <SignOutButton redirectUrl="/">
+                            <button className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors w-full flex-1">
                                 <LogOut className="h-4 w-4 shrink-0" />
                                 <span className="text-sm font-medium">{t("logout")}</span>
                             </button>
-                        </form>
+                        </SignOutButton>
                         <div className="flex items-center gap-2 shrink-0">
                             <ModeToggle />
                             <LanguageSwitcher />

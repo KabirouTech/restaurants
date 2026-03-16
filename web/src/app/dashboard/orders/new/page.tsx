@@ -3,15 +3,13 @@ import { createClient } from "@/utils/supabase/server";
 import { CreateOrderForm } from "@/components/dashboard/orders/CreateOrderForm";
 import { redirect } from "next/navigation";
 import { ChefHat } from "lucide-react";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function NewOrderPage() {
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    // Fetch Profile Org ID
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
     const orgId = profile.organization_id;
 

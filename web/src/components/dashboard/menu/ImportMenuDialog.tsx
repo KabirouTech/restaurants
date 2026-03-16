@@ -7,6 +7,7 @@ import { UploadCloud, CheckCircle, AlertCircle, FileSpreadsheet, Loader2 } from 
 import * as XLSX from 'xlsx';
 import { importMenuAction } from "@/actions/import";
 import { ColumnMapper, ExpectedColumn } from "@/components/ui/column-mapper";
+import { ImportProgressSteps, type ImportProgressPhase } from "@/components/ui/import-progress-steps";
 
 export function ImportMenuDialog({ currency }: { currency: string }) {
     const [open, setOpen] = useState(false);
@@ -14,6 +15,18 @@ export function ImportMenuDialog({ currency }: { currency: string }) {
     const [message, setMessage] = useState<string | null>(null);
     const [fileHeaders, setFileHeaders] = useState<string[]>([]);
     const [parsedData, setParsedData] = useState<any[]>([]);
+    const [processedCount, setProcessedCount] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
+    const IMPORT_BATCH_SIZE = 50;
+    const progressStep = status === "mapping" ? 1 : status === "importing" || status === "success" || status === "error" ? 2 : 0;
+    const progressPhase: ImportProgressPhase =
+        status === "importing"
+            ? "running"
+            : status === "success"
+                ? "success"
+                : status === "error"
+                    ? "error"
+                    : "idle";
 
     const EXPECTED_COLUMNS: ExpectedColumn[] = [
         { key: "Nom du Plat", label: "Nom du plat", required: true, aliases: ["nom", "name", "titre", "plat"] },
@@ -40,6 +53,8 @@ export function ImportMenuDialog({ currency }: { currency: string }) {
 
         setStatus("idle");
         setMessage(null);
+        setProcessedCount(0);
+        setTotalCount(0);
 
         const reader = new FileReader();
         reader.onload = async (evt) => {
@@ -89,18 +104,39 @@ export function ImportMenuDialog({ currency }: { currency: string }) {
 
             // Ensure data is plain JSON (remove any potential non-serializable stuff)
             const plainData = JSON.parse(JSON.stringify(mappedData));
+            const totalRows = plainData.length;
 
-            const result = await importMenuAction(plainData);
-
-            if (result.error) {
+            if (!totalRows) {
                 setStatus("error");
-                setMessage(result.error);
-            } else {
-                setStatus("success");
-                setMessage(result.message ?? `${result.count} plats importés avec succès !`);
-                // Delay close slightly
-                setTimeout(() => { setOpen(false); setStatus("idle"); }, 2500);
+                setMessage("Aucune ligne valide à importer.");
+                return;
             }
+
+            setProcessedCount(0);
+            setTotalCount(totalRows);
+
+            let importedTotal = 0;
+            for (let i = 0; i < totalRows; i += IMPORT_BATCH_SIZE) {
+                const chunk = plainData.slice(i, i + IMPORT_BATCH_SIZE);
+                const result = await importMenuAction(chunk);
+
+                if (result.error) {
+                    setStatus("error");
+                    setMessage(result.error);
+                    return;
+                }
+
+                importedTotal += result.count ?? 0;
+                setProcessedCount(Math.min(i + chunk.length, totalRows));
+            }
+
+            setStatus("success");
+            const skipped = Math.max(0, totalRows - importedTotal);
+            setMessage(
+                `${importedTotal} plat(s) importé(s) avec succès${skipped > 0 ? ` (${skipped} ignoré(s))` : ""}.`
+            );
+            // Delay close slightly
+            setTimeout(() => { setOpen(false); setStatus("idle"); }, 2500);
         } catch (e: any) {
             setStatus("error");
             setMessage("Erreur lors de l'import: " + e.message);
@@ -123,6 +159,14 @@ export function ImportMenuDialog({ currency }: { currency: string }) {
                         </DialogDescription>
                     )}
                 </DialogHeader>
+
+                <ImportProgressSteps
+                    steps={["Charger le fichier", "Mapper les colonnes", "Importer"]}
+                    currentStep={progressStep}
+                    phase={progressPhase}
+                    processedCount={processedCount}
+                    totalCount={totalCount}
+                />
 
                 {status === "mapping" ? (
                     <ColumnMapper
@@ -160,7 +204,7 @@ export function ImportMenuDialog({ currency }: { currency: string }) {
                             {status === "importing" ? (
                                 <div className="flex flex-col items-center gap-2 text-primary">
                                     <Loader2 className="h-8 w-8 animate-spin" />
-                                    <span className="text-sm font-medium">Importation en cours...</span>
+                                    <span className="text-sm font-medium">Importation en cours... {processedCount}/{totalCount}</span>
                                 </div>
                             ) : status === "success" ? (
                                 <div className="flex flex-col items-center gap-2 text-green-600">

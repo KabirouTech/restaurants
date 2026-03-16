@@ -126,6 +126,123 @@
     background-image: radial-gradient(var(--border) 1px, transparent 1px);
     background-size: 24px 24px;
   }
+
+  .storefront-template-bistro #menu,
+  .storefront-template-bistro #about,
+  .storefront-template-bistro #services,
+  .storefront-template-bistro #gallery,
+  .storefront-template-bistro #testimonials,
+  .storefront-template-bistro #contact {
+    background: linear-gradient(180deg, rgba(24, 24, 27, 0.55) 0%, rgba(24, 24, 27, 0.25) 100%);
+    border-radius: 1.25rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .storefront-template-catering #menu,
+  .storefront-template-catering #about,
+  .storefront-template-catering #services,
+  .storefront-template-catering #gallery,
+  .storefront-template-catering #testimonials,
+  .storefront-template-catering #contact {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+    box-shadow: none;
+  }
+
+  .storefront-template-restaurant #menu,
+  .storefront-template-restaurant #about,
+  .storefront-template-restaurant #services,
+  .storefront-template-restaurant #gallery,
+  .storefront-template-restaurant #testimonials,
+  .storefront-template-restaurant #contact {
+    border-top: 1px solid rgba(159, 18, 57, 0.12);
+    border-bottom: 1px solid rgba(159, 18, 57, 0.12);
+    background: linear-gradient(180deg, rgba(255, 251, 242, 0.72) 0%, rgba(255, 255, 255, 0.94) 100%);
+  }
+
+  /* ── FoodieDash ── */
+  .storefront-template-foodiedash #menu,
+  .storefront-template-foodiedash #about,
+  .storefront-template-foodiedash #services,
+  .storefront-template-foodiedash #gallery,
+  .storefront-template-foodiedash #testimonials,
+  .storefront-template-foodiedash #contact {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ── L'Elite ── */
+  .storefront-template-elite #menu,
+  .storefront-template-elite #about,
+  .storefront-template-elite #services,
+  .storefront-template-elite #gallery,
+  .storefront-template-elite #testimonials,
+  .storefront-template-elite #contact {
+    background: linear-gradient(180deg, rgba(28, 20, 16, 0.6) 0%, rgba(18, 13, 11, 0.4) 100%);
+    border-radius: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  /* ── Aroma Brew ── */
+  .storefront-template-aromabrew #menu,
+  .storefront-template-aromabrew #about,
+  .storefront-template-aromabrew #services,
+  .storefront-template-aromabrew #gallery,
+  .storefront-template-aromabrew #testimonials,
+  .storefront-template-aromabrew #contact {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ── Culina Dynamic ── */
+  .storefront-template-culina #menu,
+  .storefront-template-culina #about,
+  .storefront-template-culina #services,
+  .storefront-template-culina #gallery,
+  .storefront-template-culina #testimonials,
+  .storefront-template-culina #contact {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.5) 0%, rgba(16, 34, 29, 0.3) 100%);
+    border-radius: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #d4af37 0%, #f1d592 50%, #d4af37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .sunset-gradient {
+    background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  }
+
+  .flow-curve {
+    clip-path: ellipse(150% 100% at 50% 100%);
+  }
+}
+
+/* ── Storefront Hero Animations ─────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Onboarding Animations ──────────────────────────────────────────── */

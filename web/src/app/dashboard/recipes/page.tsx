@@ -6,18 +6,14 @@ import { Button } from "@/components/ui/button";
 // Button + Link kept for the header CTA
 import { RecipesClient } from "./RecipesClient";
 import { getTranslations } from "next-intl/server";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function RecipesPage() {
     const t = await getTranslations("dashboard.recipes");
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
 
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id, role")
-        .eq("id", user.id)
-        .single();
+    const supabase = await createClient();
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
     const [recipesRes, foldersRes] = await Promise.all([

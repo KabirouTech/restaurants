@@ -7,25 +7,17 @@ import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export const dynamic = "force-dynamic";
 
 export default async function InboxPage(props: { searchParams: Promise<{ conversationId?: string }> }) {
     const t = await getTranslations("dashboard.inbox");
     const searchParams = await props.searchParams;
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        redirect("/auth/login");
-    }
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-
     if (!profile?.organization_id) {
         redirect("/dashboard/onboarding");
     }

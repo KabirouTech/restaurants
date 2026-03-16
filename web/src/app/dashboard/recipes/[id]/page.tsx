@@ -4,18 +4,14 @@ import Link from "next/link";
 import { BookOpen, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RecipeForm } from "@/components/dashboard/recipes/RecipeForm";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
 
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
+    const supabase = await createClient();
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
     const { data: recipe } = await supabase

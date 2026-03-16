@@ -2,19 +2,14 @@
 
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function createIngredientAction(formData: FormData) {
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+
     const supabase = await createServerClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     const name = formData.get("name") as string;
     const category = formData.get("category") as string;
@@ -29,7 +24,7 @@ export async function createIngredientAction(formData: FormData) {
         const { error } = await supabase
             .from("ingredients")
             .insert({
-                organization_id: profile.organization_id,
+                organization_id: organizationId,
                 name,
                 category: category || null,
                 unit: unit || "kg",
@@ -52,10 +47,11 @@ export async function createIngredientAction(formData: FormData) {
 }
 
 export async function updateIngredientAction(formData: FormData) {
-    const supabase = await createServerClient();
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
@@ -80,7 +76,8 @@ export async function updateIngredientAction(formData: FormData) {
                 supplier_id,
                 updated_at: new Date().toISOString(),
             })
-            .eq("id", id);
+            .eq("id", id)
+            .eq("organization_id", organizationId);
 
         if (error) {
             console.error("Update Ingredient Error:", error);
@@ -95,16 +92,18 @@ export async function updateIngredientAction(formData: FormData) {
 }
 
 export async function deleteIngredientAction(id: string) {
-    const supabase = await createServerClient();
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     try {
         const { error } = await supabase
             .from("ingredients")
             .update({ is_active: false, updated_at: new Date().toISOString() })
-            .eq("id", id);
+            .eq("id", id)
+            .eq("organization_id", organizationId);
 
         if (error) {
             console.error("Delete Ingredient Error:", error);
@@ -121,22 +120,17 @@ export async function deleteIngredientAction(id: string) {
 export async function bulkDeleteIngredientsAction(ids: string[]) {
     if (!ids.length) return { error: "Aucun ingrédient sélectionné." };
 
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     const { error } = await supabase
         .from("ingredients")
         .update({ is_active: false, updated_at: new Date().toISOString() })
         .in("id", ids)
-        .eq("organization_id", profile.organization_id);
+        .eq("organization_id", organizationId);
 
     if (error) return { error: "Erreur lors de la suppression : " + error.message };
 
@@ -153,17 +147,11 @@ export async function importIngredientsAction(rows: {
     cost_per_unit?: number;
     supplier_id?: string;
 }[]) {
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+
     const supabase = await createServerClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     if (!rows.length) return { error: "Aucune ligne à importer." };
 
@@ -171,7 +159,7 @@ export async function importIngredientsAction(rows: {
     if (!valid.length) return { error: "Aucun ingrédient valide trouvé (colonne 'Nom' manquante)." };
 
     const payload = valid.map(r => ({
-        organization_id: profile.organization_id,
+        organization_id: organizationId,
         name: r.name.trim(),
         category: r.category?.trim() || null,
         unit: r.unit?.trim() || "kg",

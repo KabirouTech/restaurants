@@ -17,7 +17,7 @@ import { checkPlanLimit } from '@/lib/plans/plan-limits'
 // Types
 // ─────────────────────────────────────────────────────────────
 
-export type MemberRole = 'admin' | 'staff' | 'driver'
+export type MemberRole = 'superadmin' | 'admin' | 'member'
 export type MemberStatus = 'active' | 'suspended' | 'pending'
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'cancelled'
 
@@ -57,17 +57,17 @@ export interface Invitation {
  * Vérifie la limite du plan avant de créer.
  *
  * @example
- * const result = await inviteMember(orgId, 'jean@example.com', 'staff')
+ * const result = await inviteMember(orgId, 'jean@example.com', 'member')
  */
 export async function inviteMember(
   orgId: string,
   email: string,
-  role: MemberRole
+  role: MemberRole,
+  userId: string
 ): Promise<{ success: boolean; invitation?: Invitation; error?: string; upgradeRequired?: boolean }> {
-  const supabase = createClient()
+  if (!userId) return { success: false, error: 'Non authentifié' }
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { success: false, error: 'Non authentifié' }
+  const supabase = createClient()
 
   // 1. Vérifier la limite de membres du plan
   const limitCheck = await checkPlanLimit(orgId, 'members')
@@ -92,7 +92,7 @@ export async function inviteMember(
     .upsert(
       {
         organization_id: orgId,
-        invited_by: user.user.id,
+        invited_by: userId,
         email: email.toLowerCase().trim(),
         role,
         status: 'pending',
@@ -148,16 +148,16 @@ async function sendInvitationEmail(
  * Appelle la fonction PostgreSQL `accept_invitation`.
  */
 export async function acceptInvitation(
-  token: string
+  token: string,
+  userId: string
 ): Promise<{ success: boolean; organizationId?: string; role?: MemberRole; error?: string; upgradeRequired?: boolean }> {
-  const supabase = createClient()
+  if (!userId) return { success: false, error: 'Vous devez être connecté pour accepter une invitation.' }
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { success: false, error: 'Vous devez être connecté pour accepter une invitation.' }
+  const supabase = createClient()
 
   const { data, error } = await supabase.rpc('accept_invitation', {
     p_token: token,
-    p_user_id: user.user.id,
+    p_user_id: userId,
   })
 
   if (error) {
@@ -390,15 +390,15 @@ export async function removeMember(
 // ─────────────────────────────────────────────────────────────
 
 export const ROLE_LABELS: Record<MemberRole, string> = {
+  superadmin: 'Super Admin',
   admin: 'Administrateur',
-  staff: 'Employé',
-  driver: 'Livreur',
+  member: 'Membre',
 }
 
 export const ROLE_COLORS: Record<MemberRole, string> = {
+  superadmin: 'bg-purple-100 text-purple-800',
   admin: 'bg-amber-100 text-amber-800',
-  staff: 'bg-blue-100 text-blue-800',
-  driver: 'bg-green-100 text-green-800',
+  member: 'bg-blue-100 text-blue-800',
 }
 
 export const STATUS_LABELS: Record<MemberStatus, string> = {
@@ -408,6 +408,11 @@ export const STATUS_LABELS: Record<MemberStatus, string> = {
 }
 
 export const ROLE_PERMISSIONS: Record<MemberRole, string[]> = {
+  superadmin: [
+    'Accès complet à la plateforme',
+    'Gestion de toutes les organisations',
+    'Configuration système',
+  ],
   admin: [
     'Gérer les membres et invitations',
     'Changer le plan d\'abonnement',
@@ -415,16 +420,11 @@ export const ROLE_PERMISSIONS: Record<MemberRole, string[]> = {
     'Paramètres de l\'organisation',
     'Rapports & statistiques',
   ],
-  staff: [
+  member: [
     'Gestion des commandes',
     'Accès à la messagerie',
     'Gestion des clients (CRM)',
     'Calendrier & capacité',
     'Catalogue menu',
-  ],
-  driver: [
-    'Voir les livraisons assignées',
-    'Mettre à jour le statut de livraison',
-    'Suivi en temps réel',
   ],
 }

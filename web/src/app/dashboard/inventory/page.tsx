@@ -5,21 +5,15 @@ import { Package, AlertTriangle } from "lucide-react";
 import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { getTranslations } from "next-intl/server";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function InventoryPage() {
     const t = await getTranslations("dashboard.inventory");
     const tc = await getTranslations("common");
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
     // Parallel queries

@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { importIngredientsAction } from "@/actions/ingredients";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Download } from "lucide-react";
+import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ColumnMapper, ExpectedColumn } from "@/components/ui/column-mapper";
+import { ImportProgressSteps, type ImportProgressPhase } from "@/components/ui/import-progress-steps";
 
 type Supplier = {
     id: string;
@@ -31,6 +32,8 @@ type ParsedRow = {
     _valid: boolean;
 };
 
+const IMPORT_BATCH_SIZE = 50;
+
 export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currency }: {
     open: boolean;
     onOpenChange: (v: boolean) => void;
@@ -45,6 +48,9 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
     const [rows, setRows] = useState<ParsedRow[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
     const [dragging, setDragging] = useState(false);
+    const [importPhase, setImportPhase] = useState<ImportProgressPhase>("idle");
+    const [processedCount, setProcessedCount] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
     const [isPending, startTransition] = useTransition();
 
     const EXPECTED_COLUMNS: ExpectedColumn[] = [
@@ -57,7 +63,16 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
         { key: "supplier_name", label: "Fournisseur", aliases: ["fournisseur", "supplier"] },
     ];
 
-    const reset = () => { setRows([]); setFileName(null); setStatus("upload"); setRawRows([]); setFileHeaders([]); };
+    const reset = () => {
+        setRows([]);
+        setFileName(null);
+        setStatus("upload");
+        setRawRows([]);
+        setFileHeaders([]);
+        setImportPhase("idle");
+        setProcessedCount(0);
+        setTotalCount(0);
+    };
     const close = () => { reset(); onOpenChange(false); };
 
     const handleFile = async (file: File) => {
@@ -84,6 +99,7 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
                 setRawRows(jsonRows);
                 setFileName(file.name);
                 setStatus("mapping");
+                setImportPhase("idle");
             } catch {
                 toast.error("Impossible de lire le fichier. Vérifiez le format.");
             }
@@ -118,6 +134,7 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
 
         setRows(parsed.filter(r => Object.values(r).some(v => v)));
         setStatus("preview");
+        setImportPhase("idle");
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -129,16 +146,37 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
 
     const handleImport = () => {
         const validRows = rows.filter(r => r._valid);
+        if (!validRows.length) {
+            toast.error("Aucune ligne valide à importer.");
+            return;
+        }
+
+        setImportPhase("running");
+        setProcessedCount(0);
+        setTotalCount(validRows.length);
+
         startTransition(async () => {
-            const payload = validRows.map(({ _valid, supplier_name, ...r }) => r);
-            const result = await importIngredientsAction(payload);
-            if (result.error) {
-                toast.error(result.error);
-            } else {
-                toast.success(`${result.count} ingrédient(s) importé(s) avec succès !`);
-                router.refresh();
-                close();
+            let importedTotal = 0;
+
+            for (let i = 0; i < validRows.length; i += IMPORT_BATCH_SIZE) {
+                const chunk = validRows.slice(i, i + IMPORT_BATCH_SIZE);
+                const payload = chunk.map(({ _valid, supplier_name, ...row }) => row);
+                const result = await importIngredientsAction(payload);
+
+                if (result.error) {
+                    setImportPhase("error");
+                    toast.error(result.error);
+                    return;
+                }
+
+                importedTotal += result.count ?? 0;
+                setProcessedCount(Math.min(i + chunk.length, validRows.length));
             }
+
+            setImportPhase("success");
+            toast.success(`${importedTotal} ingrédient(s) importé(s) avec succès !`);
+            router.refresh();
+            close();
         });
     };
 
@@ -156,10 +194,11 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
 
     const validCount = rows.filter(r => r._valid).length;
     const invalidCount = rows.length - validCount;
+    const progressStep = status === "mapping" ? 1 : status === "preview" ? 2 : 0;
 
     return (
         <Dialog open={open} onOpenChange={close}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-[95vw] sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <FileSpreadsheet className="h-5 w-5 text-primary" />
@@ -169,6 +208,14 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
                         Uploadez un fichier avec les colonnes : <strong>Nom</strong>, Catégorie, Unité, Stock, Seuil, Coût unitaire, Fournisseur.
                     </DialogDescription>
                 </DialogHeader>
+
+                <ImportProgressSteps
+                    steps={["Charger le fichier", "Mapper les colonnes", "Importer"]}
+                    currentStep={progressStep}
+                    phase={importPhase}
+                    processedCount={processedCount}
+                    totalCount={totalCount}
+                />
 
                 {status === "mapping" && (
                     <ColumnMapper
@@ -274,7 +321,12 @@ export function ImportIngredientsDialog({ open, onOpenChange, suppliers, currenc
                             disabled={status !== "preview" || validCount === 0 || isPending}
                             className="gap-2"
                         >
-                            {isPending ? "Import en cours..." : `Importer ${validCount} ingrédient(s)`}
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    {`Import ${processedCount}/${totalCount}`}
+                                </>
+                            ) : `Importer ${validCount} ingrédient(s)`}
                         </Button>
                     </DialogFooter>
                 )}

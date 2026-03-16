@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, User, Utensils, ChefHat, Rocket, Check, SkipForward } from "lucide-react";
 import { createOrganizationAction } from "@/actions/onboarding";
@@ -43,6 +43,26 @@ export default function OnboardingWizard() {
         servicesSkipped: false,
         menuSkipped: false,
     });
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const checkExistingOrganization = async () => {
+            try {
+                const res = await fetch("/api/me/organization", { cache: "no-store" });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!cancelled && data?.organizationId) {
+                    router.replace("/dashboard");
+                }
+            } catch {
+                // Ignore transient client/network errors here
+            }
+        };
+
+        checkExistingOrganization();
+        return () => { cancelled = true; };
+    }, [router]);
 
     const goForward = useCallback(() => {
         setDirection("forward");
@@ -89,7 +109,7 @@ export default function OnboardingWizard() {
             setLoading(false);
         } else {
             setSuccess(true);
-            setTimeout(() => router.push("/dashboard"), 2500);
+            router.replace("/dashboard");
         }
     };
 

@@ -16,8 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { createClient } from '@/utils/supabase/client'
-import { upsertRecipeAction } from '@/actions/recipes'
+import { upsertRecipeAction, uploadRecipeMediaAction } from '@/actions/recipes'
 import { useTranslations } from 'next-intl'
 
 type Product = { id: string; name: string; category: string }
@@ -503,17 +502,29 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
 
   // ─── Image upload ─────────────────────────────────────────────────────────
 
+  async function uploadRecipeFile(file: File, mediaType: 'image' | 'audio') {
+    const payload = new FormData()
+    payload.append('file', file)
+    payload.append('mediaType', mediaType)
+    const result = await uploadRecipeMediaAction(payload)
+    if (result.error || !result.url) {
+      throw new Error(result.error || 'Erreur inconnue')
+    }
+    return result.url
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingImg(true)
-    const supabase = createClient()
-    const path = `${orgId}/images/${Date.now()}-${file.name}`
-    const { error } = await supabase.storage.from('recipes').upload(path, file)
-    if (error) { toast.error(t('errorUploadImage')); setUploadingImg(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('recipes').getPublicUrl(path)
-    setImages(prev => [...prev, publicUrl])
-    setUploadingImg(false)
+    try {
+      const publicUrl = await uploadRecipeFile(file, 'image')
+      setImages(prev => [...prev, publicUrl])
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('errorUploadImage'))
+    } finally {
+      setUploadingImg(false)
+    }
     e.target.value = ''
   }
 
@@ -523,14 +534,15 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingAudio(true)
-    const supabase = createClient()
-    const path = `${orgId}/audio/${Date.now()}-${file.name}`
-    const { error } = await supabase.storage.from('recipes').upload(path, file)
-    if (error) { toast.error(t('errorUploadAudio')); setUploadingAudio(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('recipes').getPublicUrl(path)
-    setAudioUrl(publicUrl)
-    setUploadingAudio(false)
-    toast.success(t('audioSaved'))
+    try {
+      const publicUrl = await uploadRecipeFile(file, 'audio')
+      setAudioUrl(publicUrl)
+      toast.success(t('audioSaved'))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('errorUploadAudio'))
+    } finally {
+      setUploadingAudio(false)
+    }
   }
 
   // ─── Audio — enregistrement micro ────────────────────────────────────────
@@ -546,14 +558,15 @@ export function RecipeForm({ orgId, products, initialData }: RecipeFormProps) {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' })
         setUploadingAudio(true)
-        const supabase = createClient()
-        const path = `${orgId}/audio/${Date.now()}-recording.webm`
-        const { error } = await supabase.storage.from('recipes').upload(path, file)
-        if (error) { toast.error(t('errorUploadAudio')); setUploadingAudio(false); return }
-        const { data: { publicUrl } } = supabase.storage.from('recipes').getPublicUrl(path)
-        setAudioUrl(publicUrl)
-        setUploadingAudio(false)
-        toast.success(t('recordingSaved'))
+        try {
+          const publicUrl = await uploadRecipeFile(file, 'audio')
+          setAudioUrl(publicUrl)
+          toast.success(t('recordingSaved'))
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : t('errorUploadAudio'))
+        } finally {
+          setUploadingAudio(false)
+        }
       }
       mr.start()
       mediaRecorderRef.current = mr

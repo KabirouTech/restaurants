@@ -3,17 +3,13 @@
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 // --- Create Order + Customer + Items ---
 export async function createOrderAction(formData: any) {
-    // 1. Verify User with Cookie Client
-    const supabaseUser = await createServerClient();
-    const { data: { user } } = await supabaseUser.auth.getUser();
-
-    if (!user) return { error: "Non authentifié" };
-
-    // Get Org
-    const { data: profile } = await supabaseUser.from("profiles").select("organization_id").eq("id", user.id).single();
+    // 1. Verify User with Clerk
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return { error: "Non authentifié" };
     const orgId = profile?.organization_id;
     if (!orgId) return { error: "Organisation introuvable" };
 
@@ -45,6 +41,21 @@ export async function createOrderAction(formData: any) {
         }
 
         if (!customerId) throw new Error("Client requis");
+
+        // Ensure provided customer belongs to the same organization.
+        const { data: scopedCustomer, error: scopedCustomerError } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("id", customerId)
+            .eq("organization_id", orgId)
+            .maybeSingle();
+
+        if (scopedCustomerError) {
+            throw new Error("Erreur vérification client: " + scopedCustomerError.message);
+        }
+        if (!scopedCustomer) {
+            throw new Error("Client introuvable pour cette organisation");
+        }
 
         // 2. Create Order
         const eventTime = formData.eventTime || null;
@@ -79,6 +90,26 @@ export async function createOrderAction(formData: any) {
         }));
 
         if (items.length > 0) {
+            const uniqueProductIds = Array.from(
+                new Set(items.map((item: { product_id?: string | null }) => item.product_id).filter(Boolean))
+            ) as string[];
+
+            if (uniqueProductIds.length > 0) {
+                const { data: scopedProducts, error: scopedProductsError } = await supabase
+                    .from("products")
+                    .select("id")
+                    .in("id", uniqueProductIds)
+                    .eq("organization_id", orgId);
+
+                if (scopedProductsError) {
+                    throw new Error("Erreur vérification produits: " + scopedProductsError.message);
+                }
+
+                if ((scopedProducts?.length ?? 0) !== uniqueProductIds.length) {
+                    throw new Error("Un ou plusieurs produits ne sont pas dans votre organisation");
+                }
+            }
+
             const { error: itemsError } = await supabase.from("order_items").insert(items);
             if (itemsError) throw new Error("Erreur ajout articles: " + itemsError.message);
         }
@@ -94,11 +125,10 @@ export async function createOrderAction(formData: any) {
 
 // --- Search Customers ---
 export async function searchCustomersAction(query: string) {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return [];
 
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
+    const supabase = await createServerClient();
     const orgId = profile?.organization_id;
 
     if (!orgId) return [];
@@ -117,29 +147,38 @@ export async function searchCustomersAction(query: string) {
 export async function bulkDeleteOrdersAction(ids: string[]) {
     if (!ids.length) return { error: "Aucune commande sélectionnée." };
 
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return { error: "Non authentifié" };
     const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
     if (!profile?.organization_id) return { error: "Organisation introuvable" };
 
-    // Delete order_items first (FK constraint)
-    await supabase.from("order_items").delete().in("order_id", ids);
+    const { data: scopedOrders, error: scopedOrdersError } = await supabase
+        .from("orders")
+        .select("id")
+        .in("id", ids)
+        .eq("organization_id", profile.organization_id);
+
+    if (scopedOrdersError) {
+        return { error: "Erreur de vérification : " + scopedOrdersError.message };
+    }
+
+    const scopedIds = (scopedOrders ?? []).map((order) => order.id);
+    if (!scopedIds.length) {
+        return { error: "Aucune commande valide pour votre organisation." };
+    }
+
+    // Delete order_items first (FK constraint), scoped to validated order IDs only.
+    await supabase.from("order_items").delete().in("order_id", scopedIds);
 
     // Then delete orders, scoped to org for safety
     const { error } = await supabase
         .from("orders")
         .delete()
-        .in("id", ids)
+        .in("id", scopedIds)
         .eq("organization_id", profile.organization_id);
 
     if (error) return { error: "Erreur lors de la suppression : " + error.message };
 
     revalidatePath("/dashboard/orders");
-    return { success: true, count: ids.length };
+    return { success: true, count: scopedIds.length };
 }

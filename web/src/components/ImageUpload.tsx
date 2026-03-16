@@ -173,7 +173,7 @@ export function ImageUpload({ name, defaultValue, label, folder = "uploads", onU
             </div>
 
             <Dialog open={!!cropImageSrc} onOpenChange={(open) => !open && setCropImageSrc(null)}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Cadrage de l'image</DialogTitle>
                         <DialogDescription>Ajustez le format et la portion de l'image à afficher.</DialogDescription>

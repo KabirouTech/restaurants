@@ -1,35 +1,35 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@clerk/nextjs';
 
 export interface DefaultOrganization {
     id: string;
 }
 
 export function useOrganization() {
+    const { userId } = useAuth();
     const [organization, setOrganization] = useState<DefaultOrganization | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchOrg = async () => {
-            try {
-                const supabase = createClient();
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (!userId) {
+                setOrganization(null);
+                setIsLoading(false);
+                return;
+            }
 
-                if (userError || !user) {
+            try {
+                const res = await fetch('/api/me/organization', { cache: 'no-store' });
+                if (!res.ok) {
                     setOrganization(null);
                     return;
                 }
 
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('organization_id')
-                    .eq('id', user.id)
-                    .single();
-
-                if (!profileError && profile?.organization_id) {
-                    setOrganization({ id: profile.organization_id });
+                const data = await res.json();
+                if (data?.organizationId) {
+                    setOrganization({ id: data.organizationId });
                 } else {
                     setOrganization(null);
                 }
@@ -42,7 +42,7 @@ export function useOrganization() {
         };
 
         fetchOrg();
-    }, []);
+    }, [userId]);
 
     return { organization, isLoading };
 }

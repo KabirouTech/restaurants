@@ -36,13 +36,13 @@ export function TutorielsClient({ tutorials }: { tutorials: Tutorial[] }) {
 
                     <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
                         <Link href="/" className="hover:text-primary transition-colors">Accueil</Link>
-                        <Link href="/auth/login" className="px-6 py-2 text-primary hover:text-primary/80 font-medium transition-colors">
+                        <Link href="/sign-in" className="px-6 py-2 text-primary hover:text-primary/80 font-medium transition-colors">
                             Connexion
                         </Link>
                     </nav>
 
                     <div className="flex items-center gap-4">
-                        <Link href="/auth/signup">
+                        <Link href="/sign-up">
                             <Button className="rounded-full bg-primary hover:bg-primary/90 text-white font-medium px-6 py-2 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
                                 Essai Gratuit
                             </Button>

@@ -17,17 +17,20 @@ import {
     Truck,
     BookOpen,
     MessageSquareWarning,
+    Store,
     Settings,
     LogOut,
     ChevronLeft,
     Bell,
     Shield,
     Lock,
+    UserCircle,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { ModeToggle } from "@/components/mode-toggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslations } from "next-intl";
+import { SignOutButton, useClerk } from "@clerk/nextjs";
 import type { PlanKey } from "@/lib/plans/plan-limits";
 
 type RequiredPlan = "premium" | "enterprise";
@@ -42,6 +45,7 @@ function isLocked(requiresPlan: RequiredPlan | undefined, currentPlan: PlanKey):
 export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolean; plan?: PlanKey }) {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
+    const { openUserProfile } = useClerk();
     const { requestPermission, permissionStatus } = useFCM();
     const t = useTranslations("dashboard.sidebar");
 
@@ -55,6 +59,7 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
         { name: t("orders"), href: "/dashboard/orders", icon: FileText },
         { name: t("calendar"), href: "/dashboard/calendar", icon: CalendarDays },
         { name: t("menu"), href: "/dashboard/menu", icon: Utensils },
+        { name: t("boutique"), href: "/dashboard/boutique", icon: Store },
         { name: t("messages"), href: "/dashboard/inbox", icon: MessageSquare, requiresPlan: "premium" },
         { name: t("customers"), href: "/dashboard/customers", icon: Users },
         { name: t("inventory"), href: "/dashboard/inventory", icon: Package },
@@ -211,6 +216,23 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
                         </span>
                     </div>
                 </Link>
+                <button
+                    type="button"
+                    onClick={() => openUserProfile()}
+                    className={cn(
+                        "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground h-10 w-full",
+                        collapsed ? "justify-center px-0" : "px-3 gap-3"
+                    )}
+                    title={collapsed ? t("account") : undefined}
+                >
+                    <UserCircle className="h-4 w-4 shrink-0" />
+                    <span className={cn(
+                        "whitespace-nowrap transition-all duration-300",
+                        collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
+                    )}>
+                        {t("account")}
+                    </span>
+                </button>
 
                 <div className={cn(
                     "flex items-center rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground h-10 cursor-pointer",
@@ -233,7 +255,7 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
                     {!collapsed && <span className="whitespace-nowrap">{t("language")}</span>}
                 </div>
 
-                <form action="/auth/signout" method="post">
+                <SignOutButton redirectUrl="/">
                     <button className={cn(
                         "flex items-center rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors h-10 w-full",
                         collapsed ? "justify-center px-0" : "px-3 gap-3"
@@ -246,7 +268,7 @@ export function Sidebar({ isSuperAdmin, plan = "free" }: { isSuperAdmin?: boolea
                             {t("logout")}
                         </span>
                     </button>
-                </form>
+                </SignOutButton>
             </div>
         </div>
     );

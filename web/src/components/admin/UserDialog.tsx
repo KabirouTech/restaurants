@@ -71,12 +71,12 @@ export function UserDialog({ open, onOpenChange, user, organizations }: UserDial
                         </label>
                         <select
                             name="role"
-                            defaultValue={user?.role || "staff"}
+                            defaultValue={user?.role || "member"}
                             className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                         >
+                            <option value="superadmin">Super Admin</option>
                             <option value="admin">Admin</option>
-                            <option value="staff">Staff</option>
-                            <option value="driver">Driver</option>
+                            <option value="member">Membre</option>
                         </select>
                     </div>
 

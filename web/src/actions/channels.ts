@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function connectChannelAction(
   platform: string,
@@ -10,18 +10,9 @@ export async function connectChannelAction(
   providerId: string,
   credentials: Record<string, any>
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!profile?.organization_id) return { error: "Aucune organisation" };
+  const orgContext = await getRequiredOrganizationContext("Aucune organisation");
+  if (!orgContext.ok) return { error: orgContext.error };
+  const { organizationId } = orgContext.context;
 
   const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,7 +24,7 @@ export async function connectChannelAction(
   const { data: existing } = await supabaseAdmin
     .from("channels")
     .select("id")
-    .eq("organization_id", profile.organization_id)
+    .eq("organization_id", organizationId)
     .eq("platform", platform)
     .maybeSingle();
 
@@ -41,7 +32,8 @@ export async function connectChannelAction(
     const { error } = await supabaseAdmin
       .from("channels")
       .update({ name, provider_id: providerId, credentials, is_active: true })
-      .eq("id", existing.id);
+      .eq("id", existing.id)
+      .eq("organization_id", organizationId);
 
     if (error) return { error: error.message };
     revalidatePath("/dashboard/settings");
@@ -51,7 +43,7 @@ export async function connectChannelAction(
   const { data: channel, error } = await supabaseAdmin
     .from("channels")
     .insert({
-      organization_id: profile.organization_id,
+      organization_id: organizationId,
       platform,
       name,
       provider_id: providerId,
@@ -67,18 +59,9 @@ export async function connectChannelAction(
 }
 
 export async function disconnectChannelAction(channelId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!profile?.organization_id) return { error: "Aucune organisation" };
+  const orgContext = await getRequiredOrganizationContext("Aucune organisation");
+  if (!orgContext.ok) return { error: orgContext.error };
+  const { organizationId } = orgContext.context;
 
   const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -90,7 +73,7 @@ export async function disconnectChannelAction(channelId: string) {
     .from("channels")
     .select("id")
     .eq("id", channelId)
-    .eq("organization_id", profile.organization_id)
+    .eq("organization_id", organizationId)
     .single();
 
   if (!channel) return { error: "Canal introuvable" };
@@ -98,7 +81,8 @@ export async function disconnectChannelAction(channelId: string) {
   const { error } = await supabaseAdmin
     .from("channels")
     .update({ is_active: false })
-    .eq("id", channelId);
+    .eq("id", channelId)
+    .eq("organization_id", organizationId);
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard/settings");
@@ -106,18 +90,9 @@ export async function disconnectChannelAction(channelId: string) {
 }
 
 export async function testWhatsAppConnectionAction(channelId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!profile?.organization_id) return { error: "Aucune organisation" };
+  const orgContext = await getRequiredOrganizationContext("Aucune organisation");
+  if (!orgContext.ok) return { error: orgContext.error };
+  const { organizationId } = orgContext.context;
 
   const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,7 +104,7 @@ export async function testWhatsAppConnectionAction(channelId: string) {
     .from("channels")
     .select("credentials")
     .eq("id", channelId)
-    .eq("organization_id", profile.organization_id)
+    .eq("organization_id", organizationId)
     .single();
 
   if (!channel) return { error: "Canal introuvable" };
@@ -156,18 +131,9 @@ export async function testWhatsAppConnectionAction(channelId: string) {
 }
 
 export async function fetchChannelsAction() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!profile?.organization_id) return { error: "Aucune organisation" };
+  const orgContext = await getRequiredOrganizationContext("Aucune organisation");
+  if (!orgContext.ok) return { error: orgContext.error };
+  const { organizationId } = orgContext.context;
 
   const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -178,7 +144,7 @@ export async function fetchChannelsAction() {
   const { data: channels } = await supabaseAdmin
     .from("channels")
     .select("id, platform, name, provider_id, is_active, created_at")
-    .eq("organization_id", profile.organization_id)
+    .eq("organization_id", organizationId)
     .neq("platform", "website");
 
   return { channels: channels || [] };

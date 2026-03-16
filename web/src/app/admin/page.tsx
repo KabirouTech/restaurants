@@ -1,4 +1,3 @@
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
@@ -11,17 +10,11 @@ import {
     Shield,
 } from "lucide-react";
 import Link from "next/link";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function AdminDashboardPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_super_admin")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
 
     if (!profile?.is_super_admin) redirect("/dashboard");
 
@@ -94,13 +87,13 @@ export default async function AdminDashboardPage() {
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans">
             {/* Header */}
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-4 md:px-8 z-10 shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold font-serif text-foreground flex items-center gap-3">
-                        <Shield className="h-7 w-7 text-orange-500" />
+                    <h1 className="text-xl md:text-3xl font-bold font-serif text-foreground flex items-center gap-2 md:gap-3">
+                        <Shield className="h-5 w-5 md:h-7 md:w-7 text-orange-500" />
                         Panel Plateforme
                     </h1>
-                    <p className="text-sm text-muted-foreground font-light">Vue d&apos;ensemble de toutes les organisations</p>
+                    <p className="text-xs md:text-sm text-muted-foreground font-light">Vue d&apos;ensemble de toutes les organisations</p>
                 </div>
             </header>
 

@@ -2,21 +2,14 @@
 
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function createCustomerAction(formData: FormData) {
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+
     const supabase = await createServerClient();
-
-    // 1. Verify User
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    // 2. Get Org ID
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     const fullName = formData.get("full_name") as string;
     const email = formData.get("email") as string;
@@ -28,7 +21,7 @@ export async function createCustomerAction(formData: FormData) {
         const { error } = await supabase
             .from("customers")
             .insert({
-                organization_id: profile.organization_id,
+                organization_id: organizationId,
                 full_name: fullName,
                 email: email,
                 phone: phone,
@@ -49,10 +42,11 @@ export async function createCustomerAction(formData: FormData) {
 }
 
 export async function updateCustomerAction(formData: FormData) {
-    const supabase = await createServerClient();
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     const id = formData.get("id") as string;
     const fullName = formData.get("full_name") as string;
@@ -71,7 +65,8 @@ export async function updateCustomerAction(formData: FormData) {
                 notes: notes,
                 source: source
             })
-            .eq("id", id);
+            .eq("id", id)
+            .eq("organization_id", organizationId);
 
         if (error) {
             console.error("Update Customer Error:", error);
@@ -86,16 +81,18 @@ export async function updateCustomerAction(formData: FormData) {
 }
 
 export async function deleteCustomerAction(id: string) {
-    const supabase = await createServerClient();
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     try {
         const { error } = await supabase
             .from("customers")
             .delete()
-            .eq("id", id);
+            .eq("id", id)
+            .eq("organization_id", organizationId);
 
         if (error) {
             console.error("Delete Customer Error:", error);
@@ -116,17 +113,11 @@ export async function importCustomersAction(rows: {
     notes?: string;
     source?: string;
 }[]) {
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
+
     const supabase = await createServerClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const { organizationId } = orgContext.context;
 
     if (!rows.length) return { error: "Aucune ligne à importer." };
 
@@ -136,7 +127,7 @@ export async function importCustomersAction(rows: {
 
     // Build payload — omit source if column might not exist yet
     const payload = valid.map(r => ({
-        organization_id: profile.organization_id,
+        organization_id: organizationId,
         full_name: r.full_name.trim(),
         email: r.email?.trim() || null,
         phone: r.phone?.trim() || null,
@@ -168,22 +159,17 @@ export async function importCustomersAction(rows: {
 export async function bulkDeleteCustomersAction(ids: string[]) {
     if (!ids.length) return { error: "Aucun client sélectionné." };
 
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Non authentifié" };
+    const orgContext = await getRequiredOrganizationContext();
+    if (!orgContext.ok) return { error: orgContext.error };
 
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-    if (!profile?.organization_id) return { error: "Organisation introuvable" };
+    const supabase = await createServerClient();
+    const { organizationId } = orgContext.context;
 
     const { error } = await supabase
         .from("customers")
         .delete()
         .in("id", ids)
-        .eq("organization_id", profile.organization_id); // safety scope
+        .eq("organization_id", organizationId); // safety scope
 
     if (error) return { error: "Erreur lors de la suppression : " + error.message };
 

@@ -1,4 +1,3 @@
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { format } from "date-fns";
@@ -6,6 +5,7 @@ import { fr } from "date-fns/locale";
 import { Building2, ArrowLeft, FileText, Users, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { OrgActions } from "@/components/admin/OrgActions";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function AdminOrgDetailPage({
     params,
@@ -13,15 +13,8 @@ export default async function AdminOrgDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_super_admin")
-        .eq("id", user.id)
-        .single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
     if (!profile?.is_super_admin) redirect("/dashboard");
 
     const supabaseAdmin = createAdminClient(
@@ -73,13 +66,13 @@ export default async function AdminOrgDetailPage({
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans">
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-4 md:px-8 z-10 shrink-0">
                 <div className="flex items-center gap-4">
                     <Link href="/admin/organizations" className="text-muted-foreground hover:text-foreground transition-colors">
                         <ArrowLeft className="h-5 w-5" />
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-bold font-serif text-foreground flex items-center gap-3">
+                        <h1 className="text-xl md:text-3xl font-bold font-serif text-foreground flex items-center gap-2 md:gap-3">
                             {org.name}
                         </h1>
                         <p className="text-sm text-muted-foreground font-light font-mono">/{org.slug}</p>

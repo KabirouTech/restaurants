@@ -1,4 +1,4 @@
-import { createClient as createServerClient } from "@/utils/supabase/server";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { ChefHat, Plus } from "lucide-react";
@@ -13,11 +13,8 @@ export default async function OrdersPage() {
     const t = await getTranslations("dashboard.orders");
     const tc = await getTranslations("common");
 
-    const supabaseUser = await createServerClient();
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) return <div>{tc('notAuthenticated')}</div>;
-
-    const { data: profile } = await supabaseUser.from("profiles").select("organization_id").eq("id", user.id).single();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) return <div>{tc('notAuthenticated')}</div>;
     if (!profile?.organization_id) return <div>{tc('noOrganization')}</div>;
     const orgId = profile.organization_id;
 

@@ -1,4 +1,3 @@
-import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -9,23 +8,17 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OrderActions } from "@/components/dashboard/orders/OrderActions";
 import { formatPrice } from "@/lib/currencies";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
 
-    if (!user) redirect("/auth/login");
-
-    // Get Org Info for Invoice Header
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("*, organizations(name, settings)")
-        .eq("id", user.id)
-        .single();
-
-    // @ts-ignore
-    const org = profile?.organizations;
+    const org = (profile?.organizations || null) as {
+        name?: string | null;
+        settings?: Record<string, unknown> | null;
+    } | null;
 
     // Fetch Order with related data using Service Role (Bypass RLS)
     const supabaseAdmin = createAdminClient(
@@ -63,10 +56,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     const subtotal = order.total_amount_cents || 0;
     const total = subtotal; // Tax is 0 for now
 
+    const orgSettings = (org?.settings || {}) as Record<string, unknown>;
     const orgName = org?.name || "Votre Entreprise";
-    const orgAddress = org?.settings?.contact_address;
-    const orgEmail = org?.settings?.contact_email;
-    const orgPhone = org?.settings?.contact_phone;
+    const orgAddress = typeof orgSettings.contact_address === "string" ? orgSettings.contact_address : null;
+    const orgEmail = typeof orgSettings.contact_email === "string" ? orgSettings.contact_email : null;
+    const orgPhone = typeof orgSettings.contact_phone === "string" ? orgSettings.contact_phone : null;
 
     return (
         <div className="min-h-screen bg-muted/10 p-6 md:p-8 animate-in fade-in duration-500 print:bg-white print:p-0 print:min-h-0">

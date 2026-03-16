@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { ModeToggle } from "@/components/mode-toggle";
+import { SignOutButton } from "@clerk/nextjs";
 
 /* ── Navigation items ─────────────────────────────────────────────── */
 
@@ -181,12 +182,12 @@ export function AdminSidebar() {
                     </Link>
 
                     <div className="border-t border-border pt-4 flex items-center justify-between gap-3">
-                        <form action="/auth/signout" method="post" className="flex-1">
-                            <button className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors w-full">
+                        <SignOutButton redirectUrl="/">
+                            <button className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors w-full flex-1">
                                 <LogOut className="h-4 w-4 shrink-0" />
                                 <span className="text-sm font-medium">Déconnexion</span>
                             </button>
-                        </form>
+                        </SignOutButton>
                         <ModeToggle />
                     </div>
                 </SheetContent>
@@ -303,7 +304,7 @@ export function AdminSidebar() {
                         </div>
                     </div>
 
-                    <form action="/auth/signout" method="post">
+                    <SignOutButton redirectUrl="/">
                         <button className={cn(
                             "flex items-center rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors h-10 w-full",
                             collapsed ? "justify-center px-0" : "px-3 gap-3"
@@ -316,7 +317,7 @@ export function AdminSidebar() {
                                 Déconnexion
                             </span>
                         </button>
-                    </form>
+                    </SignOutButton>
                 </div>
             </div>
         </>

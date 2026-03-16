@@ -8,7 +8,7 @@ import { deleteUserAction, bulkDeleteUsersAction } from "@/actions/admin/users";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Users, Pencil, Trash2, Loader2, Search } from "lucide-react";
+import { Users, Pencil, Trash2, Loader2, Search, Mail } from "lucide-react";
 
 interface User {
     id: string;
@@ -27,9 +27,11 @@ interface Organization {
 
 const roleBadge = (role: string | null) => {
     switch (role) {
-        case "admin":
+        case "superadmin":
             return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
-        case "driver":
+        case "admin":
+            return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+        case "member":
             return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
         default:
             return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
@@ -39,9 +41,11 @@ const roleBadge = (role: string | null) => {
 export function UsersClient({
     users,
     organizations,
+    emailMap = {},
 }: {
     users: User[];
     organizations: Organization[];
+    emailMap?: Record<string, string>;
 }) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editUser, setEditUser] = useState<User | undefined>();
@@ -59,7 +63,9 @@ export function UsersClient({
     const orgMap = Object.fromEntries(organizations.map(o => [o.id, o.name]));
 
     const filtered = users.filter(u => {
-        const matchesSearch = !search || u.full_name?.toLowerCase().includes(search.toLowerCase());
+        const matchesSearch = !search ||
+            u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+            emailMap[u.id]?.toLowerCase().includes(search.toLowerCase());
         const matchesRole = roleFilter === "all" || u.role === roleFilter;
         return matchesSearch && matchesRole;
     });
@@ -124,27 +130,27 @@ export function UsersClient({
     };
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground font-sans">
-            <header className="h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-8 z-10 shrink-0">
+        <div className="flex flex-col h-full overflow-hidden bg-background text-foreground font-sans">
+            <header className="h-14 md:h-20 bg-background/80 backdrop-blur border-b border-border flex items-center justify-between px-4 md:px-8 z-10 shrink-0">
                 <div>
-                    <h1 className="text-3xl font-bold font-serif text-foreground flex items-center gap-3">
-                        <Users className="h-7 w-7 text-orange-500" />
+                    <h1 className="text-xl md:text-3xl font-bold font-serif text-foreground flex items-center gap-2 md:gap-3">
+                        <Users className="h-5 w-5 md:h-7 md:w-7 text-orange-500" />
                         Utilisateurs
                     </h1>
-                    <p className="text-sm text-muted-foreground font-light">
+                    <p className="text-xs md:text-sm text-muted-foreground font-light">
                         {filtered.length} utilisateur{filtered.length > 1 ? "s" : ""}
                     </p>
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-6 md:p-8">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8">
                 {/* Filters */}
-                <div className="flex flex-wrap items-center gap-3 mb-6">
-                    <div className="relative flex-1 min-w-[200px] max-w-md">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-6">
+                    <div className="relative flex-1 min-w-[160px] max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Rechercher par nom..."
+                            placeholder="Rechercher par nom ou email..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
@@ -156,16 +162,16 @@ export function UsersClient({
                         className="border border-border rounded-lg px-3 py-2 bg-background text-sm"
                     >
                         <option value="all">Tous les rôles</option>
+                        <option value="superadmin">Super Admin</option>
                         <option value="admin">Admin</option>
-                        <option value="staff">Staff</option>
-                        <option value="driver">Driver</option>
+                        <option value="member">Membre</option>
                     </select>
                 </div>
 
                 {/* Bulk action bar */}
                 {selected.size > 0 && (
-                    <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                        <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                    <div className="mb-4 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                        <span className="text-xs md:text-sm font-medium text-orange-700 dark:text-orange-300">
                             {selected.size} sélectionné{selected.size > 1 ? "s" : ""}
                         </span>
                         <div className="flex-1" />
@@ -173,13 +179,13 @@ export function UsersClient({
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelected(new Set())}
-                            className="text-muted-foreground"
+                            className="text-muted-foreground text-xs md:text-sm h-7 md:h-8"
                         >
                             Désélectionner
                         </Button>
                         <Button
                             size="sm"
-                            className="bg-red-500 hover:bg-red-600 text-white"
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs md:text-sm h-7 md:h-8"
                             onClick={() => setBulkConfirmOpen(true)}
                             disabled={bulkDeleting}
                         >
@@ -189,8 +195,67 @@ export function UsersClient({
                     </div>
                 )}
 
-                {/* Table */}
-                <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                {/* ── MOBILE: Compact list ──────────────────────── */}
+                <div className="md:hidden bg-card rounded-xl border border-border overflow-hidden">
+                    {filtered.length === 0 ? (
+                        <div className="py-12 text-center text-muted-foreground text-sm">
+                            Aucun utilisateur trouvé.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-border">
+                            {filtered.map((user) => (
+                                <div
+                                    key={user.id}
+                                    className={`flex items-center gap-2.5 px-3 py-2.5 ${selected.has(user.id) ? "bg-orange-50/50 dark:bg-orange-950/10" : ""}`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={selected.has(user.id)}
+                                        onChange={() => toggleSelect(user.id)}
+                                        className="h-3.5 w-3.5 rounded border-border accent-orange-500 shrink-0"
+                                    />
+                                    {user.avatar_url ? (
+                                        <img src={user.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 text-xs font-bold shrink-0">
+                                            {user.full_name?.[0]?.toUpperCase() || "?"}
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-sm font-semibold truncate">{user.full_name || "Sans nom"}</span>
+                                            <span className={`px-1.5 py-0 rounded-full text-[9px] font-semibold shrink-0 ${roleBadge(user.role)}`}>
+                                                {user.role || "member"}
+                                            </span>
+                                            {user.is_super_admin && (
+                                                <span className="px-1.5 py-0 rounded-full text-[9px] font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 shrink-0">SA</span>
+                                            )}
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground truncate">
+                                            {emailMap[user.id] || (user.organization_id ? orgMap[user.organization_id] : "—")}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-0.5 shrink-0">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(user)}>
+                                            <Pencil className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost" size="icon"
+                                            className="h-7 w-7 text-red-500"
+                                            onClick={() => handleDeleteClick(user.id)}
+                                            disabled={deletingId === user.id}
+                                        >
+                                            {deletingId === user.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* ── DESKTOP: Table layout ─────────────────────── */}
+                <div className="hidden md:block bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -204,6 +269,7 @@ export function UsersClient({
                                         />
                                     </th>
                                     <th className="px-6 py-4 font-semibold uppercase tracking-wider">Nom</th>
+                                    <th className="px-6 py-4 font-semibold uppercase tracking-wider">Email</th>
                                     <th className="px-6 py-4 font-semibold uppercase tracking-wider">Rôle</th>
                                     <th className="px-6 py-4 font-semibold uppercase tracking-wider">Organisation</th>
                                     <th className="px-6 py-4 font-semibold uppercase tracking-wider">Super Admin</th>
@@ -240,9 +306,12 @@ export function UsersClient({
                                                 </span>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 text-muted-foreground text-xs">
+                                            {emailMap[user.id] || "—"}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${roleBadge(user.role)}`}>
-                                                {user.role || "staff"}
+                                                {user.role || "member"}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-muted-foreground">
@@ -290,7 +359,7 @@ export function UsersClient({
                                     </tr>
                                 )) : (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                                        <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
                                             Aucun utilisateur trouvé.
                                         </td>
                                     </tr>

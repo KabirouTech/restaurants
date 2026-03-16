@@ -4,21 +4,15 @@ import { CustomersTable } from "@/components/dashboard/customers/CustomersTable"
 import { Users } from "lucide-react";
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 
 export default async function CustomersPage() {
     const t = await getTranslations("dashboard.customers");
     const tc = await getTranslations("common");
+    const { userId, profile } = await getCurrentProfile();
+    if (!userId) redirect("/sign-in");
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) redirect("/auth/login");
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("organization_id")
-        .eq("id", user.id)
-        .single();
-
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
     // Fetch customers

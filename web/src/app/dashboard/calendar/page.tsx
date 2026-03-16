@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { format, startOfMonth, endOfMonth, startOfDay, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday, isSameDay, isBefore, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
@@ -15,16 +16,14 @@ import { MobileCalendarView } from "@/components/dashboard/calendar/MobileCalend
 
 export default async function CalendarPage(props: { searchParams: Promise<{ date?: string }> }) {
     const searchParams = await props.searchParams;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { userId, profile } = await getCurrentProfile();
 
     const t = await getTranslations("dashboard.calendar");
     const tc = await getTranslations("common");
 
-    if (!user) return <div>{tc('notAuthenticated')}</div>;
+    if (!userId) return <div>{tc('notAuthenticated')}</div>;
 
-    // Get Org
-    const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single();
+    const supabase = await createClient();
     if (!profile?.organization_id) return <div>{tc('noOrganization')}</div>;
     const orgId = profile.organization_id;
 
