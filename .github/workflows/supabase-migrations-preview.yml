@@ -1,12 +1,12 @@
-name: Supabase Migrations (Prod)
+name: Supabase Migrations (Preview)
 
 on:
   push:
     branches:
-      - main
+      - ros/dev
     paths:
       - "web/supabase/migrations/*.sql"
-      - ".github/workflows/supabase-migrations-prod.yml"
+      - ".github/workflows/supabase-migrations-preview.yml"
   workflow_dispatch:
     inputs:
       dry_run_only:
@@ -19,19 +19,19 @@ permissions:
   contents: read
 
 concurrency:
-  group: supabase-prod-migrations
+  group: supabase-preview-migrations
   cancel-in-progress: false
 
 jobs:
-  migrate-prod:
-    name: Push Migrations To Prod
+  migrate-preview:
+    name: Push Migrations To Preview
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
         working-directory: web
     env:
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL_PROD }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL_PREVIEW }}
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout
@@ -40,7 +40,7 @@ jobs:
       - name: Validate required secret
         run: |
           if [ -z "${SUPABASE_DB_URL}" ]; then
-            echo "Missing required secret: SUPABASE_DB_URL_PROD"
+            echo "Missing required secret: SUPABASE_DB_URL_PREVIEW"
             exit 1
           fi
 
