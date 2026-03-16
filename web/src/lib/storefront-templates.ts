@@ -1,4 +1,4 @@
-export type StorefrontTemplate = "classic" | "bistro" | "catering" | "restaurant";
+export type StorefrontTemplate = "classic" | "bistro" | "catering" | "restaurant" | "foodiedash" | "elite" | "aromabrew" | "culina";
 
 type SubscriptionPlan = "free" | "premium" | "enterprise" | string | null | undefined;
 
@@ -70,6 +70,58 @@ export const STOREFRONT_TEMPLATE_OPTIONS: StorefrontTemplateOption[] = [
     previewSurfaceClassName: "bg-amber-50/95",
     previewPrimaryClassName: "bg-orange-700",
     previewSecondaryClassName: "bg-amber-300",
+  },
+  {
+    id: "foodiedash",
+    name: "FoodieDash",
+    summary: "Bold delivery-style storefront with vibrant orange accents and modern cards.",
+    audience: "Delivery & fast food",
+    badge: "Premium",
+    priceLabel: "Premium",
+    premiumOnly: true,
+    previewClassName: "from-orange-50 via-white to-amber-50",
+    previewSurfaceClassName: "bg-white/95",
+    previewPrimaryClassName: "bg-orange-500",
+    previewSecondaryClassName: "bg-orange-100",
+  },
+  {
+    id: "elite",
+    name: "L'Elite",
+    summary: "Luxurious fine dining aesthetic with dark tones and gold accents.",
+    audience: "Fine dining & gastronomie",
+    badge: "Premium",
+    priceLabel: "Premium",
+    premiumOnly: true,
+    previewClassName: "from-zinc-950 via-stone-900 to-amber-950",
+    previewSurfaceClassName: "bg-stone-900/95",
+    previewPrimaryClassName: "bg-amber-600",
+    previewSecondaryClassName: "bg-stone-800",
+  },
+  {
+    id: "aromabrew",
+    name: "Aroma Brew",
+    summary: "Warm coffee shop style with dark browns and golden yellow highlights.",
+    audience: "Cafés & salons de thé",
+    badge: "Premium",
+    priceLabel: "Premium",
+    premiumOnly: true,
+    previewClassName: "from-yellow-950 via-stone-900 to-amber-950",
+    previewSurfaceClassName: "bg-stone-900/95",
+    previewPrimaryClassName: "bg-yellow-500",
+    previewSecondaryClassName: "bg-stone-800",
+  },
+  {
+    id: "culina",
+    name: "Culina Dynamic",
+    summary: "Ultra-modern tech-inspired design with neon green accents and bold typography.",
+    audience: "Concepts modernes & formations",
+    badge: "Premium",
+    priceLabel: "Premium",
+    premiumOnly: true,
+    previewClassName: "from-emerald-950 via-slate-900 to-teal-950",
+    previewSurfaceClassName: "bg-slate-900/95",
+    previewPrimaryClassName: "bg-emerald-400",
+    previewSecondaryClassName: "bg-slate-800",
   },
 ];
 
