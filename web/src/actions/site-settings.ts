@@ -1,8 +1,9 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
+import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 import {
     DEFAULT_STOREFRONT_TEMPLATE,
     resolveStorefrontTemplate,
@@ -41,8 +42,14 @@ interface SiteSettingsPayload {
 }
 
 export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
-    const { userId } = await auth();
-    if (!userId) return { error: "Non authentifié" };
+    const t = await getTranslations("errors");
+    const orgContext = await getRequiredOrganizationContext(t("orgNotFound"), t("notAuthenticated"));
+    if (!orgContext.ok) return { error: orgContext.error };
+    const { organizationId } = orgContext.context;
+
+    if (payload.orgId !== organizationId) {
+        return { error: t("orgUnauthorized") };
+    }
 
     try {
         const supabaseAdmin = createAdminClient(
@@ -50,16 +57,6 @@ export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!,
             { auth: { persistSession: false } }
         );
-
-        const { data: profile } = await supabaseAdmin
-            .from("profiles")
-            .select("organization_id")
-            .eq("clerk_id", userId)
-            .maybeSingle();
-
-        if (!profile?.organization_id || profile.organization_id !== payload.orgId) {
-            return { error: "Organisation non autorisée" };
-        }
 
         // Fetch existing settings to merge
         const { data: org } = await supabaseAdmin
@@ -115,7 +112,7 @@ export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
             .update({ settings: newSettings })
             .eq("id", payload.orgId);
 
-        if (error) return { error: "Erreur: " + error.message };
+        if (error) return { error: error.message };
 
         revalidatePath("/dashboard/settings");
         revalidatePath("/dashboard/boutique");
@@ -123,6 +120,6 @@ export async function updateSiteSettingsAction(payload: SiteSettingsPayload) {
 
         return { success: true };
     } catch (e: any) {
-        return { error: e.message || "Erreur inattendue" };
+        return { error: e.message || t("unexpectedError") };
     }
 }

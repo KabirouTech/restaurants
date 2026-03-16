@@ -15,12 +15,13 @@ export type OrganizationContextResult =
  * Keeps behavior consistent and avoids fragile profile `.single()` lookups.
  */
 export async function getRequiredOrganizationContext(
-  notFoundMessage = "Organisation introuvable"
+  notFoundMessage = "Organisation introuvable",
+  notAuthenticatedMessage = "Non authentifié"
 ): Promise<OrganizationContextResult> {
   const { userId, profile } = await getCurrentProfile();
 
   if (!userId) {
-    return { ok: false, error: "Non authentifié" };
+    return { ok: false, error: notAuthenticatedMessage };
   }
 
   if (!profile?.organization_id) {
