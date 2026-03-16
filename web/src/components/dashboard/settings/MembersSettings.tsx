@@ -11,10 +11,6 @@ import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog'
 import {
   DropdownMenu,
@@ -283,17 +279,49 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
 
       {/* ── Dialog Invitation ── */}
       <Dialog open={inviteOpen} onOpenChange={(v) => { setInviteOpen(v); if (!v) { setInviteError(null); setUpgradeRequired(false) } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Inviter un membre</DialogTitle>
-            <DialogDescription>
-              Un email sera envoyé avec un lien d'invitation valable 7 jours.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {/* ── Bannière décorative ── */}
+          <div className="relative h-40 overflow-hidden bg-gradient-to-br from-orange-500 via-amber-500 to-orange-700">
+            {/* Motif de points */}
+            <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <circle cx="3" cy="3" r="2" fill="white" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#dots)" />
+            </svg>
+            {/* Cercles décoratifs flottants */}
+            <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full bg-white/10 blur-sm" />
+            <div className="absolute -bottom-10 -left-8 w-48 h-48 rounded-full bg-white/10 blur-sm" />
+            <div className="absolute top-4 right-16 w-16 h-16 rounded-full bg-orange-300/30" />
+            {/* Icônes flottantes */}
+            <div className="absolute top-5 right-8 p-3 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg rotate-6">
+              <Mail className="h-6 w-6 text-white" />
+            </div>
+            <div className="absolute bottom-6 right-24 p-2.5 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg -rotate-3">
+              <Users className="h-5 w-5 text-white" />
+            </div>
+            {/* Texte principal */}
+            <div className="absolute inset-0 flex flex-col justify-center px-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 rounded-xl bg-white/25 backdrop-blur-sm border border-white/30">
+                  <UserPlus className="h-6 w-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-white drop-shadow">Inviter un membre</h2>
+              </div>
+              <p className="text-sm text-orange-100 max-w-xs leading-relaxed">
+                Un lien d'invitation sécurisé sera envoyé par email, valable <strong className="text-white">7 jours</strong>.
+              </p>
+            </div>
+          </div>
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="inv-email">Adresse email</Label>
+          {/* ── Corps du formulaire ── */}
+          <div className="p-6 space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="inv-email" className="text-sm font-medium">
+                Adresse email
+              </Label>
               <Input
                 id="inv-email"
                 type="email"
@@ -301,13 +329,14 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+                className="h-10"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Rôle</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Rôle</Label>
               <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -318,10 +347,14 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Les administrateurs peuvent modifier les paramètres et inviter d'autres membres.
+              </p>
             </div>
 
             {inviteError && !upgradeRequired && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 flex items-start gap-2">
+                <span className="mt-0.5 shrink-0">⚠️</span>
                 {inviteError}
               </p>
             )}
@@ -332,15 +365,17 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                 message={inviteError || 'Limite de membres atteinte'}
               />
             )}
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
-            <Button disabled={!email.trim() || inviting} onClick={handleInvite}>
-              {inviting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-              Envoyer l'invitation
-            </Button>
-          </DialogFooter>
+            <div className="flex gap-3 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setInviteOpen(false)}>
+                Annuler
+              </Button>
+              <Button className="flex-1" disabled={!email.trim() || inviting} onClick={handleInvite}>
+                {inviting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
+                Envoyer l'invitation
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
