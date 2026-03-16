@@ -27,9 +27,11 @@ interface Organization {
 
 const roleBadge = (role: string | null) => {
     switch (role) {
-        case "admin":
+        case "superadmin":
             return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
-        case "driver":
+        case "admin":
+            return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+        case "member":
             return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
         default:
             return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
@@ -160,9 +162,9 @@ export function UsersClient({
                         className="border border-border rounded-lg px-3 py-2 bg-background text-sm"
                     >
                         <option value="all">Tous les rôles</option>
+                        <option value="superadmin">Super Admin</option>
                         <option value="admin">Admin</option>
-                        <option value="staff">Staff</option>
-                        <option value="driver">Driver</option>
+                        <option value="member">Membre</option>
                     </select>
                 </div>
 
@@ -223,7 +225,7 @@ export function UsersClient({
                                         <div className="flex items-center gap-1.5">
                                             <span className="text-sm font-semibold truncate">{user.full_name || "Sans nom"}</span>
                                             <span className={`px-1.5 py-0 rounded-full text-[9px] font-semibold shrink-0 ${roleBadge(user.role)}`}>
-                                                {user.role || "staff"}
+                                                {user.role || "member"}
                                             </span>
                                             {user.is_super_admin && (
                                                 <span className="px-1.5 py-0 rounded-full text-[9px] font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 shrink-0">SA</span>
@@ -309,7 +311,7 @@ export function UsersClient({
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${roleBadge(user.role)}`}>
-                                                {user.role || "staff"}
+                                                {user.role || "member"}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-muted-foreground">

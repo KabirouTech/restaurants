@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Phone,
   Instagram,
@@ -38,6 +39,7 @@ interface Channel {
 }
 
 export function ChannelSettings({ orgId }: { orgId: string }) {
+  const searchParams = useSearchParams();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -84,6 +86,19 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
   const emailChannel = channels.find(
     (c) => c.platform === "email" && c.is_active
   );
+  const oauthError = searchParams.get("error");
+  const oauthSuccess = searchParams.get("success");
+  const oauthErrorLabel: Record<string, string> = {
+    missing_meta_config:
+      "Configuration Meta Business manquante: ajoutez META_APP_ID et META_APP_SECRET dans les variables d'environnement (ce flux est separe de Clerk).",
+    missing_params:
+      "La reponse OAuth est incomplete. Veuillez reessayer la connexion Instagram.",
+    token_exchange:
+      "Impossible d'echanger le code OAuth. Verifiez la configuration Meta puis reessayez.",
+    no_instagram_account:
+      "Aucun compte Instagram Business lie a cette page Facebook n'a ete trouve.",
+    oauth_failed: "La connexion Instagram a echoue. Veuillez reessayer.",
+  };
 
   const webhookUrl =
     typeof window !== "undefined"
@@ -331,10 +346,20 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
             )}
           </div>
           <CardDescription className="text-xs">
-            Messages directs via Meta Graph API
+            Messages directs via Meta Graph API (separe de l'auth Clerk)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          {oauthSuccess === "instagram" && (
+            <div className="rounded-md border border-green-200 bg-green-50 text-green-700 text-xs p-2.5">
+              Compte Instagram connecte avec succes.
+            </div>
+          )}
+          {oauthError && oauthErrorLabel[oauthError] && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 text-destructive text-xs p-2.5">
+              {oauthErrorLabel[oauthError]}
+            </div>
+          )}
           {igChannel ? (
             <>
               <div className="text-sm text-muted-foreground">
@@ -354,6 +379,9 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
               <p className="text-xs text-muted-foreground">
                 Connectez votre compte Instagram Business via Meta pour recevoir
                 et répondre aux DMs.
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Note: Clerk gere la connexion utilisateur a la plateforme. Cette liaison configure le canal Meta Business.
               </p>
               <Button size="sm" asChild>
                 <a href={`/api/auth/instagram?orgId=${orgId}`}>

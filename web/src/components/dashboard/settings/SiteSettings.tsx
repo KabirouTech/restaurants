@@ -479,161 +479,133 @@ export function SiteSettings({ org, settings, products, currentPlan }: SiteSetti
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-border bg-muted/20 p-3">
-                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Design publié</p>
-                                <p className="text-sm font-semibold mt-1">{activeTemplateMeta?.name || "Starter Fresh"}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">Visible actuellement sur votre boutique publique.</p>
-                            </div>
-                            <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
-                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Design en aperçu</p>
-                                <p className="text-sm font-semibold mt-1">{previewTemplateMeta?.name || "Starter Fresh"}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">Le grand écran à droite montre ce rendu en direct.</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* ── Compact template grid ── */}
+                        <div className="grid grid-cols-4 gap-2">
                             {STOREFRONT_TEMPLATE_OPTIONS.map((template) => {
                                 const selected = storefrontTemplate === template.id;
                                 const previewed = activePreviewTemplate === template.id;
                                 const locked = template.premiumOnly && !canUsePremiumTemplate;
                                 return (
-                                    <div
+                                    <button
                                         key={template.id}
+                                        type="button"
                                         className={cn(
-                                            "relative text-left rounded-xl border p-3 transition-all",
+                                            "relative group text-left rounded-lg border p-1.5 transition-all cursor-pointer",
                                             selected
-                                                ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                                                ? "border-primary ring-2 ring-primary/30"
                                                 : previewed
-                                                    ? "border-primary/50 bg-primary/5"
-                                                    : "border-border hover:border-primary/40 hover:bg-muted/30",
-                                            locked && "border-amber-300 bg-amber-50/50"
+                                                    ? "border-primary/50 ring-1 ring-primary/20"
+                                                    : "border-border hover:border-primary/40",
                                         )}
+                                        onClick={() => previewDesign(template.id)}
                                     >
-                                        <div className={cn("h-28 rounded-lg bg-gradient-to-br mb-3 border p-2.5", template.previewClassName)}>
-                                            <div className={cn("h-full rounded-md border border-black/10 overflow-hidden shadow-sm", template.previewSurfaceClassName)}>
-                                                <div className="h-5 border-b border-black/10 bg-black/5 px-2 flex items-center gap-1">
-                                                    <span className="h-1.5 w-1.5 rounded-full bg-black/30" />
-                                                    <span className="h-1.5 w-1.5 rounded-full bg-black/30" />
-                                                    <span className="h-1.5 w-1.5 rounded-full bg-black/30" />
-                                                </div>
-                                                <div className="p-2 space-y-1.5">
-                                                    <div className={cn("h-4 rounded-md", template.previewPrimaryClassName)} />
-                                                    <div className="grid grid-cols-3 gap-1">
-                                                        <div className={cn("h-3 rounded", template.previewSecondaryClassName)} />
-                                                        <div className={cn("h-3 rounded", template.previewSecondaryClassName)} />
-                                                        <div className={cn("h-3 rounded", template.previewSecondaryClassName)} />
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-1">
-                                                        <div className="h-6 rounded bg-black/10" />
-                                                        <div className="h-6 rounded bg-black/10" />
+                                        {/* Mini preview */}
+                                        <div className={cn("h-14 rounded bg-gradient-to-br p-1.5", template.previewClassName)}>
+                                            <div className={cn("h-full rounded border border-black/10 overflow-hidden", template.previewSurfaceClassName)}>
+                                                <div className="h-2 border-b border-black/10 bg-black/5" />
+                                                <div className="p-1 space-y-0.5">
+                                                    <div className={cn("h-1.5 w-3/4 rounded-sm", template.previewPrimaryClassName)} />
+                                                    <div className="flex gap-0.5">
+                                                        <div className={cn("h-1 flex-1 rounded-sm", template.previewSecondaryClassName)} />
+                                                        <div className={cn("h-1 flex-1 rounded-sm", template.previewSecondaryClassName)} />
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-sm font-semibold">{template.name}</p>
-                                                    <span className={cn(
-                                                        "text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border",
-                                                        template.premiumOnly
-                                                            ? "bg-amber-100 text-amber-700 border-amber-200"
-                                                            : "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                                    )}>
-                                                        {template.badge}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground">{template.summary}</p>
-                                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                                    <span>{template.audience}</span>
-                                                    <span>•</span>
-                                                    <span>{template.priceLabel}</span>
-                                                </div>
+                                        {/* Name + indicators */}
+                                        <div className="mt-1.5 px-0.5">
+                                            <p className="text-[11px] font-semibold leading-tight truncate">{template.name}</p>
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                {selected && <CheckCircle2 className="h-2.5 w-2.5 text-primary shrink-0" />}
+                                                {!selected && previewed && <Eye className="h-2.5 w-2.5 text-primary shrink-0" />}
+                                                <span className="text-[9px] text-muted-foreground truncate">{template.audience}</span>
                                             </div>
-                                            {selected && (
-                                                <span className="inline-flex items-center gap-1 text-primary text-xs font-semibold">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                                    Active
-                                                </span>
-                                            )}
-                                            {!selected && previewed && (
-                                                <span className="inline-flex items-center gap-1 text-primary text-xs font-semibold">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                                    Aperçu
-                                                </span>
-                                            )}
                                         </div>
+                                        {/* Lock badge */}
                                         {locked && (
-                                            <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wide px-2 py-1">
-                                                <Lock className="h-3 w-3" />
-                                                Premium
+                                            <span className="absolute top-1 right-1 rounded-full bg-amber-500 text-white p-0.5">
+                                                <Lock className="h-2 w-2" />
                                             </span>
                                         )}
-                                        <div className="mt-3 flex items-center gap-2">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant={previewed ? "default" : "outline"}
-                                                className="flex-1"
-                                                onClick={() => previewDesign(template.id)}
-                                            >
-                                                <Eye className="h-3.5 w-3.5 mr-1.5" />
-                                                {previewed ? "En aperçu" : "Aperçu"}
-                                            </Button>
-                                            {selected ? (
-                                                <Button type="button" size="sm" disabled className="flex-1">
-                                                    Actif
-                                                </Button>
-                                            ) : locked ? (
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
-                                                    onClick={() => activateDesign(template.id, template.premiumOnly)}
-                                                >
-                                                    Premium
-                                                </Button>
-                                            ) : (
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    className="flex-1"
-                                                    onClick={() => activateDesign(template.id, template.premiumOnly)}
-                                                >
-                                                    Utiliser
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
+                                        {/* Premium dot */}
+                                        {template.premiumOnly && !locked && (
+                                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-400" />
+                                        )}
+                                    </button>
                                 );
                             })}
                         </div>
 
-                        <p className="text-xs text-muted-foreground">
-                            Tous les designs sont prévisualisables. Les designs Premium sont publiables uniquement avec un plan Premium.
-                        </p>
-
-                        {!canUsePremiumTemplate && isPreviewingUnlockedTemplate && isPreviewingPremiumTemplate && (
-                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-                                Vous visualisez un design premium en mode apercu. Passez au Premium pour l&apos;appliquer.
-                            </div>
-                        )}
+                        {/* ── Detail panel for focused template ── */}
+                        {(() => {
+                            const focused = STOREFRONT_TEMPLATE_OPTIONS.find(t => t.id === activePreviewTemplate);
+                            if (!focused) return null;
+                            const selected = storefrontTemplate === focused.id;
+                            const locked = focused.premiumOnly && !canUsePremiumTemplate;
+                            return (
+                                <div className="rounded-xl border border-border bg-muted/10 p-3 space-y-2.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <p className="text-sm font-semibold truncate">{focused.name}</p>
+                                            <span className={cn(
+                                                "text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shrink-0",
+                                                focused.premiumOnly
+                                                    ? "bg-amber-100 text-amber-700 border-amber-200"
+                                                    : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                            )}>
+                                                {focused.badge}
+                                            </span>
+                                        </div>
+                                        {selected && (
+                                            <span className="inline-flex items-center gap-1 text-primary text-[11px] font-semibold shrink-0">
+                                                <CheckCircle2 className="h-3 w-3" />
+                                                Actif
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">{focused.summary}</p>
+                                    <div className="flex items-center gap-2">
+                                        {selected ? (
+                                            <Button type="button" size="sm" disabled className="flex-1 h-8 text-xs">
+                                                Design actif
+                                            </Button>
+                                        ) : locked ? (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                className="flex-1 h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white"
+                                                onClick={() => activateDesign(focused.id, focused.premiumOnly)}
+                                            >
+                                                <Lock className="h-3 w-3 mr-1" />
+                                                Passer au Premium
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                className="flex-1 h-8 text-xs"
+                                                onClick={() => activateDesign(focused.id, focused.premiumOnly)}
+                                            >
+                                                <Sparkles className="h-3 w-3 mr-1" />
+                                                Activer ce design
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         {!canUsePremiumTemplate && (
-                            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-amber-900">Debloquez 3 designs premium</p>
-                                    <p className="text-xs text-amber-700">Donnez un style unique a la boutique de chaque client.</p>
-                                </div>
+                            <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                                <p className="text-xs text-amber-800">7 designs premium disponibles avec le plan Premium.</p>
                                 <Button
                                     type="button"
                                     size="sm"
-                                    className="bg-amber-500 hover:bg-amber-600 text-white shrink-0"
+                                    className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 h-7 text-xs"
                                     onClick={() => setUpgradeOpen(true)}
                                 >
-                                    <Zap className="h-3.5 w-3.5 mr-1.5" />
-                                    Passer au Premium
+                                    <Zap className="h-3 w-3 mr-1" />
+                                    Upgrade
                                 </Button>
                             </div>
                         )}

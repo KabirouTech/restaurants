@@ -17,7 +17,7 @@ export function CartFloatingButton() {
     if (!isVisible) return null;
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 zoom-in duration-300">
+        <div className="hidden md:block fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 zoom-in duration-300">
             <Button
                 size="lg"
                 className="rounded-full shadow-lg h-14 w-14 p-0 relative bg-primary hover:bg-primary/90 text-primary-foreground"

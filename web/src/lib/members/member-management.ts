@@ -17,7 +17,7 @@ import { checkPlanLimit } from '@/lib/plans/plan-limits'
 // Types
 // ─────────────────────────────────────────────────────────────
 
-export type MemberRole = 'admin' | 'staff' | 'driver'
+export type MemberRole = 'superadmin' | 'admin' | 'member'
 export type MemberStatus = 'active' | 'suspended' | 'pending'
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'cancelled'
 
@@ -57,7 +57,7 @@ export interface Invitation {
  * Vérifie la limite du plan avant de créer.
  *
  * @example
- * const result = await inviteMember(orgId, 'jean@example.com', 'staff')
+ * const result = await inviteMember(orgId, 'jean@example.com', 'member')
  */
 export async function inviteMember(
   orgId: string,
@@ -390,15 +390,15 @@ export async function removeMember(
 // ─────────────────────────────────────────────────────────────
 
 export const ROLE_LABELS: Record<MemberRole, string> = {
+  superadmin: 'Super Admin',
   admin: 'Administrateur',
-  staff: 'Employé',
-  driver: 'Livreur',
+  member: 'Membre',
 }
 
 export const ROLE_COLORS: Record<MemberRole, string> = {
+  superadmin: 'bg-purple-100 text-purple-800',
   admin: 'bg-amber-100 text-amber-800',
-  staff: 'bg-blue-100 text-blue-800',
-  driver: 'bg-green-100 text-green-800',
+  member: 'bg-blue-100 text-blue-800',
 }
 
 export const STATUS_LABELS: Record<MemberStatus, string> = {
@@ -408,6 +408,11 @@ export const STATUS_LABELS: Record<MemberStatus, string> = {
 }
 
 export const ROLE_PERMISSIONS: Record<MemberRole, string[]> = {
+  superadmin: [
+    'Accès complet à la plateforme',
+    'Gestion de toutes les organisations',
+    'Configuration système',
+  ],
   admin: [
     'Gérer les membres et invitations',
     'Changer le plan d\'abonnement',
@@ -415,16 +420,11 @@ export const ROLE_PERMISSIONS: Record<MemberRole, string[]> = {
     'Paramètres de l\'organisation',
     'Rapports & statistiques',
   ],
-  staff: [
+  member: [
     'Gestion des commandes',
     'Accès à la messagerie',
     'Gestion des clients (CRM)',
     'Calendrier & capacité',
     'Catalogue menu',
-  ],
-  driver: [
-    'Voir les livraisons assignées',
-    'Mettre à jour le statut de livraison',
-    'Suivi en temps réel',
   ],
 }

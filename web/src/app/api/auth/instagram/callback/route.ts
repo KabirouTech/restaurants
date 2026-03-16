@@ -4,11 +4,19 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const orgId = request.nextUrl.searchParams.get("state");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || request.nextUrl.origin;
+  const metaAppId = process.env.META_APP_ID?.trim();
+  const metaAppSecret = process.env.META_APP_SECRET?.trim();
 
   if (!code || !orgId) {
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings?error=missing_params`
+      `${appUrl}/dashboard/settings?tab=channels&error=missing_params`
+    );
+  }
+
+  if (!metaAppId || !metaAppSecret) {
+    return NextResponse.redirect(
+      `${appUrl}/dashboard/settings?tab=channels&error=missing_meta_config`
     );
   }
 
@@ -17,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // Exchange code for short-lived token
     const tokenRes = await fetch(
-      `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${process.env.META_APP_ID}&client_secret=${process.env.META_APP_SECRET}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`
+      `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${metaAppId}&client_secret=${metaAppSecret}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`
     );
     const tokenData = await tokenRes.json();
 
@@ -29,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Exchange for long-lived token
     const longLivedRes = await fetch(
-      `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${process.env.META_APP_ID}&client_secret=${process.env.META_APP_SECRET}&fb_exchange_token=${tokenData.access_token}`
+      `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${metaAppId}&client_secret=${metaAppSecret}&fb_exchange_token=${tokenData.access_token}`
     );
     const longLivedData = await longLivedRes.json();
     const accessToken = longLivedData.access_token || tokenData.access_token;
@@ -45,7 +53,7 @@ export async function GET(request: NextRequest) {
     );
     if (!page) {
       return NextResponse.redirect(
-        `${appUrl}/dashboard/settings?error=no_instagram_account`
+        `${appUrl}/dashboard/settings?tab=channels&error=no_instagram_account`
       );
     }
 
@@ -98,7 +106,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error("Instagram OAuth error:", err);
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings?error=oauth_failed`
+      `${appUrl}/dashboard/settings?tab=channels&error=oauth_failed`
     );
   }
 }

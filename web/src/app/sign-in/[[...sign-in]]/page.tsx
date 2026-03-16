@@ -1,9 +1,39 @@
 import { SignIn } from "@clerk/nextjs";
+import { AuthSidePanel } from "@/components/auth/AuthSidePanel";
 
 export default function SignInPage() {
+    const disableOAuth = process.env.NEXT_PUBLIC_DISABLE_CLERK_OAUTH === "true";
+
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-            <SignIn forceRedirectUrl="/dashboard" />
+        <div className="flex min-h-screen">
+            {/* Left: visual panel (hidden on mobile) */}
+            <AuthSidePanel mode="sign-in" />
+
+            {/* Right: Clerk form */}
+            <div className="flex flex-1 items-center justify-center bg-background px-4 py-12 lg:px-8">
+                <div className="w-full max-w-md space-y-3">
+                    <SignIn
+                        forceRedirectUrl="/dashboard"
+                        appearance={
+                            disableOAuth
+                                ? {
+                                    elements: {
+                                        socialButtonsBlockButton: "hidden",
+                                        dividerRow: "hidden",
+                                        dividerLine: "hidden",
+                                        dividerText: "hidden",
+                                    },
+                                }
+                                : undefined
+                        }
+                    />
+                    {disableOAuth && (
+                        <p className="text-xs text-muted-foreground text-center">
+                            Connexion sociale desactivee temporairement. Utilisez email + mot de passe.
+                        </p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
