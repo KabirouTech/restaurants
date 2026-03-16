@@ -166,7 +166,7 @@ export default async function SettingsPage({
                                     {t('teamMembersDesc')}
                                 </p>
                             </div>
-                            <MembersSettings orgId={org.id} currentUserProfileId={profile.id} />
+                            <MembersSettings orgId={org.id} currentUserProfileId={profile.id} currentPlan={org.subscription_plan || 'free'} />
                         </TabsContent>
 
                         {/* ── Abonnement ───────────────────────────────── */}

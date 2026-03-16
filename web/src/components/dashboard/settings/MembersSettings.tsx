@@ -52,6 +52,7 @@ import { UpgradePrompt } from '@/components/ui/upgrade-prompt'
 interface MembersSettingsProps {
   orgId: string
   currentUserProfileId: string
+  currentPlan: string
 }
 
 const ROLE_OPTIONS: { value: MemberRole; label: string }[] = [
@@ -65,7 +66,8 @@ function initials(name: string | null, email?: string): string {
   return '?'
 }
 
-export function MembersSettings({ orgId, currentUserProfileId }: MembersSettingsProps) {
+export function MembersSettings({ orgId, currentUserProfileId, currentPlan }: MembersSettingsProps) {
+  const isFree = currentPlan === 'free'
   const [members, setMembers] = useState<Member[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
@@ -132,10 +134,14 @@ export function MembersSettings({ orgId, currentUserProfileId }: MembersSettings
                 Gérez les accès de votre équipe. Les admins peuvent tout modifier.
               </CardDescription>
             </div>
-            <Button size="sm" onClick={() => setInviteOpen(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Inviter
-            </Button>
+            {isFree ? (
+              <UpgradePrompt orgId={orgId} message="Passez au Premium pour inviter des membres" compact />
+            ) : (
+              <Button size="sm" onClick={() => setInviteOpen(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Inviter
+              </Button>
+            )}
           </div>
         </CardHeader>
 
