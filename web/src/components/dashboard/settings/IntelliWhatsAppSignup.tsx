@@ -4,33 +4,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { connectWhatsAppViaIntelliAction } from "@/actions/intelli-whatsapp";
+import {
+  startIntelliWhatsAppSignupAction,
+  finalizeIntelliWhatsAppAction,
+} from "@/actions/intelli-whatsapp";
 
-// Minimal Facebook JS SDK surface used by the embedded signup flow.
-declare global {
-  interface Window {
-    FB?: {
-      init: (params: Record<string, unknown>) => void;
-      login: (
-        cb: (response: { authResponse?: { code?: string } }) => void,
-        params: Record<string, unknown>
-      ) => void;
-      AppEvents?: { logPageView: () => void };
-    };
-    fbAsyncInit?: () => void;
-  }
-}
-
-type Step = "initial" | "popup" | "connecting" | "done";
+type Step = "initial" | "popup" | "finalizing" | "done";
 
 /**
- * One-click WhatsApp onboarding via Intelli's embedded signup. Launches Meta's
- * popup using Intelli's Facebook app config, then hands the returned auth code
- * to the server, which provisions the number through the Partner API.
+ * One-click WhatsApp onboarding through Intelli's hosted embedded signup.
  *
- * Uses Intelli's public Meta credentials (safe to expose):
- *   NEXT_PUBLIC_INTELLI_FB_APP_ID
- *   NEXT_PUBLIC_INTELLI_FB_CONFIG_ID
+ * We never touch Meta credentials: a server action mints a hosted session URL
+ * (using our ik_ key, server-side), we open it in a popup, and Intelli's own
+ * page runs the Meta flow. On success the popup posts a message back; we then
+ * confirm the result server-to-server before persisting the channel.
  */
 export function IntelliWhatsAppSignup({
   onConnected,
@@ -39,130 +26,74 @@ export function IntelliWhatsAppSignup({
 }) {
   const [step, setStep] = useState<Step>("initial");
   const [error, setError] = useState<string | null>(null);
-  const fbReady = useRef<Promise<void> | null>(null);
-  const sessionInfo = useRef<{ phone_number_id?: string; waba_id?: string }>({});
+  const popupRef = useRef<Window | null>(null);
+  const handledRef = useRef(false);
 
-  const appId = process.env.NEXT_PUBLIC_INTELLI_FB_APP_ID;
-  const configId = process.env.NEXT_PUBLIC_INTELLI_FB_CONFIG_ID;
+  const finalize = useCallback(async () => {
+    if (handledRef.current) return;
+    handledRef.current = true;
+    setStep("finalizing");
+    setError(null);
+    const result = await finalizeIntelliWhatsAppAction();
+    if (result.error) {
+      setError(result.error);
+      setStep("initial");
+      handledRef.current = false;
+      toast.error(result.error);
+      return;
+    }
+    setStep("done");
+    toast.success("WhatsApp connecté via Intelli");
+    onConnected?.();
+  }, [onConnected]);
 
-  const initSDK = useCallback((): Promise<void> => {
-    if (fbReady.current) return fbReady.current;
-    fbReady.current = new Promise<void>((resolve, reject) => {
-      if (typeof window === "undefined") return;
-      if (window.FB) return resolve();
-      if (!appId) return reject(new Error("Configuration Meta Intelli manquante."));
-
-      window.fbAsyncInit = () => {
-        window.FB?.init({ appId, cookie: true, xfbml: true, version: "v22.0" });
-        window.FB?.AppEvents?.logPageView();
-        resolve();
-      };
-      const script = document.createElement("script");
-      script.src = "https://connect.facebook.net/en_US/sdk.js";
-      script.async = true;
-      script.defer = true;
-      script.crossOrigin = "anonymous";
-      script.onerror = () =>
-        reject(new Error("Impossible de charger le SDK Facebook."));
-      document.body.appendChild(script);
-    });
-    return fbReady.current;
-  }, [appId]);
-
-  // Capture the session info Meta posts via window.message during the flow.
+  // Listen for the hosted popup's success message. The message only triggers
+  // finalize(); the actual client data is re-fetched server-side (ik_ key), so
+  // a spoofed message can't connect a channel we don't own.
   useEffect(() => {
-    initSDK().catch(() => {});
     const onMessage = (event: MessageEvent) => {
-      if (
-        !["https://www.facebook.com", "https://web.facebook.com"].includes(
-          event.origin
-        )
-      )
-        return;
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "WA_EMBEDDED_SIGNUP" && data.data) {
-          sessionInfo.current = {
-            phone_number_id: data.data.phone_number_id,
-            waba_id: data.data.waba_id,
-          };
-        }
-      } catch {
-        // non-JSON cross-origin noise; ignore
+      if (event.data?.type === "intelli:whatsapp" && event.data?.status === "success") {
+        finalize();
       }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [initSDK]);
-
-  const submitCode = useCallback(
-    async (code: string) => {
-      setStep("connecting");
-      setError(null);
-      const result = await connectWhatsAppViaIntelliAction(code);
-      if (result.error) {
-        setError(result.error);
-        setStep("initial");
-        toast.error(result.error);
-        return;
-      }
-      setStep("done");
-      toast.success("WhatsApp connecté via Intelli");
-      onConnected?.();
-    },
-    [onConnected]
-  );
+  }, [finalize]);
 
   const launch = useCallback(async () => {
     setError(null);
+    setStep("popup");
+    handledRef.current = false;
 
-    if (!configId) {
-      const msg = "La connexion WhatsApp n'est pas disponible (config Intelli manquante).";
-      setError(msg);
-      return;
-    }
-    // Meta enforces HTTPS for FB.login; on plain http the SDK silently no-ops.
-    if (
-      typeof window !== "undefined" &&
-      window.location.protocol !== "https:" &&
-      window.location.hostname !== "localhost"
-    ) {
-      setError("WhatsApp ne peut être connecté que depuis la version sécurisée (https) du site.");
-      return;
-    }
-
-    try {
-      setStep("popup");
-      await initSDK();
-      if (!window.FB) throw new Error("SDK Facebook indisponible.");
-
-      window.FB.login(
-        (response) => {
-          const code = response.authResponse?.code;
-          if (code) {
-            submitCode(code);
-          } else {
-            setStep("initial");
-            setError("Connexion annulée ou refusée.");
-          }
-        },
-        {
-          config_id: configId,
-          response_type: "code",
-          override_default_response_type: true,
-          extras: {
-            setup: {},
-            version: "v3",
-            featureType: "whatsapp_business_app_onboarding",
-            sessionInfoVersion: "3",
-          },
-        }
-      );
-    } catch (err) {
+    const result = await startIntelliWhatsAppSignupAction();
+    if (result.error || !result.url) {
+      setError(result.error || "Impossible de démarrer la connexion.");
       setStep("initial");
-      setError(err instanceof Error ? err.message : "Échec du lancement de la connexion.");
+      return;
     }
-  }, [configId, initSDK, submitCode]);
+
+    const popup = window.open(
+      result.url,
+      "intelli-whatsapp-signup",
+      "width=600,height=720,menubar=no,toolbar=no"
+    );
+    if (!popup) {
+      setError("La popup a été bloquée. Autorisez les popups et réessayez.");
+      setStep("initial");
+      return;
+    }
+    popupRef.current = popup;
+
+    // If the user closes the popup without finishing, reset to allow a retry.
+    const timer = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(timer);
+        if (!handledRef.current) {
+          setStep((s) => (s === "popup" ? "initial" : s));
+        }
+      }
+    }, 800);
+  }, []);
 
   if (step === "done") {
     return (
@@ -177,22 +108,22 @@ export function IntelliWhatsAppSignup({
       <Button
         size="sm"
         onClick={launch}
-        disabled={step === "popup" || step === "connecting"}
+        disabled={step === "popup" || step === "finalizing"}
         className="bg-[#25D366] hover:bg-[#1da851] text-white"
       >
-        {step === "connecting" ? (
+        {step === "finalizing" ? (
           <Loader2 className="h-3 w-3 animate-spin mr-1" />
         ) : (
           <MessageCircle className="h-3 w-3 mr-1" />
         )}
-        {step === "connecting"
-          ? "Connexion…"
+        {step === "finalizing"
+          ? "Finalisation…"
           : step === "popup"
-            ? "Ouverture de Meta…"
+            ? "Connexion en cours…"
             : "Connecter avec WhatsApp"}
       </Button>
       <p className="text-[11px] text-muted-foreground">
-        Onboarding géré par Intelli — aucun token Meta à configurer.
+        Onboarding hébergé par Intelli — aucun token ni identifiant Meta à configurer.
       </p>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>

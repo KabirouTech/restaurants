@@ -4,24 +4,43 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 import {
-  intelliSignupClient,
+  createEmbeddedSignupSession,
+  getClient,
   clientRefForOrg,
   IntelliAPIError,
 } from "@/lib/intelli/partner-client";
 
 /**
- * Onboard the organization's WhatsApp number through Intelli's embedded signup.
- *
- * The Meta auth code captured client-side by the embedded signup popup is
- * exchanged by Intelli (which holds the Meta app secret), provisioning the WABA
- * under Intelli. We persist a `channels` row whose credentials route future
- * sends through the Partner API (no Meta token ever touches RestaurantsOS).
+ * Start the hosted WhatsApp embedded signup. Returns an Intelli-hosted URL the
+ * client opens in a popup. Only our `ik_` key leaves the server — Intelli's Meta
+ * credentials stay on Intelli's domain.
  */
-export async function connectWhatsAppViaIntelliAction(authCode: string) {
-  if (!authCode?.trim()) {
-    return { error: "Code d'autorisation Meta manquant." };
-  }
+export async function startIntelliWhatsAppSignupAction() {
+  const orgContext = await getRequiredOrganizationContext("Aucune organisation");
+  if (!orgContext.ok) return { error: orgContext.error };
+  const { organizationId } = orgContext.context;
 
+  try {
+    const session = await createEmbeddedSignupSession({
+      clientRef: clientRefForOrg(organizationId),
+    });
+    return { url: session.url };
+  } catch (err) {
+    if (err instanceof IntelliAPIError) {
+      return { error: `Impossible de démarrer la connexion: ${err.message}` };
+    }
+    return {
+      error: err instanceof Error ? err.message : "Échec du démarrage.",
+    };
+  }
+}
+
+/**
+ * Finalize the connection after the hosted popup signals success. Trust comes
+ * only from our own server-to-server fetch with the `ik_` key — the client_ref
+ * is derived from the org server-side, never taken from the browser message.
+ */
+export async function finalizeIntelliWhatsAppAction() {
   const orgContext = await getRequiredOrganizationContext("Aucune organisation");
   if (!orgContext.ok) return { error: orgContext.error };
   const { organizationId } = orgContext.context;
@@ -30,18 +49,16 @@ export async function connectWhatsAppViaIntelliAction(authCode: string) {
 
   let client;
   try {
-    client = await intelliSignupClient({ authCode: authCode.trim(), clientRef });
+    client = await getClient(clientRef);
   } catch (err) {
-    if (err instanceof IntelliAPIError) {
-      // 409 means this org already onboarded a client on Intelli's side. Treat
-      // it as recoverable: the channel row below will be (re)activated, but we
-      // can't re-fetch the client details from a conflict, so surface a hint.
-      return { error: `Échec de la connexion via Intelli: ${err.message}` };
-    }
     return {
-      error:
-        err instanceof Error ? err.message : "Échec de la connexion via Intelli.",
+      error: err instanceof Error ? err.message : "Échec de la vérification.",
     };
+  }
+
+  if (!client) {
+    // The hosted flow hasn't provisioned the client yet (e.g. closed early).
+    return { error: "La connexion n'a pas été finalisée. Réessayez." };
   }
 
   const supabaseAdmin = createAdminClient(

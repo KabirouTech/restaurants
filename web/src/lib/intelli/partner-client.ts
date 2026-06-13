@@ -95,26 +95,36 @@ export interface IntelliClient {
 }
 
 /**
- * Complete Meta embedded signup for an end-client. Exchanges the Meta auth code
- * and provisions the WhatsApp number under Intelli. Scope: clients:write.
+ * Create a hosted embedded-signup session. Returns the Intelli-hosted URL to
+ * open in a popup. Intelli's Meta App ID / Config ID never reach us — the popup
+ * runs entirely on Intelli's domain. Scope: clients:write.
  */
-export async function intelliSignupClient(params: {
-  authCode: string;
+export async function createEmbeddedSignupSession(params: {
   clientRef: string;
-  redirectUri?: string;
-}): Promise<IntelliClient> {
-  const data = await intelliFetch<{ success: boolean; client: IntelliClient }>(
-    "/clients/signup",
-    {
-      method: "POST",
-      body: {
-        auth_code: params.authCode,
-        client_ref: params.clientRef,
-        ...(params.redirectUri ? { redirect_uri: params.redirectUri } : {}),
-      },
-    }
-  );
-  return data.client;
+}): Promise<{ session_id: string; url: string; expires_in: number }> {
+  return intelliFetch("/embedded-signup/sessions", {
+    method: "POST",
+    body: { client_ref: params.clientRef },
+  });
+}
+
+/**
+ * Fetch an onboarded client by ref (server-to-server, ik_ key). Used to confirm
+ * the result of a hosted signup without trusting the browser. Scope: clients:read.
+ * Returns null if the client doesn't exist yet.
+ */
+export async function getClient(
+  clientRef: string
+): Promise<IntelliClient | null> {
+  try {
+    return await intelliFetch<IntelliClient>(
+      `/clients/${encodeURIComponent(clientRef)}`,
+      { method: "GET" }
+    );
+  } catch (err) {
+    if (err instanceof IntelliAPIError && err.status === 404) return null;
+    throw err;
+  }
 }
 
 /**
