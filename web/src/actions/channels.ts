@@ -143,9 +143,18 @@ export async function fetchChannelsAction() {
 
   const { data: channels } = await supabaseAdmin
     .from("channels")
-    .select("id, platform, name, provider_id, is_active, created_at")
+    .select("id, platform, name, provider_id, is_active, created_at, credentials")
     .eq("organization_id", organizationId)
     .neq("platform", "website");
 
-  return { channels: channels || [] };
+  // Never ship raw credentials (tokens/passwords) to the client — expose only a
+  // safe `via` flag so the UI can distinguish Intelli-managed channels.
+  const safe = (channels || []).map((c) => {
+    const { credentials, ...rest } = c as typeof c & {
+      credentials?: { via?: string } | null;
+    };
+    return { ...rest, via: credentials?.via === "intelli" ? "intelli" : "manual" };
+  });
+
+  return { channels: safe };
 }
