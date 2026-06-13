@@ -759,5 +759,16 @@
       "badge": "Fonctionnalité Premium",
       "cta": "Passer au Premium"
     }
+  },
+  "errors": {
+    "notAuthenticated": "Non authentifié",
+    "orgNotFound": "Organisation introuvable",
+    "orgUnauthorized": "Organisation non autorisée",
+    "slugTooShort": "Le slug doit contenir au moins 3 caractères valides (a-z, 0-9, -).",
+    "slugTaken": "Cette adresse est déjà prise. Veuillez en choisir une autre.",
+    "unexpectedError": "Erreur inattendue",
+    "siteUpdated": "Site mis à jour !",
+    "designApplied": "Design activé pour votre boutique.",
+    "premiumPreviewNote": "Aperçu premium actif en prévisualisation. Le design publié reste celui du plan Free."
   }
 }

@@ -198,18 +198,27 @@ export async function inviteMemberAction(
 
   const supabase = await createClient();
 
-  // 1. Check plan limit
+  // 1. Check plan — invitations require Premium or higher
   const { data: limitData, error: limitErr } = await supabase.rpc("check_plan_limit", {
     p_org_id: organizationId,
     p_resource: "members",
   });
 
-  if (!limitErr && limitData && !limitData.allowed) {
-    return {
-      success: false,
-      error: `Limite de membres atteinte (${limitData.current}/${limitData.limit}). Passez au plan supérieur.`,
-      upgradeRequired: true,
-    };
+  if (!limitErr && limitData) {
+    if (limitData.plan === "free") {
+      return {
+        success: false,
+        error: "L'invitation de membres est réservée aux abonnements Premium et supérieurs.",
+        upgradeRequired: true,
+      };
+    }
+    if (!limitData.allowed) {
+      return {
+        success: false,
+        error: `Limite de membres atteinte (${limitData.current}/${limitData.limit}). Passez au plan supérieur.`,
+        upgradeRequired: true,
+      };
+    }
   }
 
   // 2. Get org name for the email

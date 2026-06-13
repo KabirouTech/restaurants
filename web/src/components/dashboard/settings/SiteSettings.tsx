@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -309,6 +310,7 @@ function Block({ title, icon: Icon, children }: { title: string; icon: any; chil
 export function SiteSettings({ org, settings, products, currentPlan }: SiteSettingsProps) {
     const [loading, startTransition] = useTransition();
     const router = useRouter();
+    const te = useTranslations("errors");
     const [upgradeOpen, setUpgradeOpen] = useState(false);
     const [storefrontTemplate, setStorefrontTemplate] = useState<StorefrontTemplate>(() =>
         resolveStorefrontTemplate(settings?.storefront_template, currentPlan)
@@ -383,7 +385,7 @@ export function SiteSettings({ org, settings, products, currentPlan }: SiteSetti
             return;
         }
         setStorefrontTemplate(templateId);
-        toast.success("Design activé pour votre boutique.");
+        toast.success(te("designApplied"));
     };
 
     // ── Preview derivation ──
@@ -445,9 +447,9 @@ export function SiteSettings({ org, settings, products, currentPlan }: SiteSetti
             const result = await updateSiteSettingsAction(payload);
             if (result?.error) toast.error(result.error);
             else {
-                toast.success("Site mis à jour !");
+                toast.success(te("siteUpdated"));
                 if (!canUsePremiumTemplate && isPreviewingUnlockedTemplate && isPreviewingPremiumTemplate) {
-                    toast("Aperçu premium actif en prévisualisation. Le design publié reste celui du plan Free.");
+                    toast(te("premiumPreviewNote"));
                 }
                 router.refresh();
             }

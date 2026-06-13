@@ -759,5 +759,16 @@
       "badge": "Premium Feature",
       "cta": "Upgrade to Premium"
     }
+  },
+  "errors": {
+    "notAuthenticated": "Not authenticated",
+    "orgNotFound": "Organization not found",
+    "orgUnauthorized": "Unauthorized organization",
+    "slugTooShort": "The slug must contain at least 3 valid characters (a-z, 0-9, -).",
+    "slugTaken": "This address is already taken. Please choose another one.",
+    "unexpectedError": "Unexpected error",
+    "siteUpdated": "Site updated!",
+    "designApplied": "Design applied to your store.",
+    "premiumPreviewNote": "Premium preview active. The published design remains the Free plan one."
   }
 }

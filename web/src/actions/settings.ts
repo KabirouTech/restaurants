@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
 
 export async function updateMenuInfoAction(input: {
@@ -13,12 +14,13 @@ export async function updateMenuInfoAction(input: {
     labels: string[]
     allergensPresent: string[]
 }) {
-    const orgContext = await getRequiredOrganizationContext();
+    const t = await getTranslations("errors");
+    const orgContext = await getRequiredOrganizationContext(t("orgNotFound"), t("notAuthenticated"));
     if (!orgContext.ok) return { error: orgContext.error };
     const { organizationId } = orgContext.context;
 
     if (input.orgId !== organizationId) {
-        return { error: "Organisation non autorisée" };
+        return { error: t("orgUnauthorized") };
     }
 
     const supabase = await createClient();
@@ -53,19 +55,20 @@ export async function updateMenuInfoAction(input: {
             .update({ settings: newSettings })
             .eq("id", input.orgId);
 
-        if (error) return { error: "Erreur: " + error.message };
+        if (error) return { error: error.message };
 
         revalidatePath("/dashboard/settings");
         if (existingOrg?.slug) revalidatePath(`/${existingOrg.slug}`);
 
         return { success: true };
     } catch (e: any) {
-        return { error: e.message || "Erreur inattendue" };
+        return { error: e.message || t("unexpectedError") };
     }
 }
 
 export async function updateSettingsAction(formData: FormData) {
-    const orgContext = await getRequiredOrganizationContext();
+    const t = await getTranslations("errors");
+    const orgContext = await getRequiredOrganizationContext(t("orgNotFound"), t("notAuthenticated"));
     if (!orgContext.ok) return { error: orgContext.error };
     const { organizationId } = orgContext.context;
 
@@ -74,7 +77,7 @@ export async function updateSettingsAction(formData: FormData) {
     try {
         const orgId = formData.get("orgId") as string;
         if (orgId !== organizationId) {
-            return { error: "Organisation non autorisée" };
+            return { error: t("orgUnauthorized") };
         }
         const name = formData.get("name") as string;
         const rawSlug = formData.get("slug") as string;
@@ -95,7 +98,7 @@ export async function updateSettingsAction(formData: FormData) {
         // Slug validation
         const slug = rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
         if (!slug || slug.length < 3) {
-            return { error: "Le slug doit contenir au moins 3 caractères valides (a-z, 0-9, -)." };
+            return { error: t("slugTooShort") };
         }
 
         // Fetch existing org
@@ -120,7 +123,7 @@ export async function updateSettingsAction(formData: FormData) {
                 .neq("id", orgId)
                 .maybeSingle();
             if (slugCheck) {
-                return { error: `L'adresse "/${slug}" est déjà prise. Veuillez en choisir une autre.` };
+                return { error: t("slugTaken") };
             }
         }
 
@@ -145,7 +148,7 @@ export async function updateSettingsAction(formData: FormData) {
             .update({ name, slug, settings: newSettings })
             .eq("id", orgId);
 
-        if (error) return { error: "Erreur: " + error.message };
+        if (error) return { error: error.message };
 
         revalidatePath("/dashboard/settings");
         revalidatePath(`/${existingOrg?.slug || slug}`);
@@ -155,6 +158,6 @@ export async function updateSettingsAction(formData: FormData) {
 
     } catch (e: any) {
         console.error("updateSettingsAction:", e);
-        return { error: e.message || "Erreur inattendue" };
+        return { error: e.message || t("unexpectedError") };
     }
 }
