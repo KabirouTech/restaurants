@@ -29,6 +29,7 @@ import {
   testWhatsAppConnectionAction,
   fetchChannelsAction,
 } from "@/actions/channels";
+import { IntelliWhatsAppSignup } from "./IntelliWhatsAppSignup";
 
 interface Channel {
   id: string;
@@ -36,6 +37,7 @@ interface Channel {
   name: string;
   provider_id: string;
   is_active: boolean;
+  via?: string;
 }
 
 export function ChannelSettings({ orgId }: { orgId: string }) {
@@ -49,6 +51,7 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
   const [waSaving, setWaSaving] = useState(false);
   const [waTesting, setWaTesting] = useState(false);
   const [waTestResult, setWaTestResult] = useState<string | null>(null);
+  const [showManualWa, setShowManualWa] = useState(false);
 
   // Email form
   const [emailForm, setEmailForm] = useState({
@@ -227,6 +230,11 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
         <CardContent className="space-y-3">
           {waChannel ? (
             <>
+              {waChannel.via === "intelli" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                  Géré par Intelli
+                </span>
+              )}
               <div className="text-sm text-muted-foreground">
                 Phone Number ID:{" "}
                 <span className="font-mono text-xs">
@@ -234,17 +242,19 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
                 </span>
               </div>
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleTestWhatsApp}
-                  disabled={waTesting}
-                >
-                  {waTesting ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  ) : null}
-                  Tester
-                </Button>
+                {waChannel.via !== "intelli" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleTestWhatsApp}
+                    disabled={waTesting}
+                  >
+                    {waTesting ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : null}
+                    Tester
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="destructive"
@@ -265,61 +275,82 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
                   {waTestResult}
                 </p>
               )}
-              <div className="pt-2 border-t border-border">
-                <Label className="text-xs text-muted-foreground">
-                  URL Webhook (à copier dans Meta Dashboard)
-                </Label>
-                <div className="flex gap-1 mt-1">
-                  <Input
-                    value={webhookUrl}
-                    readOnly
-                    className="text-xs font-mono h-8"
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 px-2"
-                    onClick={copyWebhookUrl}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
+              {waChannel.via !== "intelli" && (
+                <div className="pt-2 border-t border-border">
+                  <Label className="text-xs text-muted-foreground">
+                    URL Webhook (à copier dans Meta Dashboard)
+                  </Label>
+                  <div className="flex gap-1 mt-1">
+                    <Input
+                      value={webhookUrl}
+                      readOnly
+                      className="text-xs font-mono h-8"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2"
+                      onClick={copyWebhookUrl}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  {copied && (
+                    <p className="text-xs text-green-600 mt-1">Copié !</p>
+                  )}
                 </div>
-                {copied && (
-                  <p className="text-xs text-green-600 mt-1">Copié !</p>
-                )}
-              </div>
+              )}
             </>
           ) : (
             <>
-              <div className="space-y-2">
-                <Label className="text-xs">Phone Number ID</Label>
-                <Input
-                  value={waPhoneNumberId}
-                  onChange={(e) => setWaPhoneNumberId(e.target.value)}
-                  placeholder="Ex: 123456789012345"
-                  className="h-8 text-sm"
-                />
+              {/* Primary path: one-click onboarding through Intelli. */}
+              <IntelliWhatsAppSignup onConnected={loadChannels} />
+
+              {/* Fallback: manual Cloud API credentials. */}
+              <div className="pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowManualWa((v) => !v)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showManualWa
+                    ? "Masquer la connexion manuelle"
+                    : "Connecter manuellement (Cloud API)"}
+                </button>
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Access Token (permanent)</Label>
-                <Input
-                  type="password"
-                  value={waAccessToken}
-                  onChange={(e) => setWaAccessToken(e.target.value)}
-                  placeholder="Token d'accès Meta..."
-                  className="h-8 text-sm"
-                />
-              </div>
-              <Button
-                size="sm"
-                onClick={handleConnectWhatsApp}
-                disabled={waSaving || !waPhoneNumberId || !waAccessToken}
-              >
-                {waSaving ? (
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                ) : null}
-                Connecter
-              </Button>
+              {showManualWa && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Phone Number ID</Label>
+                    <Input
+                      value={waPhoneNumberId}
+                      onChange={(e) => setWaPhoneNumberId(e.target.value)}
+                      placeholder="Ex: 123456789012345"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Access Token (permanent)</Label>
+                    <Input
+                      type="password"
+                      value={waAccessToken}
+                      onChange={(e) => setWaAccessToken(e.target.value)}
+                      placeholder="Token d'accès Meta..."
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleConnectWhatsApp}
+                    disabled={waSaving || !waPhoneNumberId || !waAccessToken}
+                  >
+                    {waSaving ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : null}
+                    Connecter
+                  </Button>
+                </>
+              )}
             </>
           )}
         </CardContent>

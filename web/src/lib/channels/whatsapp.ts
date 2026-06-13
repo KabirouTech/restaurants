@@ -114,6 +114,22 @@ export async function sendWhatsAppMessage(
   recipientPhone: string,
   content: string
 ): Promise<{ externalMessageId?: string; error?: string }> {
+  // Channels onboarded through Intelli's embedded signup have no Meta token of
+  // their own — relay the send through the Partner API instead of Graph.
+  if (credentials?.via === "intelli") {
+    const { intelliSendMessage } = await import("@/lib/intelli/partner-client");
+    try {
+      const result = await intelliSendMessage({
+        clientRef: credentials.client_ref,
+        to: recipientPhone,
+        text: content,
+      });
+      return { externalMessageId: result.message_id ?? undefined };
+    } catch (err: any) {
+      return { error: err?.message || "Intelli send error" };
+    }
+  }
+
   const { phone_number_id, access_token } = credentials;
 
   try {
