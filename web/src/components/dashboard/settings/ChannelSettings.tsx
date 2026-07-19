@@ -30,6 +30,7 @@ import {
   fetchChannelsAction,
 } from "@/actions/channels";
 import { IntelliWhatsAppSignup } from "./IntelliWhatsAppSignup";
+import { IntelliInstagramConnect } from "./IntelliInstagramConnect";
 
 interface Channel {
   id: string;
@@ -52,6 +53,7 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
   const [waTesting, setWaTesting] = useState(false);
   const [waTestResult, setWaTestResult] = useState<string | null>(null);
   const [showManualWa, setShowManualWa] = useState(false);
+  const [showManualIg, setShowManualIg] = useState(false);
 
   // Email form
   const [emailForm, setEmailForm] = useState({
@@ -377,7 +379,7 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
             )}
           </div>
           <CardDescription className="text-xs">
-            Messages directs via Meta Graph API (separe de l'auth Clerk)
+            Messages directs Instagram
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -393,6 +395,11 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
           )}
           {igChannel ? (
             <>
+              {igChannel.via === "intelli" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                  Géré par Intelli
+                </span>
+              )}
               <div className="text-sm text-muted-foreground">
                 Compte:{" "}
                 <span className="font-medium">{igChannel.name}</span>
@@ -407,19 +414,35 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
             </>
           ) : (
             <>
-              <p className="text-xs text-muted-foreground">
-                Connectez votre compte Instagram Business via Meta pour recevoir
-                et répondre aux DMs.
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                Note: Clerk gere la connexion utilisateur a la plateforme. Cette liaison configure le canal Meta Business.
-              </p>
-              <Button size="sm" asChild>
-                <a href={`/api/auth/instagram?orgId=${orgId}`}>
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  Connecter avec Meta
-                </a>
-              </Button>
+              {/* Primary path: one-click onboarding through Intelli. */}
+              <IntelliInstagramConnect onConnected={loadChannels} />
+
+              {/* Fallback: direct Meta OAuth with our own app credentials. */}
+              <div className="pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowManualIg((v) => !v)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showManualIg
+                    ? "Masquer la connexion manuelle"
+                    : "Connecter manuellement (Meta)"}
+                </button>
+              </div>
+              {showManualIg && (
+                <>
+                  <p className="text-[11px] text-muted-foreground">
+                    Liaison directe Meta Business (nécessite META_APP_ID /
+                    META_APP_SECRET, séparée de l&apos;auth Clerk).
+                  </p>
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={`/api/auth/instagram?orgId=${orgId}`}>
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Connecter avec Meta
+                    </a>
+                  </Button>
+                </>
+              )}
             </>
           )}
         </CardContent>

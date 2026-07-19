@@ -35,11 +35,19 @@ function apiKey(): string {
 
 export class IntelliAPIError extends Error {
   status: number;
+  /** Machine-readable error code, e.g. "account_already_connected". */
+  code?: string;
   details?: unknown;
-  constructor(message: string, status: number, details?: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    code?: string,
+    details?: unknown
+  ) {
     super(message);
     this.name = "IntelliAPIError";
     this.status = status;
+    this.code = code;
     this.details = details;
   }
 }
@@ -68,19 +76,28 @@ async function intelliFetch<T>(path: string, init: IntelliRequest): Promise<T> {
   }
 
   if (!res.ok) {
-    // Public edge returns { error: { code, message, details } }; Django returns
-    // { error|detail: "..." }. Surface the most specific message available.
+    // Public edge returns { error: { code, message, details } } or the flat
+    // { error: "...", code: "..." }; Django returns { error|detail: "..." }.
+    // Surface the most specific message + code available.
     const envelope = parsed as
-      | { error?: { message?: string; details?: unknown } | string; detail?: string }
+      | {
+          error?: { code?: string; message?: string; details?: unknown } | string;
+          detail?: string;
+          code?: string;
+        }
       | null;
     const message =
       (typeof envelope?.error === "object" && envelope?.error?.message) ||
       (typeof envelope?.error === "string" && envelope.error) ||
       envelope?.detail ||
       `Intelli API error (${res.status})`;
+    const code =
+      (typeof envelope?.error === "object" && envelope?.error?.code) ||
+      envelope?.code ||
+      undefined;
     const details =
       typeof envelope?.error === "object" ? envelope?.error?.details : undefined;
-    throw new IntelliAPIError(message, res.status, details);
+    throw new IntelliAPIError(message, res.status, code, details);
   }
 
   return parsed as T;
@@ -127,8 +144,51 @@ export async function getClient(
   }
 }
 
+export interface IntelliInstagramClient {
+  client_ref: string;
+  channel: "instagram";
+  business_name: string;
+  /** Instagram professional account ID, when Intelli exposes it. */
+  ig_user_id?: string;
+  username?: string;
+}
+
+/**
+ * Create a hosted Instagram connect session. Same model as embedded signup:
+ * single-use URL, valid 10 minutes, opened in a popup on Intelli's domain.
+ * Throws IntelliAPIError with code "account_already_connected" (409) when the
+ * Instagram account is already connected — here or via another provider.
+ */
+export async function createInstagramConnectSession(params: {
+  clientRef: string;
+}): Promise<{ session_id: string; url: string; expires_in: number }> {
+  return intelliFetch("/instagram-connect/sessions", {
+    method: "POST",
+    body: { client_ref: params.clientRef },
+  });
+}
+
+/**
+ * Fetch an Instagram client by ref to confirm a hosted connect server-to-server.
+ * Returns null while the client doesn't exist yet (flow not finished).
+ */
+export async function getInstagramClient(
+  clientRef: string
+): Promise<IntelliInstagramClient | null> {
+  try {
+    return await intelliFetch<IntelliInstagramClient>(
+      `/clients/${encodeURIComponent(clientRef)}`,
+      { method: "GET" }
+    );
+  } catch (err) {
+    if (err instanceof IntelliAPIError && err.status === 404) return null;
+    throw err;
+  }
+}
+
 /**
  * Send a text message through an onboarded client. Scope: messages:send.
+ * Works for both WhatsApp and Instagram clients (Intelli routes by client_ref).
  * Test keys (ik_test_) always dry-run — no real delivery.
  */
 export async function intelliSendMessage(params: {
@@ -171,4 +231,70 @@ export function verifyIntelliSignature(
 /** Stable client_ref for an organization. One WhatsApp client per org. */
 export function clientRefForOrg(organizationId: string): string {
   return `org-${organizationId}`;
+}
+
+/**
+ * Stable client_ref for an org's Instagram client. A client_ref maps to exactly
+ * one channel at Intelli, so Instagram gets its own ref alongside the WhatsApp
+ * `org-<id>` one.
+ */
+export function instagramClientRefForOrg(organizationId: string): string {
+  return `org-${organizationId}-instagram`;
+}
+
+/** Intelli caps Instagram text messages at 1000 characters. */
+export const INSTAGRAM_TEXT_LIMIT = 1000;
+
+export interface IntelliConnectionStatus {
+  ok: boolean;
+  base: string;
+  /** True if INTELLI_PARTNER_API_KEY is present (regardless of validity). */
+  keyConfigured: boolean;
+  /** Masked key prefix for display, e.g. "ik_live_…" — never the full secret. */
+  keyHint: string | null;
+  /** True if INTELLI_WEBHOOK_SECRET is present. */
+  webhookSecretConfigured: boolean;
+  message: string;
+}
+
+/**
+ * Health-check the Intelli Partner connection from the server. We issue a cheap
+ * authenticated GET for a sentinel client_ref: a 404 means auth succeeded and
+ * the edge is reachable (the client simply doesn't exist), while 401/403 means
+ * the ik_ key is wrong and a network error means the edge is unreachable.
+ */
+export async function pingIntelliConnection(): Promise<IntelliConnectionStatus> {
+  const base = apiBase();
+  const rawKey = process.env.INTELLI_PARTNER_API_KEY || "";
+  const keyConfigured = Boolean(rawKey);
+  const keyHint = rawKey ? `${rawKey.slice(0, 8)}…` : null;
+  const webhookSecretConfigured = Boolean(process.env.INTELLI_WEBHOOK_SECRET);
+
+  const base_result = { base, keyConfigured, keyHint, webhookSecretConfigured };
+
+  if (!keyConfigured) {
+    return { ...base_result, ok: false, message: "Clé partenaire (INTELLI_PARTNER_API_KEY) non configurée." };
+  }
+
+  try {
+    // Sentinel ref that should never exist → expect 404 on a healthy edge.
+    await getClient("__healthcheck__");
+    // Unexpectedly found (or 2xx) — connection is clearly working.
+    return { ...base_result, ok: true, message: "Connexion établie." };
+  } catch (err) {
+    if (err instanceof IntelliAPIError) {
+      if (err.status === 404) {
+        return { ...base_result, ok: true, message: "Connexion établie (clé valide)." };
+      }
+      if (err.status === 401 || err.status === 403) {
+        return { ...base_result, ok: false, message: `Clé refusée par Intelli (${err.status}).` };
+      }
+      return { ...base_result, ok: false, message: `Erreur Intelli (${err.status}): ${err.message}` };
+    }
+    return {
+      ...base_result,
+      ok: false,
+      message: `Edge Intelli injoignable: ${err instanceof Error ? err.message : "erreur réseau"}`,
+    };
+  }
 }
