@@ -20,6 +20,7 @@ import {
     CreditCard,
     Crown,
     MessageSquareWarning,
+    Plug,
     LogOut,
     ChevronLeft,
     ArrowLeft,
@@ -44,6 +45,7 @@ const secondaryItems = [
     { name: "Tutoriels",   shortLabel: "Tutoriels", href: "/admin/tutorials",      icon: Play },
     { name: "Annonces",    shortLabel: "Annonces",  href: "/admin/announcements",  icon: Megaphone },
     { name: "Plaintes",    shortLabel: "Plaintes",  href: "/admin/complaints",     icon: MessageSquareWarning },
+    { name: "Intelli",     shortLabel: "Intelli",   href: "/admin/intelli",        icon: Plug },
 ];
 
 const allNavItems = [...primaryTabs, ...secondaryItems];
