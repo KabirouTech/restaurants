@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
+import { deriveWhatsAppAccess } from "@/lib/whatsapp/access";
+import { WhatsAppTrialBanner } from "@/components/dashboard/inbox/WhatsAppTrialBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -24,17 +26,17 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
 
     const orgId = profile.organization_id;
 
-    // ── Plan gate ────────────────────────────────────────────────
+    // ── Accès messagerie: plan payant, essai WhatsApp en cours, ou blocage ──
     const { data: org } = await supabase
         .from("organizations")
-        .select("subscription_plan")
+        .select("subscription_plan, settings")
         .eq("id", orgId)
         .single();
 
-    const plan = org?.subscription_plan || "free";
+    const access = deriveWhatsAppAccess(org);
 
-    if (plan === "free") {
-        return <PlanGate feature="unified_inbox" />;
+    if (!access.allowed) {
+        return <PlanGate feature="unified_inbox" variant="trial_expired" />;
     }
 
     // Use admin client to bypass RLS (consistent with all dashboard pages)
@@ -82,6 +84,8 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
     const selectedConversation = formattedConversations.find((c: any) => c.id === selectedConversationId);
 
     return (
+        <>
+        {access.state === "trial" && <WhatsAppTrialBanner daysLeft={access.daysLeft} />}
         <div className="flex h-[calc(100dvh-56px)] md:h-[calc(100vh-theme(spacing.2))] md:max-h-[800px] border-0 md:border md:border-border md:rounded-xl bg-background overflow-hidden relative md:shadow-sm">
 
             {/* Sidebar List */}
@@ -121,5 +125,6 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
             </div>
 
         </div>
+        </>
     );
 }
