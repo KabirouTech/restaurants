@@ -93,6 +93,37 @@ export async function sendInstagramMessage(
   recipientId: string,
   content: string
 ): Promise<{ externalMessageId?: string; error?: string }> {
+  // Channels onboarded through Intelli's hosted connect have no Meta token of
+  // their own — relay the send through the Partner API instead of Graph.
+  // recipientId must be the IGSID from an inbound webhook (sender.id); Meta
+  // only accepts replies within 24h of the customer's last message.
+  if (credentials?.via === "intelli") {
+    const { intelliSendMessage, INSTAGRAM_TEXT_LIMIT, IntelliAPIError } =
+      await import("@/lib/intelli/partner-client");
+
+    if (content.length > INSTAGRAM_TEXT_LIMIT) {
+      return {
+        error: `Message trop long pour Instagram (${content.length}/${INSTAGRAM_TEXT_LIMIT} caractères).`,
+      };
+    }
+
+    try {
+      const result = await intelliSendMessage({
+        clientRef: credentials.client_ref,
+        to: recipientId,
+        text: content,
+      });
+      return { externalMessageId: result.message_id ?? undefined };
+    } catch (err) {
+      if (err instanceof IntelliAPIError && err.status === 429) {
+        return { error: "Limite d'envoi atteinte. Réessayez dans un instant." };
+      }
+      return {
+        error: err instanceof Error ? err.message : "Intelli send error",
+      };
+    }
+  }
+
   const { page_id, access_token } = credentials;
 
   try {

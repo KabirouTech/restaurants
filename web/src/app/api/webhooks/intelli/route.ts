@@ -6,9 +6,10 @@ import {
   type IntelliWebhookPayload,
 } from "@/lib/intelli/webhook";
 
-// POST: receive normalized, HMAC-signed events from Intelli (WhatsApp messages
-// and statuses forwarded by the Partner platform). Configure this URL as the
-// partner webhook_url in the Intelli portal Settings.
+// POST: receive normalized, HMAC-signed events from Intelli (WhatsApp and
+// Instagram messages forwarded by the Partner platform, dispatched on the
+// payload's `channel` field). Configure this URL as the partner webhook_url in
+// the Intelli portal (Webhooks section).
 export async function POST(request: NextRequest) {
   // Read the raw body for signature verification — must hash exactly what was
   // sent, before any JSON re-serialization.
