@@ -1,10 +1,15 @@
 'use server'
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { getSuperAdminUserIdOrNull } from '@/lib/auth/super-admin'
+import { getCurrentProfile } from '@/lib/auth/current-profile'
 
-async function getAdminUserId() {
-  return getSuperAdminUserIdOrNull()
+// Profile UUID of the super admin (NOT the Clerk id: p_triggered_by and
+// processed_by are UUID columns referencing profiles — a Clerk `user_…` id
+// fails the uuid cast).
+async function getAdminProfileId(): Promise<string | null> {
+  const { userId, profile } = await getCurrentProfile()
+  if (!userId || !profile?.is_super_admin) return null
+  return profile.id
 }
 
 export async function approveUpgradeRequest(
@@ -15,7 +20,7 @@ export async function approveUpgradeRequest(
   paymentReference: string | null,
   adminNotes: string | null,
 ): Promise<{ success: boolean; error?: string }> {
-  const adminUserId = await getAdminUserId()
+  const adminUserId = await getAdminProfileId()
   if (!adminUserId) return { success: false, error: 'Non autorisé' }
 
   const admin = createServiceClient(
@@ -65,7 +70,7 @@ export async function rejectUpgradeRequest(
   requestId: string,
   adminNotes: string | null,
 ): Promise<{ success: boolean; error?: string }> {
-  const adminUserId = await getAdminUserId()
+  const adminUserId = await getAdminProfileId()
   if (!adminUserId) return { success: false, error: 'Non autorisé' }
 
   const admin = createServiceClient(
