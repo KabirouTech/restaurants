@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { Check, CheckCircle2, Lock, Loader2, MessageSquare, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { createUpgradeRequest } from "@/lib/plans/upgrade-pipeline";
-import { useOrganization } from "@/hooks/useOrganization";
+import { requestUpgradeAction } from "@/actions/upgrade-requests";
 import { toast } from "sonner";
 
 // ─── Feature metadata ────────────────────────────────────────────────────────
@@ -92,11 +90,14 @@ const FEATURE_META: Record<GatedFeature, {
 
 interface PlanGateProps {
     feature: GatedFeature;
+    /** "trial_expired" reframes the gate as the end of a free trial. */
+    variant?: "default" | "trial_expired";
 }
 
-export function PlanGate({ feature }: PlanGateProps) {
+export function PlanGate({ feature, variant = "default" }: PlanGateProps) {
     const [showUpgrade, setShowUpgrade] = useState(false);
     const meta = FEATURE_META[feature];
+    const trialExpired = variant === "trial_expired";
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] px-6 py-16 relative overflow-hidden animate-in fade-in duration-500">
@@ -120,12 +121,18 @@ export function PlanGate({ feature }: PlanGateProps) {
             {/* Content */}
             <div className="text-center max-w-md space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wide border border-amber-200 dark:border-amber-800">
-                    <Sparkles className="h-3 w-3" />
-                    Fonctionnalité {meta.plan === "premium" ? "Premium" : "Enterprise"}
+                    {trialExpired ? <Lock className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
+                    {trialExpired
+                        ? "Essai gratuit terminé"
+                        : `Fonctionnalité ${meta.plan === "premium" ? "Premium" : "Enterprise"}`}
                 </div>
 
                 <h2 className="text-3xl font-bold font-serif text-foreground">{meta.title}</h2>
-                <p className="text-muted-foreground text-base leading-relaxed">{meta.description}</p>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                    {trialExpired
+                        ? "Votre essai WhatsApp gratuit de 7 jours est terminé. Passez au Premium pour continuer à recevoir et répondre à vos messages."
+                        : meta.description}
+                </p>
 
                 <ul className="text-left space-y-2 mt-6 bg-card border border-border rounded-xl p-4">
                     {meta.highlights.map(h => (
@@ -166,23 +173,21 @@ export function PlanGate({ feature }: PlanGateProps) {
 
 // ─── UpgradeDialog ────────────────────────────────────────────────────────────
 
-function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () => void; feature: GatedFeature }) {
-    const { userId } = useAuth();
-    const { organization } = useOrganization();
+export function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () => void; feature: GatedFeature }) {
     const meta = FEATURE_META[feature];
     const [step, setStep] = useState<"form" | "done">("form");
     const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // Server action: l'org et le profil sont résolus côté serveur (Clerk),
+    // aucun appel Supabase RLS depuis le navigateur.
     async function handleSubmit() {
-        if (!organization?.id || !userId) return;
         setLoading(true);
         try {
-            const result = await createUpgradeRequest({
-                orgId: organization.id,
+            const result = await requestUpgradeAction({
                 targetPlan: meta.plan,
                 notes: notes || undefined,
-            }, userId);
+            });
             if (result.success) {
                 setStep("done");
             } else {
