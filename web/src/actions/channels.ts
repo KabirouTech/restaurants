@@ -3,6 +3,7 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
+import { startWhatsAppTrialIfNeeded } from "@/lib/whatsapp/access";
 
 export async function connectChannelAction(
   platform: string,
@@ -36,6 +37,9 @@ export async function connectChannelAction(
       .eq("organization_id", organizationId);
 
     if (error) return { error: error.message };
+    if (platform === "whatsapp") {
+      await startWhatsAppTrialIfNeeded(supabaseAdmin, organizationId);
+    }
     revalidatePath("/dashboard/settings");
     return { channelId: existing.id };
   }
@@ -54,6 +58,9 @@ export async function connectChannelAction(
     .single();
 
   if (error) return { error: error.message };
+  if (platform === "whatsapp") {
+    await startWhatsAppTrialIfNeeded(supabaseAdmin, organizationId);
+  }
   revalidatePath("/dashboard/settings");
   return { channelId: channel.id };
 }

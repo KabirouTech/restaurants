@@ -9,6 +9,7 @@ import {
   clientRefForOrg,
   IntelliAPIError,
 } from "@/lib/intelli/partner-client";
+import { startWhatsAppTrialIfNeeded } from "@/lib/whatsapp/access";
 
 /**
  * Start the hosted WhatsApp embedded signup. Returns an Intelli-hosted URL the
@@ -97,6 +98,7 @@ export async function finalizeIntelliWhatsAppAction() {
       .eq("organization_id", organizationId);
 
     if (error) return { error: error.message };
+    await startWhatsAppTrialIfNeeded(supabaseAdmin, organizationId);
     revalidatePath("/dashboard/settings");
     return { channelId: existing.id, client };
   }
@@ -115,6 +117,7 @@ export async function finalizeIntelliWhatsAppAction() {
     .single();
 
   if (error) return { error: error.message };
+  await startWhatsAppTrialIfNeeded(supabaseAdmin, organizationId);
   revalidatePath("/dashboard/settings");
   return { channelId: channel.id, client };
 }

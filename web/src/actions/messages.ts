@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { sendExternalMessage } from "@/lib/channels/index";
 import { getRequiredOrganizationContext } from "@/lib/auth/organization-context";
+import { getWhatsAppAccess } from "@/lib/whatsapp/access";
 
 export async function fetchMessagesAction(conversationId: string) {
     const orgContext = await getRequiredOrganizationContext("Aucune organisation");
@@ -52,6 +53,12 @@ export async function sendMessageAction(conversationId: string, content: string)
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         { auth: { persistSession: false } }
     );
+
+    // Block sending once the WhatsApp free trial has expired (free orgs only).
+    const access = await getWhatsAppAccess(supabaseAdmin, organizationId);
+    if (!access.allowed) {
+        return { error: "Votre essai WhatsApp gratuit est terminé. Passez au Premium pour envoyer des messages." };
+    }
 
     // Fetch conversation with channel info for routing
     const { data: conv } = await supabaseAdmin

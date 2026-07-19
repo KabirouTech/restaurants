@@ -2,23 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { toggleOrgActiveAction, changeOrgPlanAction, giftPremiumAction, revokePremiumGiftAction } from "@/actions/admin/organizations";
+import { toggleOrgActiveAction, changeOrgPlanAction, revokePremiumGiftAction } from "@/actions/admin/organizations";
+import { GiftPremiumDialog } from "@/components/admin/GiftPremiumDialog";
 import { toast } from "sonner";
 import { Loader2, Gift, X } from "lucide-react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 
 interface OrgActionsProps {
     orgId: string;
@@ -27,18 +14,10 @@ interface OrgActionsProps {
     settings?: Record<string, any>;
 }
 
-const GIFT_DURATIONS = [
-    { value: "3", label: "3 jours" },
-    { value: "7", label: "7 jours" },
-    { value: "14", label: "14 jours" },
-    { value: "30", label: "30 jours" },
-];
-
 export function OrgActions({ orgId, isActive, currentPlan, settings }: OrgActionsProps) {
     const [isPending, startTransition] = useTransition();
     const [plan, setPlan] = useState(currentPlan);
     const [giftOpen, setGiftOpen] = useState(false);
-    const [giftDays, setGiftDays] = useState("7");
 
     const isGifted = settings?.premium_gift === true;
     const giftExpiresAt = settings?.premium_gift_expires_at;
@@ -64,19 +43,6 @@ export function OrgActions({ orgId, isActive, currentPlan, settings }: OrgAction
                 setPlan(currentPlan);
             } else {
                 toast.success(`Plan changé vers ${newPlan}`);
-            }
-        });
-    };
-
-    const handleGiftPremium = () => {
-        startTransition(async () => {
-            const result = await giftPremiumAction(orgId, parseInt(giftDays));
-            if (result.error) {
-                toast.error(result.error);
-            } else {
-                toast.success(`Premium offert pour ${giftDays} jours`);
-                setPlan("premium");
-                setGiftOpen(false);
             }
         });
     };
@@ -128,7 +94,7 @@ export function OrgActions({ orgId, isActive, currentPlan, settings }: OrgAction
                     className="text-amber-600 border-amber-200 hover:bg-amber-50"
                 >
                     <Gift className="h-3.5 w-3.5 mr-1.5" />
-                    Offrir Premium
+                    {isGifted && !isGiftExpired ? "Modifier le cadeau" : "Offrir Premium"}
                 </Button>
             </div>
 
@@ -149,7 +115,7 @@ export function OrgActions({ orgId, isActive, currentPlan, settings }: OrgAction
                                 {new Date(giftExpiresAt).toLocaleDateString("fr-FR", {
                                     day: "numeric", month: "long", year: "numeric",
                                 })}
-                                {" "}({settings?.premium_gift_days}j)
+                                {settings?.premium_gift_days ? <> ({settings.premium_gift_days}j)</> : null}
                             </span>
                         )}
                     </div>
@@ -166,51 +132,12 @@ export function OrgActions({ orgId, isActive, currentPlan, settings }: OrgAction
                 </div>
             )}
 
-            {/* Gift Premium Dialog */}
-            <Dialog open={giftOpen} onOpenChange={setGiftOpen}>
-                <DialogContent className="max-w-sm">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Gift className="h-5 w-5 text-amber-500" />
-                            Offrir le Premium
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-2">
-                        <div className="space-y-2">
-                            <Label>Durée du cadeau</Label>
-                            <Select value={giftDays} onValueChange={setGiftDays}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {GIFT_DURATIONS.map((d) => (
-                                        <SelectItem key={d.value} value={d.value}>
-                                            {d.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            L'organisation passera automatiquement en Premium pendant la durée choisie.
-                            Vous pourrez révoquer le cadeau à tout moment.
-                        </p>
-                        <div className="flex gap-2">
-                            <Button variant="outline" className="flex-1" onClick={() => setGiftOpen(false)}>
-                                Annuler
-                            </Button>
-                            <Button
-                                className="flex-1 bg-amber-500 hover:bg-amber-600"
-                                onClick={handleGiftPremium}
-                                disabled={isPending}
-                            >
-                                {isPending && <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />}
-                                Offrir
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <GiftPremiumDialog
+                orgId={orgId}
+                open={giftOpen}
+                onOpenChange={setGiftOpen}
+                onGifted={() => setPlan("premium")}
+            />
         </div>
     );
 }
