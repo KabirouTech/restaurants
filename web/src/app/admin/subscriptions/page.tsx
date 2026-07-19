@@ -1,9 +1,10 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Crown, Users, Zap, Building2, CalendarDays, TrendingUp } from "lucide-react";
+import { Crown, Users, Zap, Building2, CalendarDays, TrendingUp, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
+import { GiftSubscriptionButton } from "@/components/admin/GiftSubscriptionButton";
 
 const PLAN_META: Record<string, { label: string; color: string; bg: string }> = {
     free:       { label: "Gratuit",    color: "text-slate-700",  bg: "bg-slate-100" },
@@ -27,7 +28,7 @@ export default async function AdminSubscriptionsPage() {
         .from("subscriptions")
         .select(`
             *,
-            organizations ( id, name, slug, is_active )
+            organizations ( id, name, slug, is_active, settings )
         `)
         .order("created_at", { ascending: false });
 
@@ -77,6 +78,7 @@ export default async function AdminSubscriptionsPage() {
                         ) : all.map((sub) => {
                             const org = sub.organizations as any;
                             const meta = PLAN_META[sub.plan_key] ?? PLAN_META.free;
+                            const gifted = org?.settings?.premium_gift === true;
                             const statusColor = sub.status === "active"
                                 ? "bg-green-100 text-green-700"
                                 : sub.status === "past_due"
@@ -95,6 +97,12 @@ export default async function AdminSubscriptionsPage() {
                                                 {sub.plan_key === "premium" && <Crown className="h-2.5 w-2.5" />}
                                                 {meta.label}
                                             </span>
+                                            {gifted && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+                                                    <Gift className="h-2.5 w-2.5" />
+                                                    Offert
+                                                </span>
+                                            )}
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColor}`}>
                                                 {sub.status}
                                             </span>
@@ -119,14 +127,16 @@ export default async function AdminSubscriptionsPage() {
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cycle</th>
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Période en cours</th>
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Inscrit le</th>
+                                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {all.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-12 text-muted-foreground text-sm">Aucun abonnement</td></tr>
+                                    <tr><td colSpan={7} className="text-center py-12 text-muted-foreground text-sm">Aucun abonnement</td></tr>
                                 ) : all.map((sub) => {
                                     const org = sub.organizations as any;
                                     const meta = PLAN_META[sub.plan_key] ?? PLAN_META.free;
+                                    const gifted = org?.settings?.premium_gift === true;
                                     const statusColor = sub.status === "active"
                                         ? "bg-green-100 text-green-700"
                                         : sub.status === "past_due"
@@ -147,10 +157,18 @@ export default async function AdminSubscriptionsPage() {
                                                 </Link>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${meta.bg} ${meta.color}`}>
-                                                    {sub.plan_key === "premium" && <Crown className="h-3 w-3" />}
-                                                    {meta.label}
-                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${meta.bg} ${meta.color}`}>
+                                                        {sub.plan_key === "premium" && <Crown className="h-3 w-3" />}
+                                                        {meta.label}
+                                                    </span>
+                                                    {gifted && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                                                            <Gift className="h-3 w-3" />
+                                                            Offert
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
@@ -173,6 +191,15 @@ export default async function AdminSubscriptionsPage() {
                                                 {sub.created_at
                                                     ? new Date(sub.created_at).toLocaleDateString("fr-FR")
                                                     : "—"}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                {org?.id && (
+                                                    <GiftSubscriptionButton
+                                                        orgId={org.id}
+                                                        orgName={org.name}
+                                                        gifted={gifted}
+                                                    />
+                                                )}
                                             </td>
                                         </tr>
                                     );
