@@ -17,7 +17,7 @@ export default async function BoutiquePage() {
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
     let org = profile.organizations as Record<string, any> | null | undefined;
-    if (!org) {
+    if (!org?.id) {
         const { data: orgData } = await supabase
             .from("organizations")
             .select("*")

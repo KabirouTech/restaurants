@@ -27,6 +27,7 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
     const [editBanner, setEditBanner] = useState<Banner | undefined>();
     const [isPending, startTransition] = useTransition();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
     const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -60,7 +61,10 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
     };
 
     const handleDelete = (id: string) => {
-        if (!confirm("Supprimer cette bannière ?")) return;
+        setConfirmDeleteId(id);
+    };
+
+    const performDelete = (id: string) => {
         setDeletingId(id);
         startTransition(async () => {
             const result = await deleteBannerAction(id);
@@ -242,6 +246,16 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 banner={editBanner}
+            />
+
+            <ConfirmDialog
+                open={confirmDeleteId !== null}
+                onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+                title="Supprimer cette bannière ?"
+                description="Cette action est irréversible."
+                confirmLabel="Supprimer"
+                variant="destructive"
+                onConfirm={() => { if (confirmDeleteId) performDelete(confirmDeleteId); setConfirmDeleteId(null); }}
             />
 
             <ConfirmDialog

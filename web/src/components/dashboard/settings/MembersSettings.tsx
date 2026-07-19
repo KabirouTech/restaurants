@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Users, UserPlus, Mail, MoreHorizontal, Shield, Loader2, RefreshCw, Clock } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Label } from '@/components/ui/label'
@@ -115,7 +116,7 @@ export function MembersSettings({ orgId, currentUserProfileId, currentPlan }: Me
     setActionLoading(id)
     const res = await action()
     setActionLoading(null)
-    if (!res.success) alert(res.error || 'Erreur')
+    if (!res.success) toast.error(res.error || 'Erreur')
     else refresh()
   }
 

@@ -60,6 +60,7 @@ export function AnnouncementsClient({ announcements }: { announcements: Announce
     const [editAnnouncement, setEditAnnouncement] = useState<Announcement | undefined>();
     const [isPending, startTransition] = useTransition();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -107,7 +108,10 @@ export function AnnouncementsClient({ announcements }: { announcements: Announce
     };
 
     const handleDelete = (id: string) => {
-        if (!confirm("Supprimer cette annonce ?")) return;
+        setConfirmDeleteId(id);
+    };
+
+    const performDelete = (id: string) => {
         setDeletingId(id);
         startTransition(async () => {
             const result = await deleteAnnouncementAction(id);
@@ -436,6 +440,16 @@ export function AnnouncementsClient({ announcements }: { announcements: Announce
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 announcement={editAnnouncement}
+            />
+
+            <ConfirmDialog
+                open={confirmDeleteId !== null}
+                onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+                title="Supprimer cette annonce ?"
+                description="Cette action est irréversible."
+                confirmLabel="Supprimer"
+                variant="destructive"
+                onConfirm={() => { if (confirmDeleteId) performDelete(confirmDeleteId); setConfirmDeleteId(null); }}
             />
 
             <ConfirmDialog

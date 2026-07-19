@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { CheckCircle2, XCircle, Eye, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
@@ -83,10 +84,12 @@ export function PaymentsClient({ requests: initial }: { requests: Request[] }) {
     }
 
     if (!result.success) {
-      alert(result.error || 'Erreur')
+      toast.error(result.error || 'Erreur')
       setLoading(false)
       return
     }
+
+    toast.success(action === 'approve' ? 'Demande approuvée — plan mis à jour' : 'Demande rejetée')
 
     // Mettre à jour le state local
     setRequests(prev => prev.map(r =>
