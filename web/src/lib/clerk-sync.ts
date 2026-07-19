@@ -20,7 +20,7 @@ export async function syncClerkProfile(clerkUserId: string) {
     // 1. Check if profile already linked
     const { data: existing, error: existingErr } = await supabase
         .from("profiles")
-        .select("*, organizations(name, slug, subscription_plan)")
+        .select("*, organizations(id, name, slug, subscription_plan, settings, is_active)")
         .eq("clerk_id", clerkUserId)
         .limit(1)
         .maybeSingle();
@@ -67,7 +67,7 @@ export async function syncClerkProfile(clerkUserId: string) {
     // 4. Find profile with the old Supabase auth user ID
     const { data: oldProfile, error: oldProfileErr } = await supabase
         .from("profiles")
-        .select("*, organizations(name, slug, subscription_plan)")
+        .select("*, organizations(id, name, slug, subscription_plan, settings, is_active)")
         .eq("id", matchingAuthUser.id)
         .limit(1)
         .maybeSingle();

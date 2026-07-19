@@ -24,6 +24,7 @@ export function TutorialsClient({ tutorials }: { tutorials: Tutorial[] }) {
     const [editTutorial, setEditTutorial] = useState<Tutorial | undefined>();
     const [isPending, startTransition] = useTransition();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [view, setView] = useState<"grid" | "list">("grid");
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
@@ -58,7 +59,10 @@ export function TutorialsClient({ tutorials }: { tutorials: Tutorial[] }) {
     };
 
     const handleDelete = (id: string) => {
-        if (!confirm("Supprimer ce tutoriel ?")) return;
+        setConfirmDeleteId(id);
+    };
+
+    const performDelete = (id: string) => {
         setDeletingId(id);
         startTransition(async () => {
             const result = await deleteTutorialAction(id);
@@ -326,6 +330,16 @@ export function TutorialsClient({ tutorials }: { tutorials: Tutorial[] }) {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 tutorial={editTutorial}
+            />
+
+            <ConfirmDialog
+                open={confirmDeleteId !== null}
+                onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+                title="Supprimer ce tutoriel ?"
+                description="Cette action est irréversible."
+                confirmLabel="Supprimer"
+                variant="destructive"
+                onConfirm={() => { if (confirmDeleteId) performDelete(confirmDeleteId); setConfirmDeleteId(null); }}
             />
 
             <ConfirmDialog

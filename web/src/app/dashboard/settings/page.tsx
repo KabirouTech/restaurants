@@ -28,8 +28,10 @@ export default async function SettingsPage({
     const supabase = await createClient();
     if (!profile?.organization_id) redirect("/dashboard/onboarding");
 
+    // Défensif: si le join du profil est partiel (pas d'id), re-fetch complet —
+    // un orgId absent rend le save impossible (« Organisation non autorisée »).
     let org = profile.organizations as Record<string, any> | null | undefined;
-    if (!org) {
+    if (!org?.id) {
         const { data: orgData } = await supabase
             .from("organizations")
             .select("*")
