@@ -1,6 +1,5 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
@@ -23,10 +22,17 @@ export async function updateMenuInfoAction(input: {
         return { error: t("orgUnauthorized") };
     }
 
-    const supabase = await createClient();
-
     try {
-        const { data: existingOrg } = await supabase
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { persistSession: false } }
+        );
+
+        // Read with the admin client: the cookie-based server client has no
+        // Supabase session under Clerk, so an RLS read returns nothing and the
+        // settings merge would silently wipe every key not in this form.
+        const { data: existingOrg } = await supabaseAdmin
             .from("organizations")
             .select("settings, slug")
             .eq("id", input.orgId)
@@ -43,12 +49,6 @@ export async function updateMenuInfoAction(input: {
             menu_allergens_present:   input.allergensPresent,
             updated_at: new Date().toISOString(),
         };
-
-        const supabaseAdmin = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!,
-            { auth: { persistSession: false } }
-        );
 
         const { error } = await supabaseAdmin
             .from("organizations")
@@ -71,8 +71,6 @@ export async function updateSettingsAction(formData: FormData) {
     const orgContext = await getRequiredOrganizationContext(t("orgNotFound"), t("notAuthenticated"));
     if (!orgContext.ok) return { error: orgContext.error };
     const { organizationId } = orgContext.context;
-
-    const supabase = await createClient();
 
     try {
         const orgId = formData.get("orgId") as string;
@@ -101,18 +99,20 @@ export async function updateSettingsAction(formData: FormData) {
             return { error: t("slugTooShort") };
         }
 
-        // Fetch existing org
-        const { data: existingOrg } = await supabase
-            .from("organizations")
-            .select("settings, slug")
-            .eq("id", orgId)
-            .single();
-
         const supabaseAdmin = createAdminClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!,
             { auth: { persistSession: false } }
         );
+
+        // Fetch existing org with the admin client — the cookie-based server
+        // client has no Supabase session under Clerk, so an RLS read returns
+        // nothing and the settings merge would wipe keys not in this form.
+        const { data: existingOrg } = await supabaseAdmin
+            .from("organizations")
+            .select("settings, slug")
+            .eq("id", orgId)
+            .single();
 
         // Slug uniqueness check
         if (slug !== existingOrg?.slug) {
