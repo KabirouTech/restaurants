@@ -55,29 +55,58 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
 
         fetchMessages();
 
-        // Realtime Subscription for new messages
-        const channel = supabase
-            .channel(`conversation:${conversationId}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table: "messages",
-                    filter: `conversation_id=eq.${conversationId}`
-                },
-                (payload) => {
-                    setMessages((prev) => {
-                        // Avoid duplicates (from optimistic update)
-                        if (prev.some(m => m.id === payload.new.id)) return prev;
-                        return [...prev, payload.new];
-                    });
-                }
-            )
-            .subscribe();
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+        let refreshTimer: ReturnType<typeof setInterval> | null = null;
+        let disposed = false;
+
+        const getClerkToken = async (): Promise<string | null> => {
+            try {
+                // @ts-expect-error Clerk is injected on window by the Clerk frontend runtime.
+                return (await window.Clerk?.session?.getToken()) ?? null;
+            } catch {
+                return null;
+            }
+        };
+
+        // Realtime Subscription for new messages. The websocket must carry the
+        // Clerk token: postgres_changes events are filtered by RLS for the
+        // subscriber, and without it the socket is anon (no events). Clerk
+        // session tokens expire after ~60s, so re-auth while the conversation
+        // stays open.
+        (async () => {
+            const token = await getClerkToken();
+            if (disposed) return;
+            if (token) supabase.realtime.setAuth(token);
+            refreshTimer = setInterval(async () => {
+                const t = await getClerkToken();
+                if (t && !disposed) supabase.realtime.setAuth(t);
+            }, 50_000);
+
+            channel = supabase
+                .channel(`conversation:${conversationId}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "INSERT",
+                        schema: "public",
+                        table: "messages",
+                        filter: `conversation_id=eq.${conversationId}`
+                    },
+                    (payload) => {
+                        setMessages((prev) => {
+                            // Avoid duplicates (from optimistic update)
+                            if (prev.some(m => m.id === payload.new.id)) return prev;
+                            return [...prev, payload.new];
+                        });
+                    }
+                )
+                .subscribe();
+        })();
 
         return () => {
-            supabase.removeChannel(channel);
+            disposed = true;
+            if (refreshTimer) clearInterval(refreshTimer);
+            if (channel) supabase.removeChannel(channel);
         };
     }, [conversationId, supabase]);
 
