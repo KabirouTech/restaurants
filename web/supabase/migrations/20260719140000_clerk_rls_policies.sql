@@ -53,6 +53,9 @@ $$ SELECT coalesce(
 -- ---------------------------------------------------------------------------
 
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
+-- Renommage de policy: dropper aussi le nouveau nom pour rester idempotent
+-- (le CI a échoué en re-jouant ce fichier déjà appliqué manuellement).
+DROP POLICY IF EXISTS "Profiles viewable by own organization" ON profiles;
 CREATE POLICY "Profiles viewable by own organization" ON profiles
   FOR SELECT TO authenticated
   USING (clerk_id = public.clerk_sub() OR organization_id = public.current_org_id());
