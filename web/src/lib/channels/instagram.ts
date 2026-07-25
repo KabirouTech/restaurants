@@ -4,25 +4,30 @@ import {
   findOrCreateConversation,
   insertIncomingMessage,
 } from "./conversation-helpers";
+import { ignored, processed, type WebhookResult } from "@/lib/webhooks/recorder";
 
 export async function processInstagramWebhook(
   supabase: SupabaseClient,
   body: any
-) {
+): Promise<WebhookResult> {
   const entry = body.entry?.[0];
-  if (!entry) return;
+  if (!entry) return ignored("Payload sans entry[0]");
 
   const messaging = entry.messaging?.[0];
-  if (!messaging) return;
+  if (!messaging) return ignored("Payload sans messaging[0]");
 
   const senderId = messaging.sender?.id;
   const recipientId = messaging.recipient?.id;
   const message = messaging.message;
 
-  if (!senderId || !recipientId || !message) return;
+  if (!message)
+    return ignored("Événement sans message (lecture, réaction ou postback)");
+  if (!senderId || !recipientId)
+    return ignored("Expéditeur ou destinataire manquant");
 
   // Skip echo messages (sent by us)
-  if (message.is_echo) return;
+  if (message.is_echo)
+    return ignored("Écho d'un message sortant", { eventType: "instagram:message.echo" });
 
   // Find channel by provider_id = our Instagram page/account ID
   const { data: channel } = await supabase
@@ -33,7 +38,8 @@ export async function processInstagramWebhook(
     .eq("is_active", true)
     .maybeSingle();
 
-  if (!channel) return;
+  if (!channel)
+    return ignored(`Aucun canal Instagram actif pour le compte ${recipientId}`);
 
   // Get sender profile name
   let senderName = senderId;
@@ -86,6 +92,12 @@ export async function processInstagramWebhook(
     message.mid,
     attachments.length > 0 ? attachments : undefined
   );
+
+  return processed({
+    organizationId: channel.organization_id,
+    messages: 1,
+    eventType: "instagram:message.received",
+  });
 }
 
 export async function sendInstagramMessage(

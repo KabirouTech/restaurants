@@ -1,6 +1,7 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { MessageCircle, Webhook, Plug } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { pingIntelliConnection } from "@/lib/intelli/partner-client";
@@ -96,6 +97,12 @@ export default async function AdminIntelliPage() {
             <span className="text-xs font-normal normal-case tracking-normal">
               ({events.length} dernier{events.length > 1 ? "s" : ""})
             </span>
+            <Link
+              href="/admin/webhooks"
+              className="ml-auto text-xs font-medium normal-case tracking-normal text-orange-500 hover:text-orange-600"
+            >
+              Monitoring complet →
+            </Link>
           </h2>
           <IntelliWebhooksViewer events={events} />
         </section>

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { processWhatsAppWebhook } from "@/lib/channels/whatsapp";
+import {
+  describeError,
+  finalizeWebhook,
+  recordWebhook,
+} from "@/lib/webhooks/recorder";
 
 // GET: Meta webhook verification
 export async function GET(request: NextRequest) {
@@ -26,17 +31,19 @@ export async function POST(request: NextRequest) {
     { auth: { persistSession: false } }
   );
 
-  // Log webhook event
-  await supabase.from("webhook_events").insert({
-    provider: "whatsapp",
-    payload: body,
-    status: "pending",
-  });
+  // Recorded before processing so a crash still leaves a `pending` trace.
+  const eventId = await recordWebhook(supabase, "whatsapp", body);
+  const startedAt = performance.now();
 
   try {
-    await processWhatsAppWebhook(supabase, body);
-  } catch (err: any) {
+    const result = await processWhatsAppWebhook(supabase, body);
+    await finalizeWebhook(supabase, eventId, startedAt, result);
+  } catch (err) {
     console.error("WhatsApp webhook error:", err);
+    await finalizeWebhook(supabase, eventId, startedAt, {
+      status: "failed",
+      reason: describeError(err),
+    });
   }
 
   // Always return 200 to Meta (otherwise Meta disables the webhook)

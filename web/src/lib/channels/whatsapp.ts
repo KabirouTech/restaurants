@@ -4,20 +4,23 @@ import {
   findOrCreateConversation,
   insertIncomingMessage,
 } from "./conversation-helpers";
+import { ignored, processed, type WebhookResult } from "@/lib/webhooks/recorder";
 
 export async function processWhatsAppWebhook(
   supabase: SupabaseClient,
   body: any
-) {
+): Promise<WebhookResult> {
   const entry = body.entry?.[0];
-  if (!entry) return;
+  if (!entry) return ignored("Payload sans entry[0]");
 
   const changes = entry.changes?.[0];
-  if (!changes || changes.field !== "messages") return;
+  if (!changes) return ignored("Payload sans changes[0]");
+  if (changes.field !== "messages")
+    return ignored(`Champ non géré: ${changes.field}`, { eventType: `whatsapp:${changes.field}` });
 
   const value = changes.value;
-  const phoneNumberId = value.metadata?.phone_number_id;
-  if (!phoneNumberId) return;
+  const phoneNumberId = value?.metadata?.phone_number_id;
+  if (!phoneNumberId) return ignored("Aucun phone_number_id dans metadata");
 
   // Find channel by provider_id
   const { data: channel } = await supabase
@@ -28,12 +31,21 @@ export async function processWhatsAppWebhook(
     .eq("is_active", true)
     .maybeSingle();
 
-  if (!channel) return;
+  if (!channel)
+    return ignored(`Aucun canal WhatsApp actif pour phone_number_id ${phoneNumberId}`);
 
   const messages = value.messages;
-  if (!messages || messages.length === 0) return;
+  if (!messages || messages.length === 0) {
+    // Delivery/read receipts land here — expected, not a problem.
+    const statusUpdate = value.statuses?.[0]?.status;
+    return ignored(
+      statusUpdate ? `Accusé de statut: ${statusUpdate}` : "Aucun message entrant",
+      { organizationId: channel.organization_id, eventType: statusUpdate ? "whatsapp:status" : null }
+    );
+  }
 
   const contacts = value.contacts || [];
+  let inserted = 0;
 
   for (const msg of messages) {
     const from = msg.from; // phone number
@@ -106,7 +118,14 @@ export async function processWhatsAppWebhook(
       msg.id,
       attachments.length > 0 ? attachments : undefined
     );
+    inserted++;
   }
+
+  return processed({
+    organizationId: channel.organization_id,
+    messages: inserted,
+    eventType: "whatsapp:message.received",
+  });
 }
 
 export async function sendWhatsAppMessage(
