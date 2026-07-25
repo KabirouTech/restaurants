@@ -4,6 +4,7 @@ import {
   findOrCreateConversation,
   insertIncomingMessage,
 } from "@/lib/channels/conversation-helpers";
+import { ignored, processed, type WebhookResult } from "@/lib/webhooks/recorder";
 
 /**
  * Shape of the normalized payload Intelli forwards to a partner webhook.
@@ -64,19 +65,23 @@ interface MessageAttachment {
 export async function processIntelliWebhook(
   supabase: SupabaseClient,
   body: IntelliWebhookPayload
-) {
+): Promise<WebhookResult> {
+  const eventType = body.channel ? `${body.channel}:${body.event}` : body.event;
+
   if (body.channel === "instagram") {
     return processIntelliInstagramEvent(supabase, body);
   }
 
   // Only inbound customer messages create conversation activity.
-  if (body.event !== "message.received") return;
+  if (body.event !== "message.received")
+    return ignored(`Événement non traité: ${body.event}`, { eventType });
 
   const clientRef = body.client_ref;
-  if (!clientRef) return;
+  if (!clientRef) return ignored("client_ref absent du payload", { eventType });
 
   const messages = body.messages;
-  if (!messages || messages.length === 0) return;
+  if (!messages || messages.length === 0)
+    return ignored("Aucun message dans le payload", { eventType });
 
   // Resolve the channel for this Intelli client. credentials is JSONB holding
   // { via: 'intelli', client_ref, ... } set at onboarding time.
@@ -88,9 +93,11 @@ export async function processIntelliWebhook(
     .eq("credentials->>client_ref", clientRef)
     .maybeSingle();
 
-  if (!channel) return;
+  if (!channel)
+    return ignored(`Aucun canal WhatsApp actif pour client_ref ${clientRef}`, { eventType });
 
   const contacts = body.contacts || [];
+  let inserted = 0;
 
   for (const msg of messages) {
     const from = msg.from;
@@ -155,7 +162,14 @@ export async function processIntelliWebhook(
       msg.id,
       attachments
     );
+    inserted++;
   }
+
+  return processed({
+    organizationId: channel.organization_id,
+    messages: inserted,
+    eventType,
+  });
 }
 
 /**
@@ -167,14 +181,18 @@ export async function processIntelliWebhook(
 async function processIntelliInstagramEvent(
   supabase: SupabaseClient,
   body: IntelliWebhookPayload
-) {
-  if (body.event !== "message.received") return;
+): Promise<WebhookResult> {
+  const eventType = `instagram:${body.event}`;
+
+  if (body.event !== "message.received")
+    return ignored(`Événement non traité: ${body.event}`, { eventType });
 
   const clientRef = body.client_ref;
-  if (!clientRef) return;
+  if (!clientRef) return ignored("client_ref absent du payload", { eventType });
 
   const messages = body.messages;
-  if (!messages || messages.length === 0) return;
+  if (!messages || messages.length === 0)
+    return ignored("Aucun message dans le payload", { eventType });
 
   const { data: channel } = await supabase
     .from("channels")
@@ -184,7 +202,11 @@ async function processIntelliInstagramEvent(
     .eq("credentials->>client_ref", clientRef)
     .maybeSingle();
 
-  if (!channel) return;
+  if (!channel)
+    return ignored(`Aucun canal Instagram actif pour client_ref ${clientRef}`, { eventType });
+
+  let inserted = 0;
+  let deduped = 0;
 
   for (const msg of messages) {
     // sender.id is the IGSID — the only handle Meta gives us to reply with.
@@ -226,7 +248,10 @@ async function processIntelliInstagramEvent(
         .eq("conversation_id", conversationId)
         .eq("external_message_id", msg.id)
         .maybeSingle();
-      if (dupe) continue;
+      if (dupe) {
+        deduped++;
+        continue;
+      }
     }
 
     await insertIncomingMessage(
@@ -238,5 +263,19 @@ async function processIntelliInstagramEvent(
       msg.id,
       attachments.length > 0 ? attachments : undefined
     );
+    inserted++;
   }
+
+  if (inserted === 0 && deduped > 0) {
+    return ignored(`${deduped} message(s) déjà reçus (redélivrance)`, {
+      organizationId: channel.organization_id,
+      eventType,
+    });
+  }
+
+  return processed({
+    organizationId: channel.organization_id,
+    messages: inserted,
+    eventType,
+  });
 }

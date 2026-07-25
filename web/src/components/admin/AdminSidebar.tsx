@@ -21,6 +21,7 @@ import {
     Crown,
     MessageSquareWarning,
     Plug,
+    Webhook,
     LogOut,
     ChevronLeft,
     ArrowLeft,
@@ -46,6 +47,7 @@ const secondaryItems = [
     { name: "Annonces",    shortLabel: "Annonces",  href: "/admin/announcements",  icon: Megaphone },
     { name: "Plaintes",    shortLabel: "Plaintes",  href: "/admin/complaints",     icon: MessageSquareWarning },
     { name: "Intelli",     shortLabel: "Intelli",   href: "/admin/intelli",        icon: Plug },
+    { name: "Webhooks",    shortLabel: "Webhooks",  href: "/admin/webhooks",       icon: Webhook },
 ];
 
 const allNavItems = [...primaryTabs, ...secondaryItems];

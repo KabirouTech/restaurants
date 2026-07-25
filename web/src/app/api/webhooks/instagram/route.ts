@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { processInstagramWebhook } from "@/lib/channels/instagram";
+import {
+  describeError,
+  finalizeWebhook,
+  recordWebhook,
+} from "@/lib/webhooks/recorder";
 
 // GET: Meta webhook verification
 export async function GET(request: NextRequest) {
@@ -27,16 +32,18 @@ export async function POST(request: NextRequest) {
     { auth: { persistSession: false } }
   );
 
-  await supabase.from("webhook_events").insert({
-    provider: "instagram",
-    payload: body,
-    status: "pending",
-  });
+  const eventId = await recordWebhook(supabase, "instagram", body);
+  const startedAt = performance.now();
 
   try {
-    await processInstagramWebhook(supabase, body);
-  } catch (err: any) {
+    const result = await processInstagramWebhook(supabase, body);
+    await finalizeWebhook(supabase, eventId, startedAt, result);
+  } catch (err) {
     console.error("Instagram webhook error:", err);
+    await finalizeWebhook(supabase, eventId, startedAt, {
+      status: "failed",
+      reason: describeError(err),
+    });
   }
 
   // Always return 200 to Meta
