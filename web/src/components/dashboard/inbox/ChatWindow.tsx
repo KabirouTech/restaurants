@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { format, isSameDay, isToday, isYesterday } from "date-fns";
 import { fr as frLocale } from "date-fns/locale";
 import { useLocale } from "next-intl";
-import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft, Check, Loader2, FileText, X, Image as ImageIcon, Mic, Video } from "lucide-react";
+import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft, Check, Loader2, FileText, X, Image as ImageIcon, Mic, Video, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,8 @@ interface MessageAttachment {
     filename?: string;
     mime_type?: string;
     media_id?: string;
+    /** Set when archiving the file at receipt failed — worth showing, not hiding. */
+    ingest_error?: string;
 }
 
 interface ChatMessage {
@@ -673,6 +675,7 @@ function AttachmentPreview({
         const label = isImage ? imageLabel : isAudio ? audioLabel : isVideo ? videoLabel : documentLabel;
         return (
             <div
+                title={attachment.ingest_error}
                 className={cn(
                     "flex items-center gap-2 text-xs rounded-lg px-2 py-1.5",
                     outgoing ? "bg-primary-foreground/10" : "bg-muted"
@@ -680,6 +683,9 @@ function AttachmentPreview({
             >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{attachment.filename || label}</span>
+                {attachment.ingest_error && (
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                )}
             </div>
         );
     }
