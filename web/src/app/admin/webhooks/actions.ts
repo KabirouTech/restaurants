@@ -2,8 +2,6 @@
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
-import { processWhatsAppWebhook } from "@/lib/channels/whatsapp";
-import { processInstagramWebhook } from "@/lib/channels/instagram";
 import {
   processIntelliWebhook,
   type IntelliWebhookPayload,
@@ -339,22 +337,22 @@ export async function replayWebhookEvent(
 
   const startedAt = performance.now();
 
-  try {
-    const result =
-      event.provider === "intelli"
-        ? await processIntelliWebhook(supabase, event.payload as IntelliWebhookPayload)
-        : event.provider === "whatsapp"
-          ? await processWhatsAppWebhook(supabase, event.payload)
-          : event.provider === "instagram"
-            ? await processInstagramWebhook(supabase, event.payload)
-            : null;
+  // Intelli is the only ingress. Rows recorded as whatsapp/instagram predate
+  // that and were delivered straight by Meta — there is no handler left to
+  // replay them through, and inventing one would send a raw Meta envelope into
+  // a parser that expects the normalized shape.
+  if (event.provider !== "intelli") {
+    return {
+      success: false,
+      message: `Événement « ${event.provider} » hérité de l'ancienne réception Meta directe — plus rejouable.`,
+    };
+  }
 
-    if (!result) {
-      return {
-        success: false,
-        message: `Aucun handler pour le provider « ${event.provider} »`,
-      };
-    }
+  try {
+    const result = await processIntelliWebhook(
+      supabase,
+      event.payload as IntelliWebhookPayload
+    );
 
     await finalizeWebhook(supabase, event.id, startedAt, result);
 

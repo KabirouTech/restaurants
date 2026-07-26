@@ -1,105 +1,13 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import {
-  findOrCreateCustomer,
-  findOrCreateConversation,
-  insertIncomingMessage,
-} from "./conversation-helpers";
-import { ignored, processed, type WebhookResult } from "@/lib/webhooks/recorder";
 import type { OutgoingMedia } from "./index";
 
-export async function processInstagramWebhook(
-  supabase: SupabaseClient,
-  body: any
-): Promise<WebhookResult> {
-  const entry = body.entry?.[0];
-  if (!entry) return ignored("Payload sans entry[0]");
-
-  const messaging = entry.messaging?.[0];
-  if (!messaging) return ignored("Payload sans messaging[0]");
-
-  const senderId = messaging.sender?.id;
-  const recipientId = messaging.recipient?.id;
-  const message = messaging.message;
-
-  if (!message)
-    return ignored("Événement sans message (lecture, réaction ou postback)");
-  if (!senderId || !recipientId)
-    return ignored("Expéditeur ou destinataire manquant");
-
-  // Skip echo messages (sent by us)
-  if (message.is_echo)
-    return ignored("Écho d'un message sortant", { eventType: "instagram:message.echo" });
-
-  // Find channel by provider_id = our Instagram page/account ID
-  const { data: channel } = await supabase
-    .from("channels")
-    .select("id, organization_id, credentials")
-    .eq("provider_id", recipientId)
-    .eq("platform", "instagram")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (!channel)
-    return ignored(`Aucun canal Instagram actif pour le compte ${recipientId}`);
-
-  // Get sender profile name
-  let senderName = senderId;
-  try {
-    const { access_token } = channel.credentials as any;
-    const profileRes = await fetch(
-      `https://graph.facebook.com/v21.0/${senderId}?fields=name,username&access_token=${access_token}`
-    );
-    if (profileRes.ok) {
-      const profileData = await profileRes.json();
-      senderName = profileData.name || profileData.username || senderId;
-    }
-  } catch {
-    // Use senderId as fallback name
-  }
-
-  let content = message.text || "";
-  const attachments: any[] = [];
-
-  if (message.attachments) {
-    for (const att of message.attachments) {
-      attachments.push({ type: att.type, url: att.payload?.url });
-      if (!content) content = `[${att.type === "image" ? "Image" : att.type === "video" ? "Vidéo" : att.type}]`;
-    }
-  }
-
-  const customerId = await findOrCreateCustomer(
-    supabase,
-    channel.organization_id,
-    { instagramId: senderId },
-    senderName
-  );
-
-  const threadId = `${senderId}_${recipientId}`;
-
-  const { conversationId } = await findOrCreateConversation(
-    supabase,
-    channel.organization_id,
-    customerId,
-    channel.id,
-    threadId
-  );
-
-  await insertIncomingMessage(
-    supabase,
-    channel.organization_id,
-    conversationId,
-    content,
-    senderName,
-    message.mid,
-    attachments.length > 0 ? attachments : undefined
-  );
-
-  return processed({
-    organizationId: channel.organization_id,
-    messages: 1,
-    eventType: "instagram:message.received",
-  });
-}
+/**
+ * Instagram goes through the Intelli Partner relay, and only through it.
+ *
+ * The direct Graph path was removed: it required our own Meta app credentials
+ * per client, and inbound traffic no longer reaches us that way — Intelli
+ * verifies, normalizes and forwards every event to /api/webhooks/intelli. The
+ * raw Meta webhook processor that used to live here went with it.
+ */
 
 export async function sendInstagramMessage(
   credentials: any,
@@ -107,147 +15,89 @@ export async function sendInstagramMessage(
   content: string,
   attachments: OutgoingMedia[] = []
 ): Promise<{ externalMessageId?: string; error?: string; warnings?: string[] }> {
-  const media = attachments[0];
+  const clientRef = credentials?.client_ref;
 
-  // Channels onboarded through Intelli's hosted connect have no Meta token of
-  // their own — relay the send through the Partner API instead of Graph.
+  if (!clientRef) {
+    return {
+      error:
+        "Ce canal Instagram n'est pas relié à Intelli. Reconnectez-le depuis Réglages → Canaux.",
+    };
+  }
+
+  const media = attachments[0];
+  const { intelliSendMessage, INSTAGRAM_TEXT_LIMIT, IntelliAPIError } =
+    await import("@/lib/intelli/partner-client");
+
+  if (content.length > INSTAGRAM_TEXT_LIMIT) {
+    return {
+      error: `Message trop long pour Instagram (${content.length}/${INSTAGRAM_TEXT_LIMIT} caractères).`,
+    };
+  }
+
   // recipientId must be the IGSID from an inbound webhook (sender.id); Meta
   // only accepts replies within 24h of the customer's last message.
-  if (credentials?.via === "intelli") {
-    const { intelliSendMessage, INSTAGRAM_TEXT_LIMIT, IntelliAPIError } =
-      await import("@/lib/intelli/partner-client");
-
-    if (content.length > INSTAGRAM_TEXT_LIMIT) {
+  try {
+    if (!media) {
+      const result = await intelliSendMessage({
+        clientRef,
+        to: recipientId,
+        text: content,
+      });
       return {
-        error: `Message trop long pour Instagram (${content.length}/${INSTAGRAM_TEXT_LIMIT} caractères).`,
+        externalMessageId: result.message_id ?? undefined,
+        warnings: result.warnings,
       };
     }
 
-    try {
-      if (!media) {
-        const result = await intelliSendMessage({
-          clientRef: credentials.client_ref,
+    // An Instagram attachment has no caption slot. Rather than let the text be
+    // dropped (the relay would succeed and only say so in `warnings`), send the
+    // media first and the caption as its own message — the remedy the relay
+    // itself prescribes.
+    const mediaResult = await intelliSendMessage({
+      clientRef,
+      to: recipientId,
+      text: "",
+      media: { type: media.type, url: media.url, filename: media.filename },
+      allowCaption: false,
+    });
+
+    const warnings = [...(mediaResult.warnings ?? [])];
+
+    if (content) {
+      try {
+        const captionResult = await intelliSendMessage({
+          clientRef,
           to: recipientId,
           text: content,
         });
-        return {
-          externalMessageId: result.message_id ?? undefined,
-          warnings: result.warnings,
-        };
-      }
-
-      // An Instagram attachment has no caption slot. Rather than let the text
-      // be dropped (the relay would succeed and only say so in `warnings`),
-      // send the media first and the caption as its own message — the remedy
-      // the relay itself prescribes.
-      const mediaResult = await intelliSendMessage({
-        clientRef: credentials.client_ref,
-        to: recipientId,
-        text: "",
-        media: { type: media.type, url: media.url, filename: media.filename },
-        allowCaption: false,
-      });
-
-      const warnings = [...(mediaResult.warnings ?? [])];
-
-      if (content) {
-        try {
-          const captionResult = await intelliSendMessage({
-            clientRef: credentials.client_ref,
-            to: recipientId,
-            text: content,
-          });
-          warnings.push(...(captionResult.warnings ?? []));
-        } catch (err) {
-          // The media did land; report the caption failure without pretending
-          // the whole send failed.
-          warnings.push(
-            `La pièce jointe est partie mais la légende n'a pas pu être envoyée : ${
-              err instanceof Error ? err.message : "erreur inconnue"
-            }`
-          );
-        }
-      }
-
-      return {
-        externalMessageId: mediaResult.message_id ?? undefined,
-        warnings: warnings.length > 0 ? warnings : undefined,
-      };
-    } catch (err) {
-      if (err instanceof IntelliAPIError && err.status === 429) {
-        return { error: "Limite d'envoi atteinte. Réessayez dans un instant." };
-      }
-      if (err instanceof IntelliAPIError && err.code === "media_link_required") {
-        return {
-          error:
-            "Instagram télécharge le fichier lui-même : la pièce jointe doit être une URL HTTPS publique.",
-        };
-      }
-      return {
-        error: err instanceof Error ? err.message : "Intelli send error",
-      };
-    }
-  }
-
-  const { page_id, access_token } = credentials;
-
-  // Graph carries either a text message or an attachment, never both — same
-  // constraint as the relay, so the caption follows as its own message.
-  const postToGraph = async (message: Record<string, unknown>) => {
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${page_id}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ recipient: { id: recipientId }, message }),
-      }
-    );
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error?.message || "Instagram API error");
-    }
-    return data;
-  };
-
-  try {
-    if (!media) {
-      const data = await postToGraph({ text: content });
-      return { externalMessageId: data.message_id };
-    }
-
-    if (!/^https:\/\//i.test(media.url)) {
-      return {
-        error:
-          "Instagram télécharge le fichier lui-même : la pièce jointe doit être une URL HTTPS publique.",
-      };
-    }
-
-    const data = await postToGraph({
-      attachment: { type: media.type, payload: { url: media.url, is_reusable: true } },
-    });
-
-    const warnings: string[] = [];
-    if (content) {
-      try {
-        await postToGraph({ text: content });
-      } catch (err: any) {
+        warnings.push(...(captionResult.warnings ?? []));
+      } catch (err) {
+        // The media did land; report the caption failure without pretending
+        // the whole send failed.
         warnings.push(
           `La pièce jointe est partie mais la légende n'a pas pu être envoyée : ${
-            err?.message || "erreur inconnue"
+            err instanceof Error ? err.message : "erreur inconnue"
           }`
         );
       }
     }
 
     return {
-      externalMessageId: data.message_id,
+      externalMessageId: mediaResult.message_id ?? undefined,
       warnings: warnings.length > 0 ? warnings : undefined,
     };
-  } catch (err: any) {
-    return { error: err.message || "Network error" };
+  } catch (err) {
+    if (err instanceof IntelliAPIError && err.status === 429) {
+      return { error: "Limite d'envoi atteinte. Réessayez dans un instant." };
+    }
+    if (err instanceof IntelliAPIError && err.code === "media_link_required") {
+      return {
+        error:
+          "Instagram télécharge le fichier lui-même : la pièce jointe doit être une URL HTTPS publique.",
+      };
+    }
+    return {
+      error: err instanceof Error ? err.message : "Intelli send error",
+    };
   }
 }

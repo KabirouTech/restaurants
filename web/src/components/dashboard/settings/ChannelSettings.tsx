@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   Phone,
   Instagram,
@@ -10,7 +9,6 @@ import {
   XCircle,
   Loader2,
   Copy,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,19 +39,13 @@ interface Channel {
   via?: string;
 }
 
-export function ChannelSettings({ orgId }: { orgId: string }) {
-  const searchParams = useSearchParams();
+export function ChannelSettings() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // WhatsApp form
-  const [waPhoneNumberId, setWaPhoneNumberId] = useState("");
-  const [waAccessToken, setWaAccessToken] = useState("");
-  const [waSaving, setWaSaving] = useState(false);
+  // WhatsApp connection test
   const [waTesting, setWaTesting] = useState(false);
   const [waTestResult, setWaTestResult] = useState<string | null>(null);
-  const [showManualWa, setShowManualWa] = useState(false);
-  const [showManualIg, setShowManualIg] = useState(false);
 
   // Email form
   const [emailForm, setEmailForm] = useState({
@@ -91,44 +83,12 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
   const emailChannel = channels.find(
     (c) => c.platform === "email" && c.is_active
   );
-  const oauthError = searchParams.get("error");
-  const oauthSuccess = searchParams.get("success");
-  const oauthErrorLabel: Record<string, string> = {
-    missing_meta_config:
-      "Configuration Meta Business manquante: ajoutez META_APP_ID et META_APP_SECRET dans les variables d'environnement (ce flux est separe de Clerk).",
-    missing_params:
-      "La reponse OAuth est incomplete. Veuillez reessayer la connexion Instagram.",
-    token_exchange:
-      "Impossible d'echanger le code OAuth. Verifiez la configuration Meta puis reessayez.",
-    no_instagram_account:
-      "Aucun compte Instagram Business lie a cette page Facebook n'a ete trouve.",
-    oauth_failed: "La connexion Instagram a echoue. Veuillez reessayer.",
-  };
-
+  // Intelli is the single ingress: it verifies and normalizes every channel's
+  // events before forwarding them here.
   const webhookUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/api/webhooks/whatsapp`
-      : "/api/webhooks/whatsapp";
-
-  const handleConnectWhatsApp = async () => {
-    if (!waPhoneNumberId.trim() || !waAccessToken.trim()) return;
-    setWaSaving(true);
-    const result = await connectChannelAction(
-      "whatsapp",
-      "WhatsApp Business",
-      waPhoneNumberId.trim(),
-      {
-        phone_number_id: waPhoneNumberId.trim(),
-        access_token: waAccessToken.trim(),
-      }
-    );
-    if (result.channelId) {
-      await loadChannels();
-      setWaPhoneNumberId("");
-      setWaAccessToken("");
-    }
-    setWaSaving(false);
-  };
+      ? `${window.location.origin}/api/webhooks/intelli`
+      : "/api/webhooks/intelli";
 
   const handleTestWhatsApp = async () => {
     if (!waChannel) return;
@@ -308,51 +268,6 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
               {/* Primary path: one-click onboarding through Intelli. */}
               <IntelliWhatsAppSignup onConnected={loadChannels} />
 
-              {/* Fallback: manual Cloud API credentials. */}
-              <div className="pt-2 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setShowManualWa((v) => !v)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showManualWa
-                    ? "Masquer la connexion manuelle"
-                    : "Connecter manuellement (Cloud API)"}
-                </button>
-              </div>
-              {showManualWa && (
-                <>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Phone Number ID</Label>
-                    <Input
-                      value={waPhoneNumberId}
-                      onChange={(e) => setWaPhoneNumberId(e.target.value)}
-                      placeholder="Ex: 123456789012345"
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Access Token (permanent)</Label>
-                    <Input
-                      type="password"
-                      value={waAccessToken}
-                      onChange={(e) => setWaAccessToken(e.target.value)}
-                      placeholder="Token d'accès Meta..."
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={handleConnectWhatsApp}
-                    disabled={waSaving || !waPhoneNumberId || !waAccessToken}
-                  >
-                    {waSaving ? (
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                    ) : null}
-                    Connecter
-                  </Button>
-                </>
-              )}
             </>
           )}
         </CardContent>
@@ -383,16 +298,6 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {oauthSuccess === "instagram" && (
-            <div className="rounded-md border border-green-200 bg-green-50 text-green-700 text-xs p-2.5">
-              Compte Instagram connecte avec succes.
-            </div>
-          )}
-          {oauthError && oauthErrorLabel[oauthError] && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 text-destructive text-xs p-2.5">
-              {oauthErrorLabel[oauthError]}
-            </div>
-          )}
           {igChannel ? (
             <>
               {igChannel.via === "intelli" && (
@@ -417,32 +322,6 @@ export function ChannelSettings({ orgId }: { orgId: string }) {
               {/* Primary path: one-click onboarding through Intelli. */}
               <IntelliInstagramConnect onConnected={loadChannels} />
 
-              {/* Fallback: direct Meta OAuth with our own app credentials. */}
-              <div className="pt-2 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setShowManualIg((v) => !v)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showManualIg
-                    ? "Masquer la connexion manuelle"
-                    : "Connecter manuellement (Meta)"}
-                </button>
-              </div>
-              {showManualIg && (
-                <>
-                  <p className="text-[11px] text-muted-foreground">
-                    Liaison directe Meta Business (nécessite META_APP_ID /
-                    META_APP_SECRET, séparée de l&apos;auth Clerk).
-                  </p>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`/api/auth/instagram?orgId=${orgId}`}>
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Connecter avec Meta
-                    </a>
-                  </Button>
-                </>
-              )}
             </>
           )}
         </CardContent>

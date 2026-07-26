@@ -34,7 +34,7 @@ import { fetchWebhookDashboard, fetchWebhookEventsPage, replayWebhookEvent } fro
 import {
   PAGE_SIZE,
   RANGES,
-  WEBHOOK_PROVIDERS,
+  LIVE_WEBHOOK_PROVIDERS,
   WEBHOOK_STATUSES,
   type RangeKey,
   type WebhookDashboard,
@@ -94,15 +94,16 @@ const PROVIDER_META: Record<string, { label: string; accent: string; endpoint: s
     accent: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     endpoint: "/api/webhooks/intelli",
   },
+  // Legacy providers: rows exist, but the endpoints that produced them are gone.
   whatsapp: {
     label: "WhatsApp",
     accent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    endpoint: "/api/webhooks/whatsapp",
+    endpoint: "",
   },
   instagram: {
     label: "Instagram",
     accent: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400",
-    endpoint: "/api/webhooks/instagram",
+    endpoint: "",
   },
 };
 
@@ -240,6 +241,14 @@ export function WebhooksClient({
   const stuck = totals.pending;
   const hasFilters = Boolean(filters.provider || filters.status || filters.search);
   const hasMore = events.length < totalMatching;
+
+  // Always show the live ingress; add legacy providers only while their rows
+  // are still inside the selected window.
+  const shownProviders = useMemo(() => {
+    const names = new Set<string>(LIVE_WEBHOOK_PROVIDERS);
+    data.providers.filter((p) => p.total > 0).forEach((p) => names.add(p.provider));
+    return [...names];
+  }, [data.providers]);
 
   const kpis = useMemo(
     () =>
@@ -404,7 +413,7 @@ export function WebhooksClient({
 
         {/* ── Per-provider health ──────────────────────────────────────── */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {WEBHOOK_PROVIDERS.map((provider) => {
+          {shownProviders.map((provider) => {
             const stat = data.providers.find((p) => p.provider === provider);
             const meta = providerMeta(provider);
             const active = filters.provider === provider;
@@ -422,11 +431,13 @@ export function WebhooksClient({
                 )}
               >
                 <div className="absolute top-4 right-4 z-10">
-                  <CopyButton
-                    value={`${baseUrl}${meta.endpoint}`}
-                    label="URL"
-                    icon={<Link2 className="h-3 w-3" />}
-                  />
+                  {meta.endpoint && (
+                    <CopyButton
+                      value={`${baseUrl}${meta.endpoint}`}
+                      label="URL"
+                      icon={<Link2 className="h-3 w-3" />}
+                    />
+                  )}
                 </div>
 
                 <button
