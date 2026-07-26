@@ -8,7 +8,7 @@ import {
   processIntelliWebhook,
   type IntelliWebhookPayload,
 } from "@/lib/intelli/webhook";
-import { describeError, finalizeWebhook } from "@/lib/webhooks/recorder";
+import { describeError, deriveEventType, finalizeWebhook } from "@/lib/webhooks/recorder";
 import {
   PAGE_SIZE,
   RANGES,
@@ -183,7 +183,10 @@ function mapEvent(row: EventRow): WebhookEvent {
     id: row.wh_id,
     provider: row.wh_provider,
     status: row.wh_status,
-    eventType: row.wh_event_type,
+    // Rows written before the routes were instrumented have no event_type, but
+    // their payload still names the event — read it back rather than showing
+    // "type inconnu" over a payload that plainly says `message.received`.
+    eventType: row.wh_event_type ?? deriveEventType(row.wh_payload),
     errorLog: row.wh_error_log,
     organizationId: row.wh_organization_id,
     organizationName: row.wh_organization_name,
