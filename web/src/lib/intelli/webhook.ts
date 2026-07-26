@@ -25,13 +25,27 @@ interface IntelliMessage {
   audio?: { id?: string };
 }
 
-/** Instagram message inside an Intelli event: sender.id is the IGSID to reply to. */
-interface IntelliInstagramMessage {
-  id?: string;
-  sender?: { id?: string; username?: string };
-  type?: string;
+/** The payload part of an Instagram message, wherever it happens to sit. */
+interface IntelliInstagramBody {
+  mid?: string;
   text?: { body?: string } | string;
-  attachments?: Array<{ type?: string; url?: string }>;
+  attachments?: Array<{ type?: string; url?: string; payload?: { url?: string } }>;
+}
+
+/**
+ * Instagram message inside an Intelli event: sender.id is the IGSID to reply to.
+ *
+ * Intelli nests the actual content under `message` (mid/text/attachments) with
+ * sender/recipient as siblings. Older payloads carried text and id flat on the
+ * message object, so both shapes are declared and read with the nested one
+ * winning — reading only the flat shape silently produced blank messages.
+ */
+interface IntelliInstagramMessage extends IntelliInstagramBody {
+  id?: string;
+  type?: string;
+  sender?: { id?: string; name?: string; username?: string };
+  recipient?: { id?: string };
+  message?: IntelliInstagramBody;
 }
 
 export interface IntelliWebhookPayload {
@@ -43,9 +57,16 @@ export interface IntelliWebhookPayload {
   timestamp?: string;
   client_ref?: string;
   phone_number?: string;
+  contact?: { id?: string; name?: string; username?: string };
   contacts?: Array<{ profile?: { name?: string }; wa_id?: string }>;
   messages?: Array<IntelliMessage & IntelliInstagramMessage>;
   statuses?: Array<Record<string, unknown>>;
+}
+
+/** Unwraps `{ body }` / plain-string text, from either nesting level. */
+function readText(value: { body?: string } | string | undefined): string {
+  if (typeof value === "string") return value;
+  return value?.body ?? "";
 }
 
 interface MessageAttachment {
@@ -207,22 +228,40 @@ async function processIntelliInstagramEvent(
 
   let inserted = 0;
   let deduped = 0;
+  let empty = 0;
 
   for (const msg of messages) {
     // sender.id is the IGSID — the only handle Meta gives us to reply with.
     const igsid = msg.sender?.id;
     if (!igsid) continue;
 
-    const name = msg.sender?.username || igsid;
+    const name =
+      msg.sender?.username ||
+      msg.sender?.name ||
+      body.contact?.username ||
+      body.contact?.name ||
+      igsid;
 
-    let content =
-      typeof msg.text === "string" ? msg.text : msg.text?.body || "";
+    // Nested shape first, flat as fallback. `mid` is the dedup key — losing it
+    // means every Intelli redelivery lands as a fresh duplicate.
+    const inner = msg.message;
+    const externalId = inner?.mid || msg.id;
+
+    let content = readText(inner?.text) || readText(msg.text);
     const attachments: MessageAttachment[] = [];
-    for (const att of msg.attachments || []) {
+    for (const att of inner?.attachments || msg.attachments || []) {
       attachments.push({ type: att.type || "file" });
-      if (!content) content = `[${att.type === "image" ? "Image" : att.type === "video" ? "Vidéo" : att.type || "Pièce jointe"}]`;
+      if (!content)
+        content = `[${att.type === "image" ? "Image" : att.type === "video" ? "Vidéo" : att.type || "Pièce jointe"}]`;
     }
-    if (!content) content = msg.type ? `[${msg.type}]` : "";
+    if (!content && msg.type) content = `[${msg.type}]`;
+
+    // A message with neither text nor attachment is not a message. Inserting it
+    // anyway is what filled the inbox with blank rows.
+    if (!content && attachments.length === 0) {
+      empty++;
+      continue;
+    }
 
     const customerId = await findOrCreateCustomer(
       supabase,
@@ -241,12 +280,12 @@ async function processIntelliInstagramEvent(
       igsid
     );
 
-    if (msg.id) {
+    if (externalId) {
       const { data: dupe } = await supabase
         .from("messages")
         .select("id")
         .eq("conversation_id", conversationId)
-        .eq("external_message_id", msg.id)
+        .eq("external_message_id", externalId)
         .maybeSingle();
       if (dupe) {
         deduped++;
@@ -260,7 +299,7 @@ async function processIntelliInstagramEvent(
       conversationId,
       content,
       name,
-      msg.id,
+      externalId,
       attachments.length > 0 ? attachments : undefined
     );
     inserted++;
@@ -268,6 +307,13 @@ async function processIntelliInstagramEvent(
 
   if (inserted === 0 && deduped > 0) {
     return ignored(`${deduped} message(s) déjà reçus (redélivrance)`, {
+      organizationId: channel.organization_id,
+      eventType,
+    });
+  }
+
+  if (inserted === 0 && empty > 0) {
+    return ignored(`${empty} message(s) sans texte ni pièce jointe`, {
       organizationId: channel.organization_id,
       eventType,
     });
