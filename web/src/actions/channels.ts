@@ -116,24 +116,34 @@ export async function testWhatsAppConnectionAction(channelId: string) {
 
   if (!channel) return { error: "Canal introuvable" };
 
-  const { phone_number_id, access_token } = channel.credentials as any;
+  // Asked through the relay rather than Graph: we hold no Meta token, and the
+  // relay is the only thing that knows whether this client is really live.
+  const clientRef = (channel.credentials as any)?.client_ref;
+
+  if (!clientRef) {
+    return {
+      error:
+        "Ce canal n'est pas relié à Intelli. Reconnectez WhatsApp pour le réactiver.",
+    };
+  }
 
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${phone_number_id}?access_token=${access_token}`
-    );
-    const data = await res.json();
+    const { getClient } = await import("@/lib/intelli/partner-client");
+    const client = await getClient(clientRef);
 
-    if (!res.ok) {
-      return { error: data.error?.message || "Erreur API Meta" };
-    }
+    if (!client) return { error: "Client introuvable côté Intelli." };
 
     return {
       success: true,
-      phoneNumber: data.display_phone_number || data.verified_name,
+      phoneNumber:
+        (client as { phone_number?: string; display_name?: string; name?: string })
+          .phone_number ||
+        (client as { display_name?: string }).display_name ||
+        (client as { name?: string }).name ||
+        clientRef,
     };
   } catch (err: any) {
-    return { error: err.message || "Erreur réseau" };
+    return { error: err?.message || "Erreur réseau" };
   }
 }
 

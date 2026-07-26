@@ -157,7 +157,7 @@ export default async function SettingsPage({
                                     {t('messagingChannelsDesc')}
                                 </p>
                             </div>
-                            <ChannelSettings orgId={org.id} />
+                            <ChannelSettings />
                         </TabsContent>
 
                         {/* ── Membres ──────────────────────────────────── */}

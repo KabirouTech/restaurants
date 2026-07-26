@@ -9,7 +9,12 @@ export const WEBHOOK_STATUSES = [
 ] as const;
 export type WebhookStatus = (typeof WEBHOOK_STATUSES)[number];
 
-export const WEBHOOK_PROVIDERS = ["intelli", "whatsapp", "instagram"] as const;
+/**
+ * Intelli is the only ingress. `whatsapp` and `instagram` still appear on rows
+ * recorded before that, so they stay renderable — they just aren't live
+ * endpoints any more.
+ */
+export const LIVE_WEBHOOK_PROVIDERS = ["intelli"] as const;
 
 /** Time windows offered in the header, with the chart bucket each implies. */
 export const RANGES = {
