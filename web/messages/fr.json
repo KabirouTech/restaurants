@@ -823,7 +823,9 @@
       "attachmentTooLong": "Fichier trop volumineux",
       "uploading": "Envoi du fichier…",
       "document": "Document",
-      "audioMessage": "Message audio"
+      "audioMessage": "Message audio",
+      "imageAttachment": "Image",
+      "videoAttachment": "Vidéo"
     },
     "settings": {
       "title": "Paramètres",
