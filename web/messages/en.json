@@ -814,7 +814,16 @@
       "noMessages": "No messages in this conversation.",
       "startConversation": "Write the first message below.",
       "sending": "Sending…",
-      "sent": "Sent"
+      "sent": "Sent",
+      "unreadSummary": "{count} unread message(s)",
+      "allRead": "All caught up",
+      "attachFile": "Attach a file",
+      "removeAttachment": "Remove",
+      "charactersLeft": "{count} characters left",
+      "attachmentTooLong": "File too large",
+      "uploading": "Uploading…",
+      "document": "Document",
+      "audioMessage": "Voice message"
     },
     "settings": {
       "title": "Settings",

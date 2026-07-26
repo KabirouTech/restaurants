@@ -6,14 +6,14 @@ import { createClient } from "@/utils/supabase/client";
 import { format, isSameDay, isToday, isYesterday } from "date-fns";
 import { fr as frLocale } from "date-fns/locale";
 import { useLocale } from "next-intl";
-import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft, Check, Loader2 } from "lucide-react";
+import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft, Check, Loader2, FileText, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { fetchMessagesAction, sendMessageAction } from "@/actions/messages";
+import { fetchMessagesAction, sendMessageAction, uploadMessageAttachmentAction } from "@/actions/messages";
 
 interface ChatWindowProps {
     conversationId: string;
@@ -35,14 +35,36 @@ const platformLabelKeys: Record<string, string> = {
     email: "Email",
 };
 
+interface MessageAttachment {
+    url?: string;
+    type?: string;
+    filename?: string;
+    mime_type?: string;
+    media_id?: string;
+}
+
 interface ChatMessage {
     id: string;
     content: string;
     sender_type: string;
     created_at: string;
+    attachments?: MessageAttachment[] | null;
     /** Optimistic message awaiting the server round-trip. */
     pending?: boolean;
 }
+
+/** Draft attachment: local preview first, `url` once the upload lands. */
+interface DraftAttachment {
+    id: string;
+    file: File;
+    previewUrl: string;
+    uploading: boolean;
+    url?: string;
+    type?: "image" | "document" | "audio" | "video";
+}
+
+/** Intelli rejects Instagram text over this — enforced server-side too. */
+const INSTAGRAM_LIMIT = 1000;
 
 /** Consecutive messages from the same side within this window share a bubble stack. */
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
@@ -103,13 +125,26 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
+    const [drafts, setDrafts] = useState<DraftAttachment[]>([]);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const platform = channelPlatform ? platformConfig[channelPlatform] : null;
     const PlatformIcon = platform?.icon || MessageCircle;
 
     const dateOpts = locale === "fr" ? { locale: frLocale } : undefined;
     const rows = useMemo(() => buildRows(messages), [messages]);
+
+    const uploading = drafts.some((d) => d.uploading);
+    // Instagram is the only channel with a hard text cap, so only it gets a counter.
+    const limit = channelPlatform === "instagram" ? INSTAGRAM_LIMIT : null;
+    const remaining = limit ? limit - newMessage.length : null;
+    const overLimit = remaining !== null && remaining < 0;
+    const canSend =
+        (newMessage.trim().length > 0 || drafts.some((d) => !d.uploading && d.url)) &&
+        !sending &&
+        !uploading &&
+        !overLimit;
 
     const dayLabel = (date: Date) => {
         if (isToday(date)) return t('today');
@@ -186,12 +221,63 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    const handleFilesPicked = async (files: FileList | null) => {
+        if (!files?.length) return;
+
+        for (const file of Array.from(files)) {
+            const id = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            const previewUrl = URL.createObjectURL(file);
+            setDrafts((prev) => [...prev, { id, file, previewUrl, uploading: true }]);
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("conversationId", conversationId);
+
+            const result = await uploadMessageAttachmentAction(formData);
+
+            if (result.error || !result.attachment) {
+                toast.error(result.error || tc('error'));
+                URL.revokeObjectURL(previewUrl);
+                setDrafts((prev) => prev.filter((d) => d.id !== id));
+                continue;
+            }
+
+            setDrafts((prev) =>
+                prev.map((d) =>
+                    d.id === id
+                        ? { ...d, uploading: false, url: result.attachment.url, type: result.attachment.type }
+                        : d
+                )
+            );
+        }
+
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const removeDraft = (id: string) => {
+        setDrafts((prev) => {
+            const target = prev.find((d) => d.id === id);
+            if (target) URL.revokeObjectURL(target.previewUrl);
+            return prev.filter((d) => d.id !== id);
+        });
+    };
+
     const handleSend = async () => {
-        if (!newMessage.trim() || sending) return;
+        const ready = drafts.filter((d) => !d.uploading && d.url);
+        if ((!newMessage.trim() && ready.length === 0) || sending || uploading || overLimit) return;
         setSending(true);
 
         const content = newMessage.trim();
+        const outgoing = ready.map((d) => ({
+            url: d.url!,
+            type: d.type ?? "document",
+            filename: d.file.name,
+            mime_type: d.file.type || undefined,
+        }));
+
         setNewMessage("");
+        drafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
+        setDrafts([]);
 
         // Show the bubble immediately, reconcile once the server answers — the
         // send round-trip goes out to Meta and is far too slow to stare at an
@@ -199,10 +285,17 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
         const tempId = `temp-${Date.now()}`;
         setMessages((prev) => [
             ...prev,
-            { id: tempId, content, sender_type: "agent", created_at: new Date().toISOString(), pending: true },
+            {
+                id: tempId,
+                content,
+                sender_type: "agent",
+                created_at: new Date().toISOString(),
+                attachments: outgoing,
+                pending: true,
+            },
         ]);
 
-        const result = await sendMessageAction(conversationId, content);
+        const result = await sendMessageAction(conversationId, content, outgoing);
 
         setMessages((prev) => {
             const withoutTemp = prev.filter((m) => m.id !== tempId);
@@ -217,6 +310,10 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
         if (result.error) {
             toast.error(result.error);
             setNewMessage(content);
+        } else if (result.deliveryError) {
+            // Stored locally but the channel refused it — the checkmark alone
+            // would be a lie.
+            toast.error(result.deliveryError);
         }
 
         setSending(false);
@@ -338,6 +435,23 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
                                                     {/* Time sits in flow beside the text rather than absolutely
                                                         positioned over it — that overlap is what made short
                                                         messages unreadable. */}
+                                                    {/* Inbound media has been stored in `attachments` all
+                                                        along and was never rendered — images showed as an
+                                                        empty bubble at best. */}
+                                                    {msg.attachments && msg.attachments.length > 0 && (
+                                                        <div className={cn("flex flex-col gap-1.5", msg.content && "mb-1.5")}>
+                                                            {msg.attachments.map((att, i) => (
+                                                                <AttachmentPreview
+                                                                    key={`${msg.id}-att-${i}`}
+                                                                    attachment={att}
+                                                                    outgoing={outgoing}
+                                                                    documentLabel={t('document')}
+                                                                    audioLabel={t('audioMessage')}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+
                                                     <div className="flex items-end gap-2">
                                                         <span className="whitespace-pre-wrap break-words min-w-0">
                                                             {msg.content}
@@ -371,39 +485,194 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
                 <div ref={bottomRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 bg-card border-t border-border">
-                <div className="flex items-end gap-2 bg-muted/30 p-2 rounded-xl border border-border focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary shrink-0 rounded-lg">
-                        <Paperclip className="h-5 w-5" />
-                    </Button>
-                    <Textarea
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSend();
-                            }
-                        }}
-                        placeholder={t('writeMessage')}
-                        className="min-h-[40px] max-h-[120px] bg-transparent border-none focus-visible:ring-0 resize-none py-3 text-sm"
+            {/* Composer */}
+            <div className="p-3 md:p-4 bg-card border-t border-border shrink-0">
+                <div className="mx-auto w-full max-w-3xl">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,audio/*,video/mp4"
+                        className="hidden"
+                        onChange={(e) => void handleFilesPicked(e.target.files)}
                     />
-                    <Button
-                        onClick={handleSend}
-                        disabled={!newMessage.trim() || sending}
-                        size="icon"
-                        className="h-10 w-10 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0 rounded-lg shadow-lg shadow-primary/20 transition-all disabled:opacity-50 disabled:shadow-none"
+
+                    {/* Staged attachments, removable before sending. */}
+                    {drafts.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {drafts.map((draft) => {
+                                const isImage = draft.file.type.startsWith("image/");
+                                return (
+                                    <div
+                                        key={draft.id}
+                                        className="relative group rounded-lg border border-border bg-muted/40 overflow-hidden"
+                                    >
+                                        {isImage ? (
+                                            <img
+                                                src={draft.previewUrl}
+                                                alt={draft.file.name}
+                                                className="h-16 w-16 object-cover"
+                                            />
+                                        ) : (
+                                            <div className="h-16 w-32 flex items-center gap-2 px-2">
+                                                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                                <span className="text-[11px] truncate">{draft.file.name}</span>
+                                            </div>
+                                        )}
+
+                                        {draft.uploading && (
+                                            <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                            </div>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => removeDraft(draft.id)}
+                                            aria-label={t('removeAttachment')}
+                                            className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-background/90 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    <div
+                        className={cn(
+                            "flex items-end gap-2 bg-muted/30 p-2 rounded-xl border transition-all focus-within:ring-2 focus-within:ring-primary/20",
+                            overLimit ? "border-destructive" : "border-border"
+                        )}
                     >
-                        <Send className="h-5 w-5 ml-0.5" />
-                    </Button>
-                </div>
-                <div className="text-center mt-2">
-                    <p className="text-[10px] text-muted-foreground">
-                        {t('enterToSend')}
-                    </p>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={sending}
+                            aria-label={t('attachFile')}
+                            title={t('attachFile')}
+                            className="h-10 w-10 text-muted-foreground hover:text-primary shrink-0 rounded-lg"
+                        >
+                            <Paperclip className="h-5 w-5" />
+                        </Button>
+
+                        <Textarea
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
+                            placeholder={t('writeMessage')}
+                            className="min-h-[40px] max-h-[120px] bg-transparent border-none focus-visible:ring-0 resize-none py-3 text-sm"
+                        />
+
+                        <Button
+                            onClick={handleSend}
+                            disabled={!canSend}
+                            size="icon"
+                            aria-label={t('title')}
+                            className="h-10 w-10 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0 rounded-lg shadow-lg shadow-primary/20 transition-all disabled:opacity-50 disabled:shadow-none"
+                        >
+                            {sending ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <Send className="h-5 w-5 ml-0.5" />
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 mt-2 px-1">
+                        <p className="text-[10px] text-muted-foreground">
+                            {uploading ? t('uploading') : t('enterToSend')}
+                        </p>
+                        {/* Only Instagram caps text, and the cap is enforced server-side —
+                            without this the rejection arrived after hitting send. */}
+                        {remaining !== null && newMessage.length > INSTAGRAM_LIMIT * 0.8 && (
+                            <p
+                                className={cn(
+                                    "text-[10px] tabular-nums shrink-0",
+                                    overLimit ? "text-destructive font-medium" : "text-muted-foreground"
+                                )}
+                            >
+                                {t('charactersLeft', { count: remaining })}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
+    );
+}
+
+/** Renders one stored attachment: images inline, everything else as a link chip. */
+function AttachmentPreview({
+    attachment,
+    outgoing,
+    documentLabel,
+    audioLabel,
+}: {
+    attachment: MessageAttachment;
+    outgoing: boolean;
+    documentLabel: string;
+    audioLabel: string;
+}) {
+    const url = attachment.url;
+    const kind = attachment.type || "";
+    const isImage = kind === "image" || attachment.mime_type?.startsWith("image/");
+    const isAudio = kind === "audio" || attachment.mime_type?.startsWith("audio/");
+
+    // Media relayed by Meta arrives as an id we hold no download token for —
+    // say so rather than rendering a broken image.
+    if (!url) {
+        return (
+            <div
+                className={cn(
+                    "flex items-center gap-2 text-xs rounded-lg px-2 py-1.5",
+                    outgoing ? "bg-primary-foreground/10" : "bg-muted"
+                )}
+            >
+                <FileText className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                    {attachment.filename || (isAudio ? audioLabel : documentLabel)}
+                </span>
+            </div>
+        );
+    }
+
+    if (isImage) {
+        return (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                <img
+                    src={url}
+                    alt={attachment.filename || ""}
+                    className="rounded-lg max-h-64 w-auto object-cover border border-border/50"
+                />
+            </a>
+        );
+    }
+
+    if (isAudio) {
+        return <audio controls src={url} className="max-w-[240px]" />;
+    }
+
+    return (
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+                "flex items-center gap-2 text-xs rounded-lg px-2 py-1.5 underline-offset-2 hover:underline",
+                outgoing ? "bg-primary-foreground/10" : "bg-muted"
+            )}
+        >
+            <FileText className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{attachment.filename || documentLabel}</span>
+        </a>
     );
 }

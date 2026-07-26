@@ -5,6 +5,7 @@ import {
   insertIncomingMessage,
 } from "./conversation-helpers";
 import { ignored, processed, type WebhookResult } from "@/lib/webhooks/recorder";
+import type { OutgoingMedia } from "./index";
 
 export async function processWhatsAppWebhook(
   supabase: SupabaseClient,
@@ -131,8 +132,11 @@ export async function processWhatsAppWebhook(
 export async function sendWhatsAppMessage(
   credentials: any,
   recipientPhone: string,
-  content: string
+  content: string,
+  attachments: OutgoingMedia[] = []
 ): Promise<{ externalMessageId?: string; error?: string }> {
+  const media = attachments[0];
+
   // Channels onboarded through Intelli's embedded signup have no Meta token of
   // their own — relay the send through the Partner API instead of Graph.
   if (credentials?.via === "intelli") {
@@ -142,6 +146,9 @@ export async function sendWhatsAppMessage(
         clientRef: credentials.client_ref,
         to: recipientPhone,
         text: content,
+        media: media
+          ? { type: media.type, url: media.url, filename: media.filename }
+          : undefined,
       });
       return { externalMessageId: result.message_id ?? undefined };
     } catch (err: any) {
@@ -163,8 +170,18 @@ export async function sendWhatsAppMessage(
         body: JSON.stringify({
           messaging_product: "whatsapp",
           to: recipientPhone,
-          type: "text",
-          text: { body: content },
+          ...(media
+            ? {
+                type: media.type,
+                [media.type]: {
+                  link: media.url,
+                  ...(content && media.type !== "audio" ? { caption: content } : {}),
+                  ...(media.type === "document" && media.filename
+                    ? { filename: media.filename }
+                    : {}),
+                },
+              }
+            : { type: "text", text: { body: content } }),
         }),
       }
     );

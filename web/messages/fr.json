@@ -814,7 +814,16 @@
       "noMessages": "Aucun message dans cette conversation.",
       "startConversation": "Écrivez le premier message ci-dessous.",
       "sending": "Envoi…",
-      "sent": "Envoyé"
+      "sent": "Envoyé",
+      "unreadSummary": "{count} message(s) non lu(s)",
+      "allRead": "Tout est lu",
+      "attachFile": "Joindre un fichier",
+      "removeAttachment": "Retirer",
+      "charactersLeft": "{count} caractères restants",
+      "attachmentTooLong": "Fichier trop volumineux",
+      "uploading": "Envoi du fichier…",
+      "document": "Document",
+      "audioMessage": "Message audio"
     },
     "settings": {
       "title": "Paramètres",

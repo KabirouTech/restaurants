@@ -6,6 +6,7 @@ import { PlanGate } from "@/components/dashboard/PlanGate";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import { MessageSquare } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { deriveWhatsAppAccess } from "@/lib/whatsapp/access";
@@ -92,10 +93,32 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
     const selectedConversationId = searchParams.conversationId;
     const selectedConversation = formattedConversations.find((c: any) => c.id === selectedConversationId);
 
+    const unreadTotal = (formattedConversations ?? []).reduce(
+        (sum: number, c: { unread_count?: number }) => sum + (c.unread_count || 0),
+        0
+    );
+
     return (
-        <>
-        {access.state === "trial" && <WhatsAppTrialBanner daysLeft={access.daysLeft} />}
-        <div className="flex h-[calc(100dvh-56px)] md:h-[calc(100vh-theme(spacing.2))] md:max-h-[800px] border-0 md:border md:border-border md:rounded-xl bg-background overflow-hidden relative md:shadow-sm">
+        <div className="flex flex-col h-[100dvh] md:h-screen overflow-hidden bg-background">
+            {/* Same header shell as every other dashboard page — the inbox was the
+                only one that opened straight into its content. */}
+            <header className="hidden md:flex items-center justify-between px-6 py-4 border-b border-border bg-card shadow-sm shrink-0">
+                <div className="flex items-center gap-3">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    <div>
+                        <h1 className="text-xl font-bold font-serif text-foreground">{t('title')}</h1>
+                        <p className="text-sm text-muted-foreground">
+                            {unreadTotal > 0
+                                ? t('unreadSummary', { count: unreadTotal })
+                                : t('allRead')}
+                        </p>
+                    </div>
+                </div>
+            </header>
+
+            {access.state === "trial" && <WhatsAppTrialBanner daysLeft={access.daysLeft} />}
+
+            <div className="flex flex-1 min-h-0 overflow-hidden relative bg-background">
 
             {/* Sidebar List */}
             <InboxSidebar
@@ -133,7 +156,7 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
                 )}
             </div>
 
+            </div>
         </div>
-        </>
     );
 }
