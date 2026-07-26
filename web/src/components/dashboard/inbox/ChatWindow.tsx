@@ -235,7 +235,8 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
 
             const result = await uploadMessageAttachmentAction(formData);
 
-            if (result.error || !result.attachment) {
+            const uploaded = result.attachment;
+            if (result.error || !uploaded) {
                 toast.error(result.error || tc('error'));
                 URL.revokeObjectURL(previewUrl);
                 setDrafts((prev) => prev.filter((d) => d.id !== id));
@@ -245,7 +246,7 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
             setDrafts((prev) =>
                 prev.map((d) =>
                     d.id === id
-                        ? { ...d, uploading: false, url: result.attachment.url, type: result.attachment.type }
+                        ? { ...d, uploading: false, url: uploaded.url, type: uploaded.type }
                         : d
                 )
             );
@@ -297,12 +298,13 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
 
         const result = await sendMessageAction(conversationId, content, outgoing);
 
+        const sent = result.message;
         setMessages((prev) => {
             const withoutTemp = prev.filter((m) => m.id !== tempId);
-            if (!result.message) return withoutTemp;
+            if (!sent) return withoutTemp;
             // Realtime may have delivered it first.
-            if (withoutTemp.some((m) => m.id === result.message.id)) return withoutTemp;
-            return [...withoutTemp, result.message];
+            if (withoutTemp.some((m) => m.id === sent.id)) return withoutTemp;
+            return [...withoutTemp, sent];
         });
 
         // Swallowing this is why a blocked send (expired trial) looked like the
@@ -314,6 +316,10 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
             // Stored locally but the channel refused it — the checkmark alone
             // would be a lie.
             toast.error(result.deliveryError);
+        } else if (result.deliveryWarnings?.length) {
+            // Delivered, but something was adjusted along the way (a caption
+            // sent as its own message, for instance). Worth saying, not an error.
+            result.deliveryWarnings.forEach((warning) => toast.warning(warning));
         }
 
         setSending(false);

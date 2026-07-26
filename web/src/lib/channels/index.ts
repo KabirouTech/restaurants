@@ -5,6 +5,8 @@ import { sendEmailReply } from "./email";
 interface SendResult {
   externalMessageId?: string;
   error?: string;
+  /** Non-fatal notices — the send landed but something was adjusted or dropped. */
+  warnings?: string[];
 }
 
 /** Media the composer attached, already uploaded and publicly reachable. */
