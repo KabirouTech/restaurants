@@ -5,6 +5,7 @@ import {
   insertIncomingMessage,
 } from "@/lib/channels/conversation-helpers";
 import { ignored, processed, type WebhookResult } from "@/lib/webhooks/recorder";
+import { ingestFromMediaId, ingestFromUrl } from "@/lib/channels/media-ingest";
 
 /**
  * Shape of the normalized payload Intelli forwards to a partner webhook.
@@ -70,10 +71,16 @@ function readText(value: { body?: string } | string | undefined): string {
 }
 
 interface MessageAttachment {
-  type: string;
+  type?: string;
+  /** Our own copy, once the file has been archived at receipt. */
+  url?: string;
+  /** The short-lived origin URL we copied from (Instagram). */
+  source_url?: string;
   media_id?: string;
   mime_type?: string;
   filename?: string;
+  sha256?: string;
+  ingest_error?: string;
 }
 
 /**
@@ -120,6 +127,14 @@ export async function processIntelliWebhook(
   const contacts = body.contacts || [];
   let inserted = 0;
 
+  const resolveMedia = (
+    mediaId: string | undefined,
+    meta: MessageAttachment
+  ): Promise<MessageAttachment> =>
+    mediaId
+      ? ingestFromMediaId(supabase, channel.organization_id, mediaId, clientRef, meta)
+      : Promise.resolve(meta);
+
   for (const msg of messages) {
     const from = msg.from;
     if (!from) continue;
@@ -134,26 +149,31 @@ export async function processIntelliWebhook(
       case "text":
         content = msg.text?.body || "";
         break;
+      // WhatsApp gives an id only the relay can resolve, using the client's own
+      // credentials. Resolved here so the bytes are ours once, rather than
+      // re-fetched on every read.
       case "image":
         content = msg.image?.caption || "[Image]";
-        attachments.push({
-          type: "image",
-          media_id: msg.image?.id,
-          mime_type: msg.image?.mime_type,
-        });
+        attachments.push(
+          await resolveMedia(msg.image?.id, {
+            type: "image",
+            mime_type: msg.image?.mime_type,
+          })
+        );
         break;
       case "document":
         content = msg.document?.caption || msg.document?.filename || "[Document]";
-        attachments.push({
-          type: "document",
-          media_id: msg.document?.id,
-          mime_type: msg.document?.mime_type,
-          filename: msg.document?.filename,
-        });
+        attachments.push(
+          await resolveMedia(msg.document?.id, {
+            type: "document",
+            mime_type: msg.document?.mime_type,
+            filename: msg.document?.filename,
+          })
+        );
         break;
       case "audio":
         content = "[Audio]";
-        attachments.push({ type: "audio", media_id: msg.audio?.id });
+        attachments.push(await resolveMedia(msg.audio?.id, { type: "audio" }));
         break;
       default:
         content = `[${msg.type}]`;
@@ -249,8 +269,24 @@ async function processIntelliInstagramEvent(
 
     let content = readText(inner?.text) || readText(msg.text);
     const attachments: MessageAttachment[] = [];
+
     for (const att of inner?.attachments || msg.attachments || []) {
-      attachments.push({ type: att.type || "file" });
+      // Instagram carries the file as a lookaside URL on the payload — there is
+      // no media id to resolve for this channel. The URL expires within
+      // minutes, so it is copied into our own bucket here, on arrival, rather
+      // than when someone opens the conversation.
+      const sourceUrl = att.payload?.url || att.url;
+
+      if (sourceUrl) {
+        attachments.push(
+          await ingestFromUrl(supabase, channel.organization_id, sourceUrl, {
+            type: att.type || "file",
+          })
+        );
+      } else {
+        attachments.push({ type: att.type || "file" });
+      }
+
       if (!content)
         content = `[${att.type === "image" ? "Image" : att.type === "video" ? "Vidéo" : att.type || "Pièce jointe"}]`;
     }

@@ -191,6 +191,73 @@ export async function getInstagramClient(
  * Works for both WhatsApp and Instagram clients (Intelli routes by client_ref).
  * Test keys (ik_test_) always dry-run — no real delivery.
  */
+export interface IntelliMediaPayload {
+  bytes: ArrayBuffer;
+  contentType: string;
+  contentLength: number | null;
+  /** Verifiable against the hash carried on the inbound webhook. */
+  sha256: string | null;
+}
+
+/**
+ * Download inbound WhatsApp media through the partner relay.
+ *
+ * `GET /media/<id>?client_ref=<ref>` performs the two-step Graph exchange with
+ * the client's own credentials and streams the bytes back, so we never handle
+ * a Meta token. `client_ref` is also the authorization: it selects whose
+ * credentials fetch the file and must belong to the calling partner. The call
+ * is not billed — the message was already counted on the way in.
+ *
+ * Instagram has no media id to resolve: the relay answers
+ * `channel_media_inline`, meaning the lookaside URL on the payload is the file.
+ * Callers must read `attachments[].payload.url` for that channel instead.
+ */
+export async function fetchIntelliMedia(params: {
+  mediaId: string;
+  clientRef: string;
+  signal?: AbortSignal;
+}): Promise<IntelliMediaPayload> {
+  const url = `${apiBase()}/media/${encodeURIComponent(params.mediaId)}?client_ref=${encodeURIComponent(params.clientRef)}`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${apiKey()}` },
+    cache: "no-store",
+    signal: params.signal,
+  });
+
+  if (!res.ok) {
+    // Errors stay JSON even on this binary endpoint.
+    let code: string | undefined;
+    let message = `Intelli media error (${res.status})`;
+    try {
+      const parsed = (await res.json()) as {
+        error?: { code?: string; message?: string } | string;
+        code?: string;
+        detail?: string;
+      };
+      code =
+        (typeof parsed?.error === "object" && parsed.error?.code) || parsed?.code || undefined;
+      message =
+        (typeof parsed?.error === "object" && parsed.error?.message) ||
+        (typeof parsed?.error === "string" && parsed.error) ||
+        parsed?.detail ||
+        message;
+    } catch {
+      /* keep the status-derived message */
+    }
+    throw new IntelliAPIError(message, res.status, code);
+  }
+
+  const lengthHeader = res.headers.get("content-length");
+
+  return {
+    bytes: await res.arrayBuffer(),
+    contentType: res.headers.get("content-type") || "application/octet-stream",
+    contentLength: lengthHeader ? Number(lengthHeader) : null,
+    sha256: res.headers.get("x-media-sha256"),
+  };
+}
+
 export type IntelliMediaType = "image" | "document" | "audio" | "video";
 
 export interface IntelliSendResponse {
