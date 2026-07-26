@@ -5,6 +5,7 @@ import {
   insertIncomingMessage,
 } from "./conversation-helpers";
 import { ignored, processed, type WebhookResult } from "@/lib/webhooks/recorder";
+import type { OutgoingMedia } from "./index";
 
 export async function processInstagramWebhook(
   supabase: SupabaseClient,
@@ -103,8 +104,11 @@ export async function processInstagramWebhook(
 export async function sendInstagramMessage(
   credentials: any,
   recipientId: string,
-  content: string
+  content: string,
+  attachments: OutgoingMedia[] = []
 ): Promise<{ externalMessageId?: string; error?: string }> {
+  const media = attachments[0];
+
   // Channels onboarded through Intelli's hosted connect have no Meta token of
   // their own — relay the send through the Partner API instead of Graph.
   // recipientId must be the IGSID from an inbound webhook (sender.id); Meta
@@ -124,6 +128,9 @@ export async function sendInstagramMessage(
         clientRef: credentials.client_ref,
         to: recipientId,
         text: content,
+        media: media
+          ? { type: media.type, url: media.url, filename: media.filename }
+          : undefined,
       });
       return { externalMessageId: result.message_id ?? undefined };
     } catch (err) {
@@ -149,7 +156,10 @@ export async function sendInstagramMessage(
         },
         body: JSON.stringify({
           recipient: { id: recipientId },
-          message: { text: content },
+          // Graph takes either a text message or an attachment, never both.
+          message: media
+            ? { attachment: { type: media.type, payload: { url: media.url, is_reusable: true } } }
+            : { text: content },
         }),
       }
     );

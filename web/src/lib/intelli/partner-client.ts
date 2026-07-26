@@ -191,20 +191,43 @@ export async function getInstagramClient(
  * Works for both WhatsApp and Instagram clients (Intelli routes by client_ref).
  * Test keys (ik_test_) always dry-run — no real delivery.
  */
+export type IntelliMediaType = "image" | "document" | "audio" | "video";
+
+/**
+ * Send through the Intelli Partner relay.
+ *
+ * With `media`, the body follows the same Cloud API envelope Intelli already
+ * proxies for text — `type` naming a media object carrying a public `link`
+ * (plus `caption`/`filename` where the API accepts them). If the relay turns
+ * out not to accept media, it surfaces as an IntelliAPIError the composer
+ * reports rather than a silent no-op.
+ */
 export async function intelliSendMessage(params: {
   clientRef: string;
   to: string;
   text: string;
+  media?: { type: IntelliMediaType; url: string; filename?: string };
 }): Promise<{ success: boolean; message_id: string | null; dry_run?: boolean }> {
-  return intelliFetch("/messages/send", {
-    method: "POST",
-    body: {
-      client_ref: params.clientRef,
-      to: params.to,
-      type: "text",
-      text: { body: params.text },
-    },
-  });
+  const body: Record<string, unknown> = {
+    client_ref: params.clientRef,
+    to: params.to,
+  };
+
+  if (params.media) {
+    const { type, url, filename } = params.media;
+    body.type = type;
+    body[type] = {
+      link: url,
+      // Only image/video/document carry a caption; audio takes neither.
+      ...(params.text && type !== "audio" ? { caption: params.text } : {}),
+      ...(type === "document" && filename ? { filename } : {}),
+    };
+  } else {
+    body.type = "text";
+    body.text = { body: params.text };
+  }
+
+  return intelliFetch("/messages/send", { method: "POST", body });
 }
 
 /**
