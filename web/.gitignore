@@ -1,7 +1,15 @@
 node_modules
 .next
 .DS_Store
-.env.local
+
+# Every env file, not just .env.local — `.env` holds the Supabase service role
+# key, the Clerk secret and the Intelli partner key.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+.firebase/
 scripts/
 supabase/.temp/
 

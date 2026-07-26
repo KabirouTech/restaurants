@@ -1,0 +1,21 @@
+# Secrets — never commit these.
+# `web/.gitignore` only covered `.env.local`, so `web/.env` (service role key,
+# Clerk secret, Intelli partner key, SMTP credentials) was one `git add -A`
+# away from being published.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Downloaded OAuth client credentials (Google, Meta, …).
+client_secret_*.json
+*-credentials.json
+service-account*.json
+
+# Keys and certificates.
+*.pem
+*.p12
+*.key
+
+# OS noise.
+.DS_Store
