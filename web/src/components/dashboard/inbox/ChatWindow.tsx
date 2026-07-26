@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { format } from "date-fns";
-import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft } from "lucide-react";
+import { format, isSameDay, isToday, isYesterday } from "date-fns";
+import { fr as frLocale } from "date-fns/locale";
+import { useLocale } from "next-intl";
+import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft, Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,19 +35,87 @@ const platformLabelKeys: Record<string, string> = {
     email: "Email",
 };
 
+interface ChatMessage {
+    id: string;
+    content: string;
+    sender_type: string;
+    created_at: string;
+    /** Optimistic message awaiting the server round-trip. */
+    pending?: boolean;
+}
+
+/** Consecutive messages from the same side within this window share a bubble stack. */
+const GROUP_WINDOW_MS = 5 * 60 * 1000;
+
+type ChatRow =
+    | { kind: "date"; key: string; date: Date }
+    | { kind: "system"; key: string; message: ChatMessage }
+    | { kind: "group"; key: string; outgoing: boolean; messages: ChatMessage[] };
+
+/**
+ * Flattens the message list into render rows: a separator whenever the day
+ * changes, and one group per run of same-side messages sent close together.
+ * Grouping is what stops six rapid "test" messages from reading as six
+ * disconnected blocks each with its own timestamp.
+ */
+function buildRows(messages: ChatMessage[]): ChatRow[] {
+    const rows: ChatRow[] = [];
+    let previousDate: Date | null = null;
+
+    for (const message of messages) {
+        const date = new Date(message.created_at);
+
+        if (!previousDate || !isSameDay(date, previousDate)) {
+            rows.push({ kind: "date", key: `date-${message.id}`, date });
+            previousDate = date;
+        }
+
+        if (message.sender_type === "system") {
+            rows.push({ kind: "system", key: message.id, message });
+            continue;
+        }
+
+        const outgoing = message.sender_type === "agent";
+        const last = rows[rows.length - 1];
+
+        if (last?.kind === "group" && last.outgoing === outgoing) {
+            const previous = last.messages[last.messages.length - 1];
+            const gap = date.getTime() - new Date(previous.created_at).getTime();
+            if (gap >= 0 && gap <= GROUP_WINDOW_MS) {
+                last.messages.push(message);
+                continue;
+            }
+        }
+
+        rows.push({ kind: "group", key: message.id, outgoing, messages: [message] });
+    }
+
+    return rows;
+}
+
 export function ChatWindow({ conversationId, customerName, customerAvatar, channelPlatform }: ChatWindowProps) {
     const t = useTranslations("dashboard.inbox");
     const tc = useTranslations("common");
+    const locale = useLocale();
     const supabase = createClient();
     const router = useRouter();
     const pathname = usePathname();
-    const [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
 
     const platform = channelPlatform ? platformConfig[channelPlatform] : null;
     const PlatformIcon = platform?.icon || MessageCircle;
+
+    const dateOpts = locale === "fr" ? { locale: frLocale } : undefined;
+    const rows = useMemo(() => buildRows(messages), [messages]);
+
+    const dayLabel = (date: Date) => {
+        if (isToday(date)) return t('today');
+        if (isYesterday(date)) return t('yesterday');
+        return format(date, "d MMMM yyyy", dateOpts);
+    };
 
     useEffect(() => {
         // Fetch existing messages via server action
@@ -93,10 +164,11 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
                         filter: `conversation_id=eq.${conversationId}`
                     },
                     (payload) => {
+                        const incoming = payload.new as ChatMessage;
                         setMessages((prev) => {
                             // Avoid duplicates (from optimistic update)
-                            if (prev.some(m => m.id === payload.new.id)) return prev;
-                            return [...prev, payload.new];
+                            if (prev.some(m => m.id === incoming.id)) return prev;
+                            return [...prev, incoming];
                         });
                     }
                 )
@@ -121,14 +193,30 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
         const content = newMessage.trim();
         setNewMessage("");
 
+        // Show the bubble immediately, reconcile once the server answers — the
+        // send round-trip goes out to Meta and is far too slow to stare at an
+        // empty composer.
+        const tempId = `temp-${Date.now()}`;
+        setMessages((prev) => [
+            ...prev,
+            { id: tempId, content, sender_type: "agent", created_at: new Date().toISOString(), pending: true },
+        ]);
+
         const result = await sendMessageAction(conversationId, content);
 
-        if (result.message) {
-            // Add message if not already added by realtime
-            setMessages((prev) => {
-                if (prev.some(m => m.id === result.message.id)) return prev;
-                return [...prev, result.message];
-            });
+        setMessages((prev) => {
+            const withoutTemp = prev.filter((m) => m.id !== tempId);
+            if (!result.message) return withoutTemp;
+            // Realtime may have delivered it first.
+            if (withoutTemp.some((m) => m.id === result.message.id)) return withoutTemp;
+            return [...withoutTemp, result.message];
+        });
+
+        // Swallowing this is why a blocked send (expired trial) looked like the
+        // message had simply vanished.
+        if (result.error) {
+            toast.error(result.error);
+            setNewMessage(content);
         }
 
         setSending(false);
@@ -178,48 +266,108 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/5">
-                {messages.map((msg) => {
-                    const isAgent = msg.sender_type === "agent" || msg.sender_type === "system";
-                    const isSystem = msg.sender_type === "system";
+            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 bg-muted/20">
+                {rows.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center gap-1">
+                        <MessageCircle className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                        <p className="text-sm text-muted-foreground">{t('noMessages')}</p>
+                        <p className="text-xs text-muted-foreground/70">{t('startConversation')}</p>
+                    </div>
+                ) : (
+                    <div className="mx-auto w-full max-w-3xl">
+                        {rows.map((row) => {
+                            if (row.kind === "date") {
+                                return (
+                                    <div key={row.key} className="flex justify-center py-4">
+                                        <span className="px-3 py-1 rounded-full bg-background/80 border border-border text-[11px] font-medium text-muted-foreground shadow-sm">
+                                            {dayLabel(row.date)}
+                                        </span>
+                                    </div>
+                                );
+                            }
 
-                    if (isSystem) {
-                        return (
-                            <div key={msg.id} className="flex justify-center my-4">
-                                <span className="bg-muted text-muted-foreground text-xs px-2 py-1 rounded-full">
-                                    {msg.content}
-                                </span>
-                            </div>
-                        );
-                    }
+                            if (row.kind === "system") {
+                                return (
+                                    <div key={row.key} className="flex justify-center py-2">
+                                        <span className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full">
+                                            {row.message.content}
+                                        </span>
+                                    </div>
+                                );
+                            }
 
-                    return (
-                        <div
-                            key={msg.id}
-                            className={cn(
-                                "flex w-full max-w-[80%]",
-                                isAgent ? "ml-auto justify-end" : "mr-auto justify-start"
-                            )}
-                        >
-                            <div
-                                className={cn(
-                                    "p-3 rounded-2xl shadow-sm text-sm relative group",
-                                    isAgent
-                                        ? "bg-primary text-primary-foreground rounded-tr-none"
-                                        : "bg-card border border-border rounded-tl-none"
-                                )}
-                            >
-                                <p>{msg.content}</p>
-                                <span className={cn(
-                                    "text-[10px] absolute bottom-1 right-2 opacity-60",
-                                    isAgent ? "text-primary-foreground" : "text-muted-foreground"
-                                )}>
-                                    {msg.created_at ? format(new Date(msg.created_at), "HH:mm") : ""}
-                                </span>
-                            </div>
-                        </div>
-                    );
-                })}
+                            const { outgoing } = row;
+
+                            return (
+                                <div
+                                    key={row.key}
+                                    className={cn("flex gap-2 pt-3", outgoing ? "justify-end" : "justify-start")}
+                                >
+                                    {/* Avatar anchors the incoming stack; outgoing needs no identity marker. */}
+                                    {!outgoing && (
+                                        <Avatar className="h-7 w-7 shrink-0 self-end mb-0.5 border border-border">
+                                            <AvatarImage src={customerAvatar} />
+                                            <AvatarFallback className="text-[10px]">
+                                                {customerName.substring(0, 2).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    )}
+
+                                    <div
+                                        className={cn(
+                                            "flex flex-col gap-0.5 min-w-0 max-w-[min(80%,34rem)]",
+                                            outgoing && "items-end"
+                                        )}
+                                    >
+                                        {row.messages.map((msg, index) => {
+                                            const isLast = index === row.messages.length - 1;
+                                            return (
+                                                <div
+                                                    key={msg.id}
+                                                    title={format(new Date(msg.created_at), "PPpp", dateOpts)}
+                                                    className={cn(
+                                                        "w-fit max-w-full px-3 py-2 text-sm rounded-2xl transition-opacity",
+                                                        outgoing
+                                                            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                                                            : "bg-card border border-border shadow-sm",
+                                                        // Tail only on the last bubble, so a stack reads as one turn.
+                                                        isLast && (outgoing ? "rounded-br-md" : "rounded-bl-md"),
+                                                        msg.pending && "opacity-70"
+                                                    )}
+                                                >
+                                                    {/* Time sits in flow beside the text rather than absolutely
+                                                        positioned over it — that overlap is what made short
+                                                        messages unreadable. */}
+                                                    <div className="flex items-end gap-2">
+                                                        <span className="whitespace-pre-wrap break-words min-w-0">
+                                                            {msg.content}
+                                                        </span>
+                                                        {isLast && (
+                                                            <span
+                                                                className={cn(
+                                                                    "shrink-0 flex items-center gap-0.5 text-[10px] tabular-nums translate-y-[1px]",
+                                                                    outgoing ? "text-primary-foreground/70" : "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                {format(new Date(msg.created_at), "HH:mm")}
+                                                                {outgoing &&
+                                                                    (msg.pending ? (
+                                                                        <Loader2 className="h-3 w-3 animate-spin" aria-label={t('sending')} />
+                                                                    ) : (
+                                                                        <Check className="h-3 w-3" aria-label={t('sent')} />
+                                                                    ))}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
                 <div ref={bottomRef} />
             </div>
 
