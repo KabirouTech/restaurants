@@ -134,7 +134,7 @@ export async function sendWhatsAppMessage(
   recipientPhone: string,
   content: string,
   attachments: OutgoingMedia[] = []
-): Promise<{ externalMessageId?: string; error?: string }> {
+): Promise<{ externalMessageId?: string; error?: string; warnings?: string[] }> {
   const media = attachments[0];
 
   // Channels onboarded through Intelli's embedded signup have no Meta token of
@@ -150,8 +150,17 @@ export async function sendWhatsAppMessage(
           ? { type: media.type, url: media.url, filename: media.filename }
           : undefined,
       });
-      return { externalMessageId: result.message_id ?? undefined };
+      return {
+        externalMessageId: result.message_id ?? undefined,
+        warnings: result.warnings,
+      };
     } catch (err: any) {
+      if (err?.code === "media_link_required") {
+        return {
+          error:
+            "WhatsApp télécharge le fichier lui-même : la pièce jointe doit être une URL HTTPS publique.",
+        };
+      }
       return { error: err?.message || "Intelli send error" };
     }
   }

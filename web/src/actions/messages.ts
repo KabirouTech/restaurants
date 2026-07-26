@@ -43,6 +43,34 @@ export async function fetchMessagesAction(conversationId: string) {
     return { messages: messages || [] };
 }
 
+/** The message row as the composer consumes it. */
+export interface SentMessageRow {
+    id: string;
+    content: string;
+    sender_type: string;
+    created_at: string;
+    attachments?: OutgoingAttachment[] | null;
+}
+
+/**
+ * Explicit so the caller can read every field. Inferring this union left
+ * `message` unreachable on the error branch and broke property access.
+ */
+export interface SendMessageResult {
+    message?: SentMessageRow;
+    /** The message was never stored — nothing was sent. */
+    error?: string;
+    /** Stored locally, but the channel refused delivery. */
+    deliveryError?: string;
+    /** Delivered, with something adjusted or dropped along the way. */
+    deliveryWarnings?: string[];
+}
+
+export interface UploadAttachmentResult {
+    attachment?: OutgoingAttachment;
+    error?: string;
+}
+
 export interface OutgoingAttachment {
     /** Publicly reachable URL — Meta fetches the media by URL when relaying it. */
     url: string;
@@ -68,7 +96,9 @@ function attachmentKind(mime: string): OutgoingAttachment["type"] {
  * Runs on the service role rather than from the browser so the bucket needs no
  * INSERT policy, and so the org check can't be bypassed by a crafted client.
  */
-export async function uploadMessageAttachmentAction(formData: FormData) {
+export async function uploadMessageAttachmentAction(
+    formData: FormData
+): Promise<UploadAttachmentResult> {
     const orgContext = await getRequiredOrganizationContext("Aucune organisation");
     if (!orgContext.ok) return { error: orgContext.error };
     const { organizationId } = orgContext.context;
@@ -122,7 +152,7 @@ export async function sendMessageAction(
     conversationId: string,
     content: string,
     attachments: OutgoingAttachment[] = []
-) {
+): Promise<SendMessageResult> {
     const orgContext = await getRequiredOrganizationContext("Aucune organisation");
     if (!orgContext.ok) return { error: orgContext.error };
     const { organizationId } = orgContext.context;
@@ -172,6 +202,7 @@ export async function sendMessageAction(
     // Route to external channel if applicable
     const channel = (conv as any).channels;
     let deliveryError: string | null = null;
+    let deliveryWarnings: string[] | null = null;
 
     if (channel && channel.platform !== "website" && conv.external_thread_id) {
         try {
@@ -196,6 +227,7 @@ export async function sendMessageAction(
             }
 
             if (result.error) deliveryError = result.error;
+            if (result.warnings?.length) deliveryWarnings = result.warnings;
         } catch (err: any) {
             console.error("Failed to send external message:", err);
             deliveryError = err?.message || "Échec de l'envoi vers le canal externe";
@@ -206,6 +238,11 @@ export async function sendMessageAction(
 
     // The message row exists either way, but reporting success on a rejected
     // delivery is how an over-long Instagram message got a checkmark and was
-    // never sent. Hand the failure back so the composer can say so.
-    return deliveryError ? { message, deliveryError } : { message };
+    // never sent. Hand failures and non-fatal notices back so the composer can
+    // say what actually happened.
+    return {
+        message,
+        ...(deliveryError ? { deliveryError } : {}),
+        ...(deliveryWarnings ? { deliveryWarnings } : {}),
+    };
 }

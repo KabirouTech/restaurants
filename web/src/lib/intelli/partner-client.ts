@@ -193,21 +193,37 @@ export async function getInstagramClient(
  */
 export type IntelliMediaType = "image" | "document" | "audio" | "video";
 
+export interface IntelliSendResponse {
+  success: boolean;
+  message_id: string | null;
+  dry_run?: boolean;
+  /**
+   * Non-fatal notices from the relay — e.g. a caption dropped because the
+   * target platform has nowhere to put it. The send still succeeded.
+   */
+  warnings?: string[];
+}
+
 /**
  * Send through the Intelli Partner relay.
  *
- * With `media`, the body follows the same Cloud API envelope Intelli already
- * proxies for text — `type` naming a media object carrying a public `link`
- * (plus `caption`/`filename` where the API accepts them). If the relay turns
- * out not to accept media, it surfaces as an IntelliAPIError the composer
- * reports rather than a silent no-op.
+ * Media always travels as a public HTTPS `link`: the platform fetches the file
+ * itself, so an uploaded media id is meaningless to it and the relay rejects
+ * that shape upfront with `media_link_required`. Checking the scheme here turns
+ * a misconfigured storage URL into a clear local error instead of a partner
+ * round-trip.
+ *
+ * `caption` is only set where the platform actually has a slot for it — callers
+ * targeting Instagram must send the caption as its own text message.
  */
 export async function intelliSendMessage(params: {
   clientRef: string;
   to: string;
   text: string;
   media?: { type: IntelliMediaType; url: string; filename?: string };
-}): Promise<{ success: boolean; message_id: string | null; dry_run?: boolean }> {
+  /** Set false for platforms with no caption slot on an attachment. */
+  allowCaption?: boolean;
+}): Promise<IntelliSendResponse> {
   const body: Record<string, unknown> = {
     client_ref: params.clientRef,
     to: params.to,
@@ -215,11 +231,22 @@ export async function intelliSendMessage(params: {
 
   if (params.media) {
     const { type, url, filename } = params.media;
+
+    if (!/^https:\/\//i.test(url)) {
+      throw new IntelliAPIError(
+        "Le média doit être une URL HTTPS publique que la plateforme peut télécharger.",
+        400,
+        "media_link_required",
+        { url }
+      );
+    }
+
+    const allowCaption = params.allowCaption ?? true;
     body.type = type;
     body[type] = {
       link: url,
-      // Only image/video/document carry a caption; audio takes neither.
-      ...(params.text && type !== "audio" ? { caption: params.text } : {}),
+      // Audio carries no caption on any platform; Instagram carries none at all.
+      ...(params.text && allowCaption && type !== "audio" ? { caption: params.text } : {}),
       ...(type === "document" && filename ? { filename } : {}),
     };
   } else {
