@@ -46,7 +46,7 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
         { auth: { persistSession: false } }
     );
 
-    const { data: conversations } = await supabaseAdmin
+    const { data: conversations, error: conversationsError } = await supabaseAdmin
         .from("conversations")
         .select(`
             id,
@@ -68,6 +68,15 @@ export default async function InboxPage(props: { searchParams: Promise<{ convers
         .eq("organization_id", orgId)
         .order("last_message_at", { ascending: false })
         .limit(20);
+
+    // Discarding this error is how a missing `customers.avatar_url` column made
+    // the inbox read as empty for five months instead of failing loudly.
+    if (conversationsError) {
+        console.error(
+            `[inbox] conversations query failed for org ${orgId}:`,
+            conversationsError.message
+        );
+    }
 
     // Get the latest message for each conversation's preview
     const formattedConversations = conversations?.map((c: any) => {
