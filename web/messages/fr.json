@@ -81,7 +81,11 @@
       "label": "Ils cuisinent avec nous"
     },
     "identity": {
-      "pills": ["Vision panafricaine", "Motifs culturels modernes", "Conçu pour les opérateurs locaux"]
+      "pills": [
+        "Vision panafricaine",
+        "Motifs culturels modernes",
+        "Conçu pour les opérateurs locaux"
+      ]
     },
     "problem": {
       "title": "Vous vous reconnaissez ?",
@@ -107,25 +111,53 @@
         "pill": "Devis & Commandes",
         "title": "Un devis élégant en 2 clics.",
         "body": "Créez un devis, ajoutez vos plats depuis votre menu, envoyez-le en PDF. Suivez les acomptes et les confirmations dans un tableau Kanban clair.",
-        "items": ["Devis PDF prêt à envoyer", "Suivi : brouillon → confirmé → livré", "Historique complet par client", "Gestion des acomptes"]
+        "items": [
+          "Devis PDF prêt à envoyer",
+          "Suivi : brouillon → confirmé → livré",
+          "Historique complet par client",
+          "Gestion des acomptes"
+        ]
       },
       "calendar": {
         "pill": "Calendrier & Capacité",
         "title": "Finis les doubles réservations.",
         "body": "Visualisez votre planning en temps réel. Chaque type d'événement a un poids : 1 mariage compte autant que 5 cocktails. Vous savez toujours si vous pouvez dire oui.",
-        "items": ["Vue mensuelle avec charge par jour", "Système de capacité pondérée", "Bloquer des dates en un clic", "Commande rapide depuis le calendrier"]
+        "items": [
+          "Vue mensuelle avec charge par jour",
+          "Système de capacité pondérée",
+          "Bloquer des dates en un clic",
+          "Commande rapide depuis le calendrier"
+        ]
       },
       "inbox": {
         "pill": "Messagerie Unifiée",
         "title": "Tous vos clients au même endroit.",
         "body": "WhatsApp, Instagram, Email et Messenger dans une seule boîte de réception. Ne ratez plus jamais une commande à cause d'un message manqué."
       },
-      "recipes": { "title": "Recettes", "desc": "Créez vos fiches recettes en texte, photo ou dictée vocale. Exportez en PDF élégant, organisez en dossiers." },
-      "inventory": { "title": "Inventaire", "desc": "Suivez vos stocks avec alertes de seuil. Reliez chaque ingrédient à un fournisseur." },
-      "suppliers": { "title": "Fournisseurs", "desc": "Centralisez tous vos contacts fournisseurs et leurs conditions. Import Excel disponible." },
-      "menu": { "title": "Menu Digital", "desc": "Publiez votre carte en ligne avec photos, prix et allergènes. Partageable avec vos clients." },
-      "crm": { "title": "CRM Clients", "desc": "Historique de commandes, notes, tags. Retrouvez n'importe quel client en 2 secondes." },
-      "team": { "title": "Gestion d'Équipe", "desc": "Invitez vos collaborateurs avec des rôles précis : admin, manager, agent." }
+      "recipes": {
+        "title": "Recettes",
+        "desc": "Créez vos fiches recettes en texte, photo ou dictée vocale. Exportez en PDF élégant, organisez en dossiers."
+      },
+      "inventory": {
+        "title": "Inventaire",
+        "desc": "Suivez vos stocks avec alertes de seuil. Reliez chaque ingrédient à un fournisseur."
+      },
+      "suppliers": {
+        "title": "Fournisseurs",
+        "desc": "Centralisez tous vos contacts fournisseurs et leurs conditions. Import Excel disponible."
+      },
+      "menu": {
+        "title": "Menu Digital",
+        "desc": "Publiez votre carte en ligne avec photos, prix et allergènes. Partageable avec vos clients."
+      },
+      "crm": {
+        "title": "CRM Clients",
+        "desc": "Historique de commandes, notes, tags. Retrouvez n'importe quel client en 2 secondes."
+      },
+      "team": {
+        "title": "Gestion d'Équipe",
+        "desc": "Invitez vos collaborateurs avec des rôles précis : admin, manager, agent."
+      }
     },
     "storefront": {
       "nav": "Boutique",
@@ -134,25 +166,57 @@
       "subtitle": "Depuis votre dashboard, publiez en quelques minutes une page client à votre image. Vos plats, vos photos, vos couleurs, et un parcours de commande clair.",
       "dashboardTitle": "Depuis votre côté admin",
       "dashboardBody": "Créez et mettez à jour votre boutique publique sans code. Une modification dans votre menu, et la vitrine se synchronise immédiatement.",
-      "dashboardItems": ["Personnalisez les couleurs et le logo", "Créez des catégories et plats vedettes", "Définissez prix, photos et détails de préparation", "Publiez et partagez le lien de votre boutique"],
+      "dashboardItems": [
+        "Personnalisez les couleurs et le logo",
+        "Créez des catégories et plats vedettes",
+        "Définissez prix, photos et détails de préparation",
+        "Publiez et partagez le lien de votre boutique"
+      ],
       "publicTitle": "Ce que vos clients voient",
       "publicBody": "Une vitrine mobile-first, propre et rapide, avec catégories, cartes plats, infos de préparation et bouton de commande.",
-      "publicItems": ["Design mobile-first", "Identité visuelle de votre marque", "CTA commande direct", "Navigation menu rapide"],
+      "publicItems": [
+        "Design mobile-first",
+        "Identité visuelle de votre marque",
+        "CTA commande direct",
+        "Navigation menu rapide"
+      ],
       "mock": {
         "name": "Chez Fatou Traiteur",
-        "nav": ["Accueil", "Menu", "À propos", "Contact"],
+        "nav": [
+          "Accueil",
+          "Menu",
+          "À propos",
+          "Contact"
+        ],
         "heroTag": "Plat Signature",
         "heroTitle": "Goûtez l'âme de la cuisine africaine",
         "heroDescription": "Menus sur mesure pour événements, entreprises et familles. Produits frais, saveurs fortes et livraison fiable.",
         "menuTitle": "Notre Carte",
-        "categories": ["Populaires", "Déjeuner", "Plateaux", "Boissons"],
+        "categories": [
+          "Populaires",
+          "Déjeuner",
+          "Plateaux",
+          "Boissons"
+        ],
         "searchPlaceholder": "Rechercher un plat...",
         "orderTitle": "Votre commande",
         "orderCta": "Voir le détail & commander",
         "dishes": [
-          { "name": "Thiéboudienne Royale", "price": "11 000 FCFA", "prep": "Prêt en 35 min" },
-          { "name": "Poulet Yassa Signature", "price": "9 000 FCFA", "prep": "Prêt en 30 min" },
-          { "name": "Bissap Gingembre", "price": "3 500 FCFA", "prep": "Bouteille fraîche · 1L" }
+          {
+            "name": "Thiéboudienne Royale",
+            "price": "11 000 FCFA",
+            "prep": "Prêt en 35 min"
+          },
+          {
+            "name": "Poulet Yassa Signature",
+            "price": "9 000 FCFA",
+            "prep": "Prêt en 30 min"
+          },
+          {
+            "name": "Bissap Gingembre",
+            "price": "3 500 FCFA",
+            "prep": "Bouteille fraîche · 1L"
+          }
         ],
         "note": "Le client choisit ses plats, confirme par message, et la commande arrive directement dans RestaurantsOS."
       }
@@ -160,15 +224,30 @@
     "howItWorks": {
       "title": "Lancez-vous en 5 minutes.",
       "subtitle": "Pas de formation, pas de technicien. Vous, votre téléphone, c'est parti.",
-      "step1": { "title": "Créez votre compte", "desc": "Nom de votre structure, devise, couleur. Votre espace est prêt." },
-      "step2": { "title": "Configurez votre activité", "desc": "Ajoutez vos plats, définissez votre capacité, connectez WhatsApp." },
-      "step3": { "title": "Recevez vos commandes", "desc": "Vos clients vous contactent, vous répondez et gérez tout depuis l'app." }
+      "step1": {
+        "title": "Créez votre compte",
+        "desc": "Nom de votre structure, devise, couleur. Votre espace est prêt."
+      },
+      "step2": {
+        "title": "Configurez votre activité",
+        "desc": "Ajoutez vos plats, définissez votre capacité, connectez WhatsApp."
+      },
+      "step3": {
+        "title": "Recevez vos commandes",
+        "desc": "Vos clients vous contactent, vous répondez et gérez tout depuis l'app."
+      }
     },
     "import": {
       "badge": "Import universel",
       "title": "Vous avez déjà des données ? Importez-les.",
       "body": "Recettes, clients, fournisseurs, ingrédients, produits — tout s'importe depuis Excel ou CSV. Téléchargez le modèle, remplissez, importez.",
-      "items": ["Recettes", "Clients", "Fournisseurs", "Ingrédients", "Menu"]
+      "items": [
+        "Recettes",
+        "Clients",
+        "Fournisseurs",
+        "Ingrédients",
+        "Menu"
+      ]
     },
     "pricing": {
       "title": "Un prix juste. Pas de surprise.",
@@ -179,8 +258,18 @@
         "period": "pour toujours",
         "description": "Pour tester la plateforme et démarrer doucement.",
         "cta": "Commencer gratuitement",
-        "features": ["30 commandes/mois", "1 utilisateur", "10 produits au menu", "Calendrier basique", "Recettes & inventaire"],
-        "missing": ["Messagerie unifiée", "WhatsApp / Instagram", "Rapports"]
+        "features": [
+          "30 commandes/mois",
+          "1 utilisateur",
+          "10 produits au menu",
+          "Calendrier basique",
+          "Recettes & inventaire"
+        ],
+        "missing": [
+          "Messagerie unifiée",
+          "WhatsApp / Instagram",
+          "Rapports"
+        ]
       },
       "premium": {
         "name": "Premium",
@@ -189,7 +278,16 @@
         "description": "Pour les traiteurs établis qui veulent tout centraliser.",
         "cta": "Démarrer en Premium",
         "badge": "Le plus populaire",
-        "features": ["Commandes illimitées", "5 utilisateurs inclus", "Menu illimité", "Messagerie unifiée (bientôt disponible)", "WhatsApp + Instagram + Messenger + Email", "Calendrier & capacité avancés", "CRM clients illimité", "Support 24h"],
+        "features": [
+          "Commandes illimitées",
+          "5 utilisateurs inclus",
+          "Menu illimité",
+          "Messagerie unifiée (bientôt disponible)",
+          "WhatsApp + Instagram + Messenger + Email",
+          "Calendrier & capacité avancés",
+          "CRM clients illimité",
+          "Support 24h"
+        ],
         "earlyAdopter": "La messagerie unifiée est en développement. Abonnez-vous maintenant pour y accéder en avant-première.",
         "missing": []
       },
@@ -199,7 +297,15 @@
         "period": "à partir de 200 000 FCFA/mois",
         "description": "Pour les groupes et structures multi-sites.",
         "cta": "Nous contacter",
-        "features": ["Tout en Premium", "Utilisateurs illimités", "Accès API complet", "Webhooks & intégrations", "Marque blanche", "Account manager dédié", "Support 24h/7j téléphone"],
+        "features": [
+          "Tout en Premium",
+          "Utilisateurs illimités",
+          "Accès API complet",
+          "Webhooks & intégrations",
+          "Marque blanche",
+          "Account manager dédié",
+          "Support 24h/7j téléphone"
+        ],
         "missing": []
       }
     },
@@ -212,9 +318,21 @@
         "total": "Total",
         "deposit": "Acompte versé",
         "items": [
-          { "name": "Thiéboudienne", "qty": "×20", "price": "80 000 FCFA" },
-          { "name": "Poulet Yassa", "qty": "×15", "price": "60 000 FCFA" },
-          { "name": "Jus Bissap", "qty": "×40", "price": "20 000 FCFA" }
+          {
+            "name": "Thiéboudienne",
+            "qty": "×20",
+            "price": "80 000 FCFA"
+          },
+          {
+            "name": "Poulet Yassa",
+            "qty": "×15",
+            "price": "60 000 FCFA"
+          },
+          {
+            "name": "Jus Bissap",
+            "qty": "×40",
+            "price": "20 000 FCFA"
+          }
         ],
         "totalAmount": "160 000 FCFA",
         "depositAmount": "50 000 FCFA"
@@ -223,19 +341,49 @@
         "month": "Mars 2025",
         "eventsCount": "3 événements",
         "full": "COMPLET",
-        "days": ["L", "M", "M", "J", "V", "S", "D"],
+        "days": [
+          "L",
+          "M",
+          "M",
+          "J",
+          "V",
+          "S",
+          "D"
+        ],
         "events": [
-          { "name": "Mariage Konaté", "date": "Sam 6 · 200 pers." },
-          { "name": "Cocktail Entreprise", "date": "Sam 13 · 80 pers." }
+          {
+            "name": "Mariage Konaté",
+            "date": "Sam 6 · 200 pers."
+          },
+          {
+            "name": "Cocktail Entreprise",
+            "date": "Sam 13 · 80 pers."
+          }
         ]
       },
       "inbox": {
         "title": "Messages",
         "conversations": [
-          { "name": "Marème Ndiaye", "msg": "Bonjour, je voudrais un devis pour 150 personnes...", "time": "11:42" },
-          { "name": "Kofi Atta", "msg": "Vous faites le thiéboudienne ?", "time": "10:15" },
-          { "name": "Aminata Sy", "msg": "Suite à notre échange téléphonique...", "time": "09:30" },
-          { "name": "Oumar Touré", "msg": "Merci pour le devis, on confirme !", "time": "Hier" }
+          {
+            "name": "Marème Ndiaye",
+            "msg": "Bonjour, je voudrais un devis pour 150 personnes...",
+            "time": "11:42"
+          },
+          {
+            "name": "Kofi Atta",
+            "msg": "Vous faites le thiéboudienne ?",
+            "time": "10:15"
+          },
+          {
+            "name": "Aminata Sy",
+            "msg": "Suite à notre échange téléphonique...",
+            "time": "09:30"
+          },
+          {
+            "name": "Oumar Touré",
+            "msg": "Merci pour le devis, on confirme !",
+            "time": "Hier"
+          }
         ]
       }
     },
@@ -449,11 +597,27 @@
       "closed": "Fermé",
       "reopen": "Rouvrir",
       "noEventsToday": "Aucun événement ce jour",
-      "weekLabels": ["L", "M", "M", "J", "V", "S", "D"],
+      "weekLabels": [
+        "L",
+        "M",
+        "M",
+        "J",
+        "V",
+        "S",
+        "D"
+      ],
       "reopenDate": "Rouvrir cette date",
       "addEvent": "Ajouter un événement",
       "closeDate": "Fermer cette date",
-      "weekDays": ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
+      "weekDays": [
+        "Lundi",
+        "Mardi",
+        "Mercredi",
+        "Jeudi",
+        "Vendredi",
+        "Samedi",
+        "Dimanche"
+      ],
       "dialog": {
         "newQuote": "Nouveau Devis",
         "client": "Client",
@@ -644,7 +808,13 @@
       "searchPlaceholder": "Rechercher...",
       "online": "En ligne",
       "writeMessage": "Écrivez un message...",
-      "enterToSend": "Entrée pour envoyer · Shift + Entrée pour nouvelle ligne"
+      "enterToSend": "Entrée pour envoyer · Shift + Entrée pour nouvelle ligne",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "noMessages": "Aucun message dans cette conversation.",
+      "startConversation": "Écrivez le premier message ci-dessous.",
+      "sending": "Envoi…",
+      "sent": "Envoyé"
     },
     "settings": {
       "title": "Paramètres",

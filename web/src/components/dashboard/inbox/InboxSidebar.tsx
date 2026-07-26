@@ -144,7 +144,7 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
                     </div>
                 ) : (
                     filteredConversations.map((conv) => {
-                        const lastMsg = conv.messages?.[0]?.content || "Nouvelle conversation";
+                        const lastMsg = conv.messages?.[0]?.content?.trim() || t('newConversation');
                         const isSelected = selectedId === conv.id;
 
                         return (
@@ -189,12 +189,17 @@ export function InboxSidebar({ conversations, className }: InboxSidebarProps) {
                                         )}>
                                             {lastMsg}
                                         </p>
+
+                                        {/* In flow, not absolutely positioned over the preview — and it
+                                            carries the count, which a 2px dot could never do. */}
+                                        {conv.unread_count > 0 && (
+                                            <span className="ml-auto shrink-0 min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold tabular-nums flex items-center justify-center">
+                                                {conv.unread_count > 99 ? "99+" : conv.unread_count}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
-                                {conv.unread_count > 0 && (
-                                    <div className="absolute right-4 top-1/2 mt-3 h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
-                                )}
                                 {isSelected && (
                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
                                 )}
