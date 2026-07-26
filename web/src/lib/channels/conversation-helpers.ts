@@ -36,11 +36,19 @@ export async function findOrCreateCustomer(
   if (lookup.instagramId) {
     const { data } = await supabase
       .from("customers")
-      .select("id")
+      .select("id, full_name")
       .eq("organization_id", orgId)
       .eq("instagram_username", lookup.instagramId)
       .maybeSingle();
-    if (data?.id) return data.id;
+    if (data?.id) {
+      // Customers first seen while the Instagram parser was reading the wrong
+      // shape were stored under their raw IGSID. Once a real handle shows up,
+      // adopt it instead of displaying a number forever.
+      if (name && name !== lookup.instagramId && data.full_name === lookup.instagramId) {
+        await supabase.from("customers").update({ full_name: name }).eq("id", data.id);
+      }
+      return data.id;
+    }
   }
 
   const insert: Record<string, any> = { organization_id: orgId };

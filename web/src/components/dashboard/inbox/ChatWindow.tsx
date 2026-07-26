@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { format, isSameDay, isToday, isYesterday } from "date-fns";
 import { fr as frLocale } from "date-fns/locale";
 import { useLocale } from "next-intl";
-import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft, Check, Loader2, FileText, X } from "lucide-react";
+import { Send, Paperclip, MoreVertical, Phone, Instagram, Mail, Globe, MessageCircle, ChevronLeft, Check, Loader2, FileText, X, Image as ImageIcon, Mic, Video } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -424,61 +424,88 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
                                     >
                                         {row.messages.map((msg, index) => {
                                             const isLast = index === row.messages.length - 1;
+                                            const attachments = msg.attachments ?? [];
+                                            // Inbound media arrives with the content set to a stand-in like
+                                            // "[Image]". Once the attachment itself renders, repeating that
+                                            // label is noise.
+                                            const isPlaceholder = /^\[[^\]]*\]$/.test((msg.content || "").trim());
+                                            const showText = Boolean(msg.content) && !(attachments.length > 0 && isPlaceholder);
+                                            // A picture is its own bubble — wrapping it in a padded coloured
+                                            // box just framed it in orange.
+                                            const mediaOnly = attachments.length > 0 && !showText;
+
+                                            const timestamp = (
+                                                <>
+                                                    {format(new Date(msg.created_at), "HH:mm")}
+                                                    {outgoing &&
+                                                        (msg.pending ? (
+                                                            <Loader2 className="h-3 w-3 animate-spin" aria-label={t('sending')} />
+                                                        ) : (
+                                                            <Check className="h-3 w-3" aria-label={t('sent')} />
+                                                        ))}
+                                                </>
+                                            );
+
                                             return (
                                                 <div
                                                     key={msg.id}
                                                     title={format(new Date(msg.created_at), "PPpp", dateOpts)}
                                                     className={cn(
-                                                        "w-fit max-w-full px-3 py-2 text-sm rounded-2xl transition-opacity",
-                                                        outgoing
-                                                            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                                                            : "bg-card border border-border shadow-sm",
+                                                        "relative w-fit max-w-full text-sm rounded-2xl transition-opacity overflow-hidden",
+                                                        mediaOnly
+                                                            ? "bg-transparent"
+                                                            : cn(
+                                                                  "px-3 py-2",
+                                                                  outgoing
+                                                                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                                                                      : "bg-card border border-border shadow-sm"
+                                                              ),
                                                         // Tail only on the last bubble, so a stack reads as one turn.
                                                         isLast && (outgoing ? "rounded-br-md" : "rounded-bl-md"),
                                                         msg.pending && "opacity-70"
                                                     )}
                                                 >
-                                                    {/* Time sits in flow beside the text rather than absolutely
-                                                        positioned over it — that overlap is what made short
-                                                        messages unreadable. */}
-                                                    {/* Inbound media has been stored in `attachments` all
-                                                        along and was never rendered — images showed as an
-                                                        empty bubble at best. */}
-                                                    {msg.attachments && msg.attachments.length > 0 && (
-                                                        <div className={cn("flex flex-col gap-1.5", msg.content && "mb-1.5")}>
-                                                            {msg.attachments.map((att, i) => (
+                                                    {attachments.length > 0 && (
+                                                        <div className={cn("flex flex-col gap-1.5", showText && "mb-1.5")}>
+                                                            {attachments.map((att, i) => (
                                                                 <AttachmentPreview
                                                                     key={`${msg.id}-att-${i}`}
                                                                     attachment={att}
                                                                     outgoing={outgoing}
+                                                                    imageLabel={t('imageAttachment')}
                                                                     documentLabel={t('document')}
                                                                     audioLabel={t('audioMessage')}
+                                                                    videoLabel={t('videoAttachment')}
                                                                 />
                                                             ))}
                                                         </div>
                                                     )}
 
-                                                    <div className="flex items-end gap-2">
-                                                        <span className="whitespace-pre-wrap break-words min-w-0">
-                                                            {msg.content}
-                                                        </span>
-                                                        {isLast && (
-                                                            <span
-                                                                className={cn(
-                                                                    "shrink-0 flex items-center gap-0.5 text-[10px] tabular-nums translate-y-[1px]",
-                                                                    outgoing ? "text-primary-foreground/70" : "text-muted-foreground"
-                                                                )}
-                                                            >
-                                                                {format(new Date(msg.created_at), "HH:mm")}
-                                                                {outgoing &&
-                                                                    (msg.pending ? (
-                                                                        <Loader2 className="h-3 w-3 animate-spin" aria-label={t('sending')} />
-                                                                    ) : (
-                                                                        <Check className="h-3 w-3" aria-label={t('sent')} />
-                                                                    ))}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    {/* Over media the time needs its own scrim to stay legible;
+                                                        beside text it sits in flow so it can never overlap. */}
+                                                    {mediaOnly
+                                                        ? isLast && (
+                                                              <span className="absolute bottom-2 right-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] tabular-nums text-white">
+                                                                  {timestamp}
+                                                              </span>
+                                                          )
+                                                        : (
+                                                              <div className="flex items-end gap-2">
+                                                                  <span className="whitespace-pre-wrap break-words min-w-0">
+                                                                      {showText ? msg.content : null}
+                                                                  </span>
+                                                                  {isLast && (
+                                                                      <span
+                                                                          className={cn(
+                                                                              "shrink-0 flex items-center gap-0.5 text-[10px] tabular-nums translate-y-[1px]",
+                                                                              outgoing ? "text-primary-foreground/70" : "text-muted-foreground"
+                                                                          )}
+                                                                      >
+                                                                          {timestamp}
+                                                                      </span>
+                                                                  )}
+                                                              </div>
+                                                          )}
                                                 </div>
                                             );
                                         })}
@@ -620,22 +647,30 @@ export function ChatWindow({ conversationId, customerName, customerAvatar, chann
 function AttachmentPreview({
     attachment,
     outgoing,
+    imageLabel,
     documentLabel,
     audioLabel,
+    videoLabel,
 }: {
     attachment: MessageAttachment;
     outgoing: boolean;
+    imageLabel: string;
     documentLabel: string;
     audioLabel: string;
+    videoLabel: string;
 }) {
     const url = attachment.url;
     const kind = attachment.type || "";
-    const isImage = kind === "image" || attachment.mime_type?.startsWith("image/");
-    const isAudio = kind === "audio" || attachment.mime_type?.startsWith("audio/");
+    const mime = attachment.mime_type || "";
+    const isImage = kind === "image" || mime.startsWith("image/");
+    const isAudio = kind === "audio" || mime.startsWith("audio/");
+    const isVideo = kind === "video" || mime.startsWith("video/");
 
     // Media relayed by Meta arrives as an id we hold no download token for —
-    // say so rather than rendering a broken image.
+    // name it by what it actually is rather than calling every one a document.
     if (!url) {
+        const Icon = isImage ? ImageIcon : isAudio ? Mic : isVideo ? Video : FileText;
+        const label = isImage ? imageLabel : isAudio ? audioLabel : isVideo ? videoLabel : documentLabel;
         return (
             <div
                 className={cn(
@@ -643,10 +678,8 @@ function AttachmentPreview({
                     outgoing ? "bg-primary-foreground/10" : "bg-muted"
                 )}
             >
-                <FileText className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">
-                    {attachment.filename || (isAudio ? audioLabel : documentLabel)}
-                </span>
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{attachment.filename || label}</span>
             </div>
         );
     }
@@ -656,11 +689,15 @@ function AttachmentPreview({
             <a href={url} target="_blank" rel="noopener noreferrer" className="block">
                 <img
                     src={url}
-                    alt={attachment.filename || ""}
-                    className="rounded-lg max-h-64 w-auto object-cover border border-border/50"
+                    alt={attachment.filename || imageLabel}
+                    className="rounded-xl max-h-72 max-w-full w-auto object-contain"
                 />
             </a>
         );
+    }
+
+    if (isVideo) {
+        return <video controls src={url} className="rounded-xl max-h-72 max-w-full" />;
     }
 
     if (isAudio) {
